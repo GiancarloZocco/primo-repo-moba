@@ -1,8 +1,13 @@
 {
   "name": "MLBB TOP Tactical Telemetry",
   "short_name": "MLBB TOP",
+  "description": "Assistente per il draft di Mobile Legends: consigli di pick e ban, tier list, schede eroe, confronti e quiz.",
+  "lang": "it",
+  "dir": "ltr",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0B0E14",
   "theme_color": "#0B0E14",
   "icons": [
@@ -15,6 +20,12 @@
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

@@ -227,11 +227,39 @@ async function run() {
     ok(got.st === shared.st, "chi apre il link vede lo stesso draft (pick, ban e lane)" + (got.st === shared.st ? "" : ": " + shared.st + " ≠ " + got.st));
     ok(got.hash === "", "il codice viene tolto dalla barra degli indirizzi dopo l'apertura");
     await p2.evaluate(function () { location.hash = "d=zzz" }); await p2.waitForTimeout(300);
-    ok(/non valido/.test(p2.lastDialog || ""), "link rovinato: avviso, draft invariato");
+    ok(await p2.evaluate(function () { return /non valido/.test(document.getElementById("toasts").textContent) }), "link rovinato: avviso dentro l'app, draft invariato");
     var still = await p2.evaluate(function () { return JSON.stringify([S.ally, S.enemy, S.banA, S.banE, S.allyLane]) });
     ok(still === shared.st, "il draft resta quello di prima dopo un link rovinato");
     ok(errs2.length === 0, "nessun errore JavaScript aprendo il link" + (errs2.length ? ": " + errs2.join(" | ") : ""));
     await ctx2.close();
+
+    section("Screenshot, backup, OCR offline, manifest");
+    var PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+    await p.evaluate(function (png) { localStorage.setItem("draftsync_shot", png) }, PNG);
+    await p.reload(); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") }); await p.waitForTimeout(300);
+    var mig = await p.evaluate(async function () { return { ls: localStorage.getItem("draftsync_shot"), idb: await shotGet(), mem: SHOT.length } });
+    ok(!mig.ls && mig.idb && mig.mem > 0, "lo screenshot salvato in localStorage passa in IndexedDB al primo avvio");
+    await p.reload(); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") }); await p.waitForTimeout(300);
+    ok(await p.evaluate(function () { go("profile"); return !!document.getElementById("mshot") }), "dopo il riavvio lo screenshot compare nel Profilo");
+    await ctx.setOffline(true);
+    var ocr = await p.evaluate(function () { delete window.Tesseract; document.getElementById("mocr").click(); return document.getElementById("mst").textContent });
+    await ctx.setOffline(false);
+    ok(/Sei offline/.test(ocr), "OCR senza rete: messaggio chiaro invece di bloccarsi");
+    await p.evaluate(function () { S.games = [{ d: 1, r: 1, a: NAMES.slice(0, 5), e: NAMES.slice(5, 10), me: NAMES[0] }]; S.nick = "Backup1"; save(); go("profile") });
+    var dl = await Promise.all([p.waitForEvent("download"), p.click("#bkx")]);
+    var bpath = await dl[0].path(), bk = JSON.parse(fs.readFileSync(bpath, "utf8"));
+    ok(bk.app === "mlbb-top" && bk.S.nick === "Backup1" && bk.S.games.length === 1 && bk.shot === PNG, "Esporta: file con profilo, storico partite e screenshot (" + dl[0].suggestedFilename() + ")");
+    await p.evaluate(async function () { S.nick = "Altro"; S.games = []; save(); await shotSet(null); SHOT = ""; go("profile") });
+    await p.setInputFiles("#bkf", bpath); await p.waitForTimeout(800); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
+    var rs = await p.evaluate(async function () { return { nick: S.nick, games: S.games.length, shot: (await shotGet()) || "" } });
+    ok(rs.nick === "Backup1" && rs.games === 1 && rs.shot === PNG, "Importa: dopo la conferma tornano profilo, storico e screenshot");
+    await p.evaluate(function () { go("profile") });
+    var bad = path.join(require("os").tmpdir(), "non-backup.json"); fs.writeFileSync(bad, '{"x":1}');
+    await p.setInputFiles("#bkf", bad); await p.waitForTimeout(300);
+    ok(await p.evaluate(function () { return /non è un backup/.test(document.getElementById("toasts").textContent) && S.nick === "Backup1" }), "un file sbagliato viene rifiutato senza toccare i dati");
+    var mf = await p.evaluate(async function () { return (await fetch("manifest.json")).json() });
+    var mk = (mf.icons || []).filter(function (i) { return i.purpose === "maskable" })[0];
+    ok(mf.lang === "it" && mf.description && mk && (await p.evaluate(async function (u) { return (await fetch(u)).ok }, mk.src)), "manifest con lingua, descrizione e icona maskable");
 
     section("Immagini locali");
     var im = await p.evaluate(async function () {
@@ -250,7 +278,7 @@ async function run() {
     p.lastDialog = null; arena.mode = "fail";
     await p.evaluate(function () { localStorage.removeItem("draftsync_live"); go("profile") });
     await p.click("#live"); await p.waitForTimeout(500);
-    ok(/non riuscito/.test(p.lastDialog || ""), "server in errore: avviso mostrato, niente salvato");
+    ok(await p.evaluate(function () { return /non riuscito/.test(document.getElementById("toasts").textContent) && !localStorage.getItem("draftsync_live") }), "server in errore: avviso dentro l'app, niente salvato");
     arena.mode = "ok"; p.lastDialog = null;
     await p.evaluate(function () { go("profile") });
     await p.click("#live"); await p.waitForFunction(function () { return !!localStorage.getItem("draftsync_live") }, null, { timeout: 5000 }).catch(function () { });

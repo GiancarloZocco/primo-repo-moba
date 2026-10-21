@@ -1802,6 +1802,43 @@
     }
 
     /* nav */
+    .toasts {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 60;
+      pointer-events: none
+    }
+
+    .toast {
+      background: var(--panel2);
+      border: 1px solid var(--line2);
+      border-left: 3px solid var(--blueT);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--text);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, .45);
+      transition: opacity .4s, transform .4s
+    }
+
+    .toast.err {
+      border-left-color: var(--red)
+    }
+
+    .toast.ok {
+      border-left-color: var(--green)
+    }
+
+    .toast.out {
+      opacity: 0;
+      transform: translateY(6px)
+    }
+
     nav {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -3010,6 +3047,7 @@
     <section class="scr" id="v-profile"></section>
     <section class="scr" id="v-cmp"></section>
     <nav id="nav"></nav>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
     <div class="sheet" id="sheet">
       <div class="box">
         <h3 id="pt"></h3>
@@ -3053,6 +3091,24 @@
     try { var LV0 = JSON.parse(localStorage.getItem("draftsync_live") || "null"); if (LV0 && LV0.rk) applyLive(LV0) } catch (e) { }
     var NAMES = Object.keys(H).sort(function (a, b) { return a.localeCompare(b) });
     var $ = function (i) { return document.getElementById(i) };
+    /* avviso dentro l'app al posto di alert(): kind "err" (rosso) o "ok" (verde) */
+    function toast(msg, kind) {
+      var box = $("toasts"), t = document.createElement("div"); if (!box) return;
+      t.className = "toast" + (kind ? " " + kind : ""); t.setAttribute("role", kind === "err" ? "alert" : "status"); t.textContent = msg; box.appendChild(t);
+      setTimeout(function () { t.classList.add("out") }, 4200); setTimeout(function () { t.remove() }, 4700)
+    }
+    /* screenshot del profilo in IndexedDB: localStorage ha pochi MB e se si riempie fallirebbero anche i salvataggi del draft */
+    function idbDo(mode, fn) {
+      return new Promise(function (ok, no) {
+        if (!window.indexedDB) return no(new Error("IndexedDB non disponibile"));
+        var r = indexedDB.open("mlbb-top", 1);
+        r.onupgradeneeded = function () { r.result.createObjectStore("kv") };
+        r.onerror = function () { no(r.error) };
+        r.onsuccess = function () { var db = r.result, t = db.transaction("kv", mode), q = fn(t.objectStore("kv")); t.oncomplete = function () { db.close(); ok(q && q.result) }; t.onerror = t.onabort = function () { db.close(); no(t.error) } }
+      })
+    }
+    function shotGet() { return idbDo("readonly", function (st) { return st.get("shot") }) }
+    function shotSet(v) { return idbDo("readwrite", function (st) { return v ? st.put(v, "shot") : st.delete("shot") }) }
     function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] }) }
 
     /* ---------- stato ---------- */
@@ -3077,6 +3133,13 @@
       return true;
     }
     var ITON = applyIT();
+    var SHOT = "";
+    (function () {
+      var old = null; try { old = localStorage.getItem("draftsync_shot") } catch (e) { }
+      var show = function () { if (cur === "profile" && $("mpc")) mpCard() };
+      if (old) { SHOT = old; shotSet(old).then(function () { try { localStorage.removeItem("draftsync_shot") } catch (e) { } }).catch(function () { }) }
+      else shotGet().then(function (v) { SHOT = v || ""; if (SHOT) show() }).catch(function () { });
+    })();
     var focus = null, recs = [], detOpen = false, pk = null, cur = "draft", hist = [], hero = "Khufra", htab = "ab", bdl = null, hsub = "her", itf = "all", iq = "", tf = "all", tq = "", tsort = "wr", hf = "all", hq = "", QZ = null;
 
     /* ---------- motore ---------- */
@@ -3477,7 +3540,7 @@
       var m = /[#&]d=([^&]*)/.exec(location.hash); if (!m) return false;
       history.replaceState(null, "", location.href.split("#")[0]);
       var o = readCode(decodeURIComponent(m[1]));
-      if (!o) { alert("Link del draft non valido."); return false }
+      if (!o) { toast("Link del draft non valido.", "err"); return false }
       if (used().length && !confirm("Aprire il draft condiviso? Sostituisce quello attuale.")) return false;
       S.ally = o.ally; S.enemy = o.enemy; S.banA = o.banA; S.banE = o.banE; S.allyLane = o.allyLane; focus = null; save(); return true;
     }
@@ -3805,6 +3868,7 @@
         '<div class="set" style="flex-direction:column;align-items:stretch"><div class="kv"><b style="font-family:var(--hd);font-weight:500;font-size:13px">Statistiche per rank</b><span class="a" style="font-size:10.5px;font-weight:700">' + RKN[S.rk].toUpperCase() + '</span></div><div class="seg" id="prk"></div></div>' +
         '<div class="set"><span><b>Aggiornamento automatico</b><small>Scarica le statistiche una volta al giorno quando c’è internet</small></span><button class="tg' + (S.autoLive !== false ? " on" : "") + '" id="tga" aria-label="Aggiornamento automatico"></button></div>' +
         '<div class="set"><span><b>Dati ufficiali</b><small>' + NAMES.length + ' eroi · ' + (META.live ? "aggiornati online il " : "snapshot del ") + META.date + '</small></span><button class="btn sm" id="live">Aggiorna</button></div>' +
+        '<div class="set"><span><b>Backup dei dati</b><small>Profilo, draft, storico partite, quiz e screenshot in un file</small></span><span style="display:flex;gap:6px"><button class="btn sm" id="bkx">Esporta</button><button class="btn sm" id="bki">Importa</button></span></div><input type="file" accept="application/json,.json" id="bkf" hidden>' +
         '<div class="set"><span><b>Azzera progressi quiz</b><small>XP, serie e record</small></span><button class="btn rd sm" id="rq">Azzera</button></div>' +
         '<p class="hint" style="padding-top:10px;border-top:1px solid var(--line)">Win rate, pick rate, ban rate, counter, compagni e build: dati ufficiali MLBB Academy (via arena.rone.dev, ' + META.win + '). Abilità e titoli: MLBB Academy e Wiki MLBB. Il pulsante Aggiorna scarica le statistiche più recenti (serve internet). Tier e punteggi del draft sono calcolati da MLBB TOP.</p>' +
         '<p class="k" style="text-align:center;margin:10px 0 0">MLBB TOP esports system · build v4.0</p></div>';
@@ -3822,6 +3886,9 @@
       $("tgm").onclick = function () { S.useMine = S.useMine === false; focus = null; save(); rProfile() };
       $("reset").onclick = function () { S.allyLane = [null, null, null, null, null]; S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; focus = null; save(); go("draft") };
       if ($("ghx")) $("ghx").onclick = function () { if (!confirm("Cancellare tutte le partite dello storico?")) return; S.games = []; save(); rProfile() };
+      $("bkx").onclick = exportBackup;
+      $("bki").onclick = function () { $("bkf").click() };
+      $("bkf").onchange = function () { var f = this.files[0]; this.value = ""; if (f) importBackup(f) };
       $("rq").onclick = function () { S.quiz = Object.assign({}, DEF.quiz); QZ = null; save(); rProfile() };
     }
     var RKL = ["Guerriero", "Élite", "Maestro", "Gran Maestro", "Epico", "Leggenda", "Mitico", "Onore Mitico", "Gloria Mitica", "Immortale Mitico"];
@@ -4018,10 +4085,10 @@
         '<button class="btn sm" id="msnap" style="width:100%;margin-top:8px">Salva i dati attuali nello storico</button>';
       [].forEach.call(el.querySelectorAll(".spk"), function (f) { var t = f.querySelector(".sptip");[].forEach.call(f.querySelectorAll(".hit"), function (c) { c.onclick = function () { t.textContent = c.dataset.t } }) });
       [].forEach.call(el.querySelectorAll(".hx"), function (b) { b.onclick = function () { S.mph = S.mph.filter(function (e) { return e.d !== b.dataset.d }); save(); mpHist() } });
-      $("msnap").onclick = function () { if (mpSnap()) { save(); mpHist() } else alert("Inserisci almeno win rate, partite o stelle prima di salvare.") }
+      $("msnap").onclick = function () { if (mpSnap()) { save(); mpHist() } else toast("Inserisci almeno win rate, partite o stelle prima di salvare.", "err") }
     }
     function mpCard() {
-      var el = $("mpc"), m = S.mp = S.mp && typeof S.mp === "object" ? S.mp : {}, shot = ""; try { shot = localStorage.getItem("draftsync_shot") || "" } catch (e) { }
+      var el = $("mpc"), m = S.mp = S.mp && typeof S.mp === "object" ? S.mp : {}, shot = SHOT;
       m.h = m.h || [{}, {}, {}];
       var opt = function (v) { return '<option value="">-</option>' + RKL.map(function (r) { return '<option' + (r === v ? " selected" : "") + '>' + r + '</option>' }).join("") };
       var inp = function (k, lab, type, extra) { return '<label class="k">' + lab + '<input data-k="' + k + '" type="' + type + '" ' + (extra || "") + ' value="' + esc(m[k] == null ? "" : String(m[k])) + '"></label>' };
@@ -4050,13 +4117,41 @@
       $("mchg").onclick = function () { $("mfile").click() };
       $("mfile").onchange = function () {
         var f = this.files[0]; if (!f) return;
-        mpShot(f, function (d) { if (!d) { alert("Immagine non valida."); return } try { localStorage.setItem("draftsync_shot", d) } catch (e) { alert("Memoria del dispositivo piena: screenshot non salvato."); return } mpCard() })
+        mpShot(f, function (d) {
+          if (!d) { toast("Immagine non valida.", "err"); return }
+          shotSet(d).then(function () { SHOT = d; mpCard() }).catch(function () { try { localStorage.setItem("draftsync_shot", d); SHOT = d; mpCard() } catch (e) { toast("Memoria del dispositivo piena: screenshot non salvato.", "err") } })
+        })
       };
       if (shot) {
-        $("mocr").onclick = function () { var b = this, st = $("mst"); b.disabled = true; $("mres").innerHTML = ""; mpRead(shot, st).then(function (R) { st.textContent = ""; mpShow(R) }).catch(function () { st.textContent = "Lettura non riuscita: serve la connessione la prima volta per scaricare il lettore. Riprova online." }).then(function () { b.disabled = false }) };
-        $("mdel").onclick = function () { try { localStorage.removeItem("draftsync_shot") } catch (e) { } mpCard() };
+        $("mocr").onclick = function () { var b = this, st = $("mst"); if (!window.Tesseract && !navigator.onLine) { st.textContent = "Sei offline: la prima volta il lettore dello screenshot va scaricato da internet. Riprova con la connessione, oppure compila a mano i campi qui sotto."; return } b.disabled = true; $("mres").innerHTML = ""; mpRead(shot, st).then(function (R) { st.textContent = ""; mpShow(R) }).catch(function () { st.textContent = "Lettura non riuscita: serve la connessione la prima volta per scaricare il lettore. Riprova online." }).then(function () { b.disabled = false }) };
+        $("mdel").onclick = function () { try { localStorage.removeItem("draftsync_shot") } catch (e) { } shotSet(null).catch(function () { }); SHOT = ""; mpCard() };
         $("mshot").onclick = function () { var o = document.createElement("div"); o.style.cssText = "position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:12px"; o.innerHTML = '<img src="' + shot + '" alt="" style="max-width:100%;max-height:100%;object-fit:contain">'; o.onclick = function () { o.remove() }; document.body.appendChild(o) }
       }
+    }
+    /* ---------- backup: un file JSON con tutto ciò che l'app salva sul dispositivo ---------- */
+    function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || "null") } catch (e) { return null } }
+    function exportBackup() {
+      var data = { app: "mlbb-top", v: 1, at: new Date().toISOString(), S: S, live: lsGet("draftsync_live"), prev: lsGet("draftsync_prev"), shot: SHOT || null };
+      var blob = new Blob([JSON.stringify(data)], { type: "application/json" }), a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = "mlbb-top-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+      document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove() }, 1000);
+      toast("Backup esportato: conserva il file per ripristinare i dati.", "ok")
+    }
+    function importBackup(file) {
+      var r = new FileReader();
+      r.onload = function () {
+        var d; try { d = JSON.parse(r.result) } catch (e) { d = null }
+        if (!d || d.app !== "mlbb-top" || !d.S || typeof d.S !== "object") { toast("File non valido: non è un backup di MLBB TOP.", "err"); return }
+        if (!confirm("Ripristinare il backup del " + new Date(d.at).toLocaleDateString("it-IT") + "? I dati attuali verranno sostituiti.")) return;
+        try {
+          localStorage.setItem("draftsync", JSON.stringify(d.S));
+          if (d.live) localStorage.setItem("draftsync_live", JSON.stringify(d.live)); else localStorage.removeItem("draftsync_live");
+          if (d.prev) localStorage.setItem("draftsync_prev", JSON.stringify(d.prev)); else localStorage.removeItem("draftsync_prev");
+        } catch (e) { toast("Memoria del dispositivo piena: backup non ripristinato.", "err"); return }
+        shotSet(typeof d.shot === "string" && /^data:image\//.test(d.shot) ? d.shot : null).catch(function () { }).then(function () { location.reload() })
+      };
+      r.onerror = function () { toast("Impossibile leggere il file.", "err") };
+      r.readAsText(file)
     }
     /* scarica le 3 classifiche (tutti, mitico, gloria); cb(LV o null, classifiche fallite) */
     function fetchLive(cb) {
@@ -4077,8 +4172,8 @@
     function liveUpdate(btn) {
       btn.disabled = true; btn.textContent = "...";
       fetchLive(function (LV, fail) {
-        if (!LV) { btn.disabled = false; btn.textContent = "Riprova"; alert("Aggiornamento non riuscito: controlla la connessione e riprova."); return }
-        rProfile(); if (fail) alert("Aggiornamento parziale: classifiche non scaricate " + fail + " su 3, le altre sono aggiornate.")
+        if (!LV) { btn.disabled = false; btn.textContent = "Riprova"; toast("Aggiornamento non riuscito: controlla la connessione e riprova.", "err"); return }
+        rProfile(); if (fail) toast("Aggiornamento parziale: classifiche non scaricate " + fail + " su 3, le altre sono aggiornate."); else toast("Statistiche aggiornate.", "ok")
       })
     }
     /* aggiornamento automatico: una volta al giorno, in silenzio, solo se c'è internet (al massimo un tentativo ogni 3 ore) */
