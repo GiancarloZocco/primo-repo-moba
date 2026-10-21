@@ -134,9 +134,30 @@ async function run() {
     await p.evaluate(function () { S.guide = null; save(); go("draft") });
     ok(await p.evaluate(function () { return !document.querySelector(".guide") && !document.querySelector("#v-draft .now") }), "modalità spenta: niente turni né evidenziazioni");
 
+    section("Storico partite");
+    var hs = await p.evaluate(function () {
+      S.games = []; var five = NAMES.slice(0, 5), foes = NAMES.slice(5, 10);
+      S.ally = [null, null, null, null, null]; S.enemy = foes.slice(); S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; go("draft");
+      var before = !!document.getElementById("gwin");
+      S.ally = five.slice(); rDraft();
+      var shown = !!document.getElementById("gwin");
+      [].filter.call(document.querySelectorAll("#gme .chip"), function (b) { return b.textContent === five[2] })[0].click();
+      document.getElementById("gwin").click();
+      var after = { games: S.games.length, me: S.games[0].me, r: S.games[0].r, empty: used().length === 0, msg: /Partita salvata: vittoria con/.test(document.querySelector("#v-draft").textContent) };
+      S.ally = five.slice(); S.enemy = foes.slice(); rDraft(); document.getElementById("glose").click();
+      S.ally = five.slice(); S.enemy = foes.slice(); rDraft(); document.getElementById("gwin").click();
+      go("profile"); var t = document.querySelector("#v-profile").textContent;
+      return { before: before, shown: shown, after: after, n: S.games.length, prof: /Partite segnate3/.test(t) && /Vittorie2 \(67%\)/.test(t), mine: /I tuoi eroi/.test(t), team: /Con questi in squadra vinci di più/.test(t), dots: document.querySelectorAll(".gdots i").length };
+    });
+    ok(!hs.before && hs.shown, "Vittoria/Sconfitta compaiono solo con 5 alleati");
+    ok(hs.after.games === 1 && hs.after.r === 1 && hs.after.me && hs.after.empty && hs.after.msg, "Vittoria salva la partita col tuo eroe e svuota il draft");
+    ok(hs.n === 3 && hs.prof && hs.mine && hs.team && hs.dots === 3, "nel Profilo: 3 partite, 67% vittorie, i tuoi eroi, compagni migliori, ultime partite");
+    var cleared = await p.evaluate(function () { document.getElementById("ghx").click(); return S.games.length });
+    ok(cleared === 0, "Cancella storico (con conferma) svuota le partite");
+
     section("Condividi draft");
     var shared = await p.evaluate(function () {
-      S.banA = [NAMES[20], null, null, null, null]; S.banE = [null, NAMES[21], null, null, null]; S.allyLane[0] = "j"; save(); rDraft();
+      S.banA = [NAMES[20], null, null, null, null]; S.banE = [null, NAMES[21], null, null, null]; S.allyLane[0] = "j"; save(); go("draft");
       return { url: shareUrl(), st: JSON.stringify([S.ally, S.enemy, S.banA, S.banE, S.allyLane.map(function (l, i) { return S.ally[i] ? l : null })]) };
     });
     ok(/#d=a[\d.]+_e[\d.]+_x[\d.]+_y[\d.]+_l[a-z-]{5}$/.test(shared.url), "link generato: " + shared.url.split("#")[1]);
