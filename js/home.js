@@ -7,6 +7,7 @@ var NEWS = [
       "Pool di eroi: bonus nei consigli del draft, riga «Dal tuo pool» e primi nel selettore (si modifica dal Profilo).",
       "Build contro i nemici: oggetti situazionali (anti-cure, difese, penetrazione, stivali) in base al draft, nell'analisi dettagliata e nella scheda eroe.",
       "Spell ed emblema consigliati per il pick suggerito, con Purify come alternativa contro molti controlli.",
+      "Guida rapida in partita (Gioca → Guida): piano dal draft, consigli per la tua lane e obiettivi per fase.",
       "Home: riassunto di draft, sfida del giorno, eroi in crescita e ultime partite.",
       "Barra in basso a gruppi: Gioca (Draft, Storico), Studia (Tier list, Eroi, Confronto, Quiz), Io (Profilo, Impostazioni).",
       "Impostazioni in una schermata a parte.",
@@ -41,7 +42,7 @@ function rHome() {
     '<div class="card"><div class="kv"><b class="hh">' + IC.medal + ' Ultime partite</b>' + (st.n ? '<span class="pill ' + (st.w / st.n >= .5 ? "gr" : "rd") + '">' + Math.round(100 * st.w / st.n) + '% vittorie</span>' : '') + '</div>' +
     (last.length ? '<div class="gdots" style="margin:8px 0">' + last.map(function (x) { return '<i class="' + (x.r ? "w" : "l") + '">' + (x.r ? "V" : "S") + '</i>' }).join("") + '</div>' : '<p class="hint" style="margin:6px 0 8px">Nessuna partita ancora: a fine draft segna Vittoria o Sconfitta.</p>') +
     '<button class="btn sm" id="hgames" style="width:100%">Storico partite</button></div>' +
-    '<div class="two"><button class="btn sm" id="hcmp">' + IC.swap + ' Confronta eroi</button><button class="btn sm" id="htier">Tier list</button></div>';
+    '<div class="two"><button class="btn sm" id="hguide">Guida in partita</button><button class="btn sm" id="hcmp">' + IC.swap + ' Confronta eroi</button></div>';
   top.forEach(function (h) { var b = document.createElement("button"); b.className = "lcand"; b.innerHTML = tile(h, "sm") + '<b>' + esc(h) + '</b><small class="' + (mv.length ? "g" : "a") + '">' + (mv.length ? "+" + dWr(h).toFixed(1) : pc(M[h].wr)) + '</small>'; b.onclick = function () { openHero(h) }; $("htop").appendChild(b) });
   if ($("hnews")) $("hnews").onclick = function () { go("news") };
   if ($("hstart")) $("hstart").onclick = function () { go("start") };
@@ -49,7 +50,7 @@ function rHome() {
   $("hquiz").onclick = function () { if (!d && (!QZ || !QZ.daily)) newRound(true); go("quiz") };
   $("hgames").onclick = function () { go("games") };
   $("hcmp").onclick = function () { go("cmp") };
-  $("htier").onclick = function () { go("tier") };
+  $("hguide").onclick = function () { go("guide") };
 }
 
 function rNews() {

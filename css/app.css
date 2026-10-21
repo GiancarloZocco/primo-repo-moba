@@ -3110,3 +3110,10 @@ ul.news {
 .sit small, .spem small { color: var(--mute); font-size: 11.5px; }
 .spem { display: flex; flex-direction: column; gap: 8px; }
 .spl1 { margin: 2px 0 8px; }
+
+/* guida rapida in partita */
+.gtips { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 1.45; }
+.gtips li::marker { color: var(--blue2); }
+.gtips li.tg::marker { color: var(--green); }
+.gtips li.ta::marker { color: var(--amber); }
+.gtips li.tr::marker { color: var(--red); }

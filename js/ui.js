@@ -39,6 +39,7 @@ var SCR = {
   home: { g: "home", sub: "Tactical Telemetry", r: "rHome" }, start: { g: "home", sub: "Benvenuto", r: "rStart" },
   news: { g: "home", sub: "Novità", r: "rNews" },
   draft: { g: "play", t: "Draft", sub: "Draft live", r: "rDraft" },
+  guide: { g: "play", t: "Guida", sub: "Guida rapida in partita", r: "rGuide" },
   games: { g: "play", t: "Storico", sub: "Storico partite", r: "rGames" },
   tier: { g: "study", t: "Tier list", sub: "Meta tier list", r: "rTier" },
   heroes: { g: "study", t: "Eroi", sub: "Database", r: "rHeroes" },

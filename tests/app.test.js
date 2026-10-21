@@ -126,7 +126,7 @@ async function run() {
       return r;
     });
     ok(nv.groups === "Home,Gioca,Studia,Io", "barra in basso a gruppi: " + nv.groups);
-    ok(/^(tier|heroes|cmp|quiz)\|Tier list,Eroi,Confronto,Quiz$/.test(nv.study) && /^(draft|games)\|Draft,Storico$/.test(nv.play), "barra del gruppo: Studia e Gioca con le loro schermate (" + nv.study + " · " + nv.play + ")");
+    ok(/^(tier|heroes|cmp|quiz)\|Tier list,Eroi,Confronto,Quiz$/.test(nv.study) && /^(draft|guide|games)\|Draft,Guida,Storico$/.test(nv.play), "barra del gruppo: Studia e Gioca con le loro schermate (" + nv.study + " · " + nv.play + ")");
     ok(nv.set, "Impostazioni in una schermata a parte (non più nel Profilo)");
     ok(nv.heroNav === "study|Eroi", "la scheda eroe resta sotto Studia → Eroi");
     ok(nv.draft === "draft", "dalla Home si va al draft");
@@ -157,6 +157,20 @@ async function run() {
     ok(pl.bonus, "pool: bonus nei consigli, più alto nella lane preferita");
     ok(pl.g === "Il tuo pool" && pl.g1 === pl.h, "pool: primo gruppo nel selettore degli eroi");
     ok(pl.off === 0, "pool: si disattiva con «Usa i miei eroi nei consigli»");
+
+    section("Guida in partita");
+    var gd = await p.evaluate(function () {
+      S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null];
+      go("guide"); var empty = !!document.getElementById("gdr") && document.querySelectorAll("#glane button").length === 5;
+      setSlot(S.ally, 0, "Tigreal"); ["Estes", "Lancelot", "Layla"].forEach(function (h, i) { setSlot(S.enemy, i, h) }); go("guide");
+      var txt = document.querySelector("#v-guide").textContent;
+      document.querySelectorAll("#glane button")[3].click(); var jg = /Retribution/.test(document.querySelector("#v-guide").textContent);
+      gLane = null; S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; save();
+      return { empty: empty, plan: /Tigreal/.test(txt) && /Lancelot/.test(txt) && /Layla/.test(txt) && /anti-cure contro Estes/.test(txt), phases: /Lord/.test(txt) && /Turtle/.test(txt), jg: jg };
+    });
+    ok(gd.empty, "guida: senza draft invita ad andare al draft, 5 lane da scegliere");
+    ok(gd.plan, "guida: piano dal draft (iniziatore, bersagli, minacce, anti-cure)");
+    ok(gd.phases && gd.jg, "guida: obiettivi per fase e consigli della lane scelta");
 
     section("Build contro i nemici");
     var bv = await p.evaluate(function () {
