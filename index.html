@@ -2482,6 +2482,56 @@
       margin-top: 6px
     }
 
+    .slot.now,
+    .bslot.now {
+      border: 1px solid var(--amber);
+      box-shadow: 0 0 0 1px var(--amber), 0 0 14px rgba(245, 158, 11, .35);
+      color: var(--amber)
+    }
+
+    .guide .gs {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px
+    }
+
+    .guide .gs b {
+      font-family: var(--hd);
+      font-size: 16px
+    }
+
+    .guide .steps {
+      display: grid;
+      grid-template-columns: repeat(20, 1fr);
+      gap: 2px;
+      margin-bottom: 10px
+    }
+
+    .guide .steps i {
+      height: 5px;
+      border-radius: 2px;
+      background: var(--line)
+    }
+
+    .guide .steps i.A {
+      background: var(--blue2)
+    }
+
+    .guide .steps i.E {
+      background: var(--red)
+    }
+
+    .guide .steps i.done {
+      opacity: .35
+    }
+
+    .guide .steps i.cur {
+      outline: 1px solid var(--amber);
+      outline-offset: 1px
+    }
+
     .bslot {
       aspect-ratio: 1;
       display: flex;
@@ -2917,7 +2967,7 @@
     function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] }) }
 
     /* ---------- stato ---------- */
-    var DEF = { allyLane: [null, null, null, null, null], recent: [], useMine: true, mph: [], banA: [null, null, null, null, null], banE: [null, null, null, null, null], ally: [null, null, null, null, null], enemy: [null, null, null, null, null], keep: false, lanefit: true, avatar: null, rk: "all", algo: "meta", theme: "dark", nick: "DraftStrategist", main: "T", picks: 0, synSum: 0, synN: 0, quiz: { xp: 0, ok: 0, tot: 0, best: 0, streak: 0, rounds: 0 }, spoken: false, autoLive: true };
+    var DEF = { allyLane: [null, null, null, null, null], recent: [], useMine: true, mph: [], banA: [null, null, null, null, null], banE: [null, null, null, null, null], ally: [null, null, null, null, null], enemy: [null, null, null, null, null], keep: false, lanefit: true, avatar: null, rk: "all", algo: "meta", theme: "dark", nick: "DraftStrategist", main: "T", picks: 0, synSum: 0, synN: 0, quiz: { xp: 0, ok: 0, tot: 0, best: 0, streak: 0, rounds: 0 }, spoken: false, autoLive: true, guide: null, gbans: 10 };
     var S; try { S = JSON.parse(localStorage.getItem("draftsync") || "null") } catch (e) { S = null }
     S = Object.assign({}, DEF, S || {}); S.quiz = Object.assign({}, DEF.quiz, S.quiz || {});
     function sanitizeTeam(t) { t = (t || []).slice(0, 5); while (t.length < 5) t.push(null); return t.map(function (h) { return h && H[h] ? h : null }) }
@@ -3124,7 +3174,8 @@
     function rDraft() {
       compute(); var v = $("v-draft"), full = S.ally.indexOf(null) < 0, algo = { meta: "Meta", bal: "Bilanciata", safe: "Safe pick" }[S.algo], free = LANES.filter(function (l) { return !cover[l] });
       v.innerHTML = '<div class="ttl"><div><h2>Draft Live<i></i></h2><p>5v5 · ' + algo + ' · ' + RKN[S.rk] + '</p></div><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><span class="pill am" title="Sinergia della squadra alleata">Sinergia ' + synergy() + '%</span><span class="pill bl">' + en().length + '/5 Nemici</span></span></div>' +
-        (used().length ? '' : '<div class="alert"><span class="a">' + IC.bulb + '</span><span>Inizia dai ban, poi aggiungi gli eroi nemici man mano che li scelgono: i consigli per ogni lane si aggiornano a ogni pick.</span></div>') +
+        '<div class="srt" style="margin-top:0"><span class="k">Guidato:</span><div class="seg" id="gd"></div></div>' + (S.guide ? '<div class="srt" style="margin-top:0"><span class="k">Ban:</span><div class="seg" id="gbn"></div></div>' : '') + guideBox() +
+        (used().length || S.guide ? '' : '<div class="alert"><span class="a">' + IC.bulb + '</span><span>Inizia dai ban, poi aggiungi gli eroi nemici man mano che li scelgono: i consigli per ogni lane si aggiornano a ogni pick.</span></div>') +
         '<div class="teams"><div class="team ally"><h3>Alleati</h3><div id="ally"></div></div><div class="team enemy"><h3>Nemici</h3><div id="enemy"></div></div></div><div class="bans" id="bans"></div>' +
         '<div class="kv" style="align-items:center"><span class="k">Consigliati per lane</span><button class="lnk" id="lf">' + (S.lanefit ? "Solo lane libere ✓" : "Tutte le lane") + '</button></div><div class="lrows" id="lanes"></div><button class="lnk" id="lmore" style="align-self:center">' + (lMore ? "Mostra 3 per lane" : "Mostra 6 per lane") + '</button><div id="rec"></div>' +
         '<div class="two"><button class="btn sm" id="add"' + (en().length >= 5 ? " disabled" : "") + '>+ Nemico</button><button class="btn sm" id="det">' + (detOpen || S.keep ? "Chiudi analisi" : "Analisi dettagliata") + '</button></div><div class="two" style="margin-top:8px"><button class="btn sm" id="rp">Azzera pick</button><button class="btn sm" id="share"' + (used().length ? "" : " disabled") + '>Condividi draft</button></div><div id="detail"></div><div id="alert"></div>';
@@ -3173,7 +3224,41 @@
       $("rp").onclick = function () { if (!used().length || !confirm("Azzerare i pick di entrambe le squadre? I ban restano.")) return; S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.allyLane = [null, null, null, null, null]; focus = null; save(); rDraft() };
       $("lf").onclick = function () { S.lanefit = !S.lanefit; focus = null; save(); rDraft() };
       $("share").onclick = function () { shareDraft(this) };
+      [[null, "No"], ["blue", "Primi noi"], ["red", "Primi loro"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.guide === o[0] ? "on" : ""; b.onclick = function () { S.guide = o[0]; save(); rDraft() }; $("gd").appendChild(b) });
+      if (S.guide) [[10, "10 (Mitico)"], [6, "6"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.gbans === o[0] ? "on" : ""; b.onclick = function () { S.gbans = o[0]; save(); rDraft() }; $("gbn").appendChild(b) });
+      guideBind();
       $("lmore").onclick = function () { lMore = !lMore; rDraft() };
+    }
+    /* ---------- draft guidato: ordine dei turni ranked (F = chi sceglie per primo, S = l'altra squadra) ---------- */
+    var ORDER = { 10: ["bF", "bS", "bF", "bS", "bF", "bS", "pF", "pS", "pS", "pF", "pF", "pS", "bS", "bF", "bS", "bF", "pS", "pF", "pF", "pS"], 6: ["bF", "bS", "bF", "bS", "bF", "bS", "pF", "pS", "pS", "pF", "pF", "pS", "pS", "pF", "pF", "pS"] };
+    var GT = { bA: "Ban alleato", bE: "Ban nemico", pA: "Pick alleato", pE: "Pick nemico" };
+    function guideSteps() {
+      var first = S.guide === "red" ? "E" : "A", other = first === "A" ? "E" : "A";
+      return (ORDER[S.gbans] || ORDER[10]).map(function (o) { return o.charAt(0) + (o.charAt(1) === "F" ? first : other) });
+    }
+    /* turno attuale: il primo passo per cui la squadra non ha ancora abbastanza ban o pick */
+    function guideNow() {
+      if (!S.guide) return null;
+      var st = guideSteps(), need = {}, have = { bA: S.banA.filter(Boolean).length, bE: S.banE.filter(Boolean).length, pA: S.ally.filter(Boolean).length, pE: S.enemy.filter(Boolean).length };
+      for (var k = 0; k < st.length; k++) { need[st[k]] = (need[st[k]] || 0) + 1; if (have[st[k]] < need[st[k]]) return { k: k, t: st[k], steps: st } }
+      return { k: st.length, t: null, steps: st };
+    }
+    function guideTeam(t) { return { bA: S.banA, bE: S.banE, pA: S.ally, pE: S.enemy }[t] }
+    function guideBox() {
+      var g = guideNow(); if (!g) return "";
+      var bar0 = '<div class="steps">' + g.steps.map(function (t, i) { return '<i class="' + t.charAt(1) + (i < g.k ? " done" : i === g.k ? " cur" : "") + '" title="' + (i + 1) + ". " + GT[t] + '"></i>' }).join("") + '</div>';
+      if (!g.t) return '<div class="card guide">' + bar0 + '<div class="gs"><b>Draft completato</b><span class="pill gr">' + g.steps.length + '/' + g.steps.length + '</span></div><p class="hint">Buona partita! A fine match segna com’è andata qui sotto.</p></div>';
+      var A = g.t.charAt(1) === "A", ban = g.t.charAt(0) === "b", sug = A ? (ban ? (banRecs()[0] || {}).n : (focusRec() || {}).n) : null;
+      return '<div class="card hl guide">' + bar0 + '<div class="gs"><span><span class="k">Turno ' + (g.k + 1) + ' di ' + g.steps.length + '</span><br><b class="' + (A ? "b" : "r") + '">' + GT[g.t] + '</b></span>' +
+        (sug ? '<button class="btn am sm" id="gsug">' + (ban ? "Banna " : "Scegli ") + esc(sug) + '</button>' : '') + '</div>' +
+        '<button class="btn sm" id="gpick" style="width:100%">' + (A ? "Scegli un altro eroe" : (ban ? "Segna il ban nemico" : "Segna il pick nemico")) + '</button></div>';
+    }
+    function guideBind() {
+      var g = guideNow(); if (!g || !g.t) return;
+      var team = guideTeam(g.t), i = team.indexOf(null), ban = g.t.charAt(0) === "b";
+      var put = function (n) { if (i < 0) return; if (ban) { team[i] = n; pushRecent(n); focus = null; save() } else setSlot(team, i, n); rDraft() };
+      if ($("gsug")) $("gsug").onclick = function () { var m = ban ? banRecs()[0] : focusRec(); if (!m) return; put(m.n); if (!ban && !cover[m.lane]) { S.allyLane[i] = m.lane; save(); rDraft() } };
+      $("gpick").onclick = function () { openPick(GT[g.t], free(), put, { quick: 1 }) };
     }
     /* ban consigliati: eroi forti nel meta, che counterano i nostri pick o che rendono di più con i pick nemici */
     function banRecs() {
@@ -3194,7 +3279,7 @@
         var row = document.createElement("div"); row.className = "brow"; el.appendChild(row);
         for (var i = 0; i < 5; i++)(function (i) {
           var h = g[1][i], b = document.createElement("button"), t = "Ban " + g[0].toLowerCase() + " " + (i + 1);
-          b.className = "bslot" + (h ? " on" : ""); b.innerHTML = h ? tile(h, "sm") + "<span>" + esc(h) + "</span>" : "+";
+          var gn = guideNow(); b.className = "bslot" + (h ? " on" : "") + (gn && gn.t === (g[1] === S.banA ? "bA" : "bE") && g[1].indexOf(null) === i ? " now" : ""); b.innerHTML = h ? tile(h, "sm") + "<span>" + esc(h) + "</span>" : "+";
           b.setAttribute("aria-label", t + (h ? ": " + h : ": libero"));
           var set = function (n) { g[1][i] = n; pushRecent(n); focus = null; save(); rDraft() };
           b.onclick = function () { if (h) openPick(t + " · " + h, [h].concat(free_()), set, { cur: h, quick: 1, rm: function () { set(null) } }); else openPick(t, free_(), set, { quick: 1 }) };
@@ -3258,7 +3343,7 @@
       for (var i = 0; i < 5; i++)(function (i) {
         var wrap = document.createElement("div"), b = document.createElement("button"), h = team[i];
         wrap.className = "srow"; wrap.style.marginTop = i ? "6px" : "0";
-        b.className = "slot" + (h ? " on" : "");
+        var gn = guideNow(); b.className = "slot" + (h ? " on" : "") + (gn && gn.t === (side ? "pA" : "pE") && team.indexOf(null) === i ? " now" : "");
         b.innerHTML = h ? tile(h, "sm") + '<span class="nm">' + h + '</span>' + (side ? '<span class="ed" aria-hidden="true">' + IC.pen + '</span>' : "") : "Slot libero";
         if (h && side) b.setAttribute("aria-label", "Modifica slot alleato " + (i + 1) + ": " + h);
         b.onclick = function () {

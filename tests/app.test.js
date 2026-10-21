@@ -112,6 +112,28 @@ async function run() {
     ok(bn.banned && !bn.again, "toccando un consiglio l'eroe finisce nei ban alleati e sparisce dai consigli");
     ok(bn.full === 0 && !bn.hint, "con i 5 ban alleati pieni i consigli spariscono");
 
+    section("Draft guidato");
+    for (var mode of [["blue", 10], ["red", 10], ["blue", 6]]) {
+      var gr = await p.evaluate(function (mo) {
+        S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null];
+        S.guide = mo[0]; S.gbans = mo[1]; go("draft");
+        var seq = [], lit = 0;
+        for (var n = 0; n < 25; n++) {
+          var g = guideNow(); if (!g.t) break;
+          seq.push(g.t); if (document.querySelectorAll("#v-draft .now").length === 1) lit++;
+          var b = document.getElementById("gsug");
+          if (b && n % 2 === 0) b.click(); else { document.getElementById("gpick").click(); document.querySelector("#grid button").click() }
+        }
+        return { seq: seq.join(" "), lit: lit, done: /Draft completato/.test(document.querySelector("#v-draft").textContent), cnt: [S.ally, S.enemy, S.banA, S.banE].map(function (t) { return t.filter(Boolean).length }).join("/"), dup: used().length !== new Set(used()).size };
+      }, mode);
+      var exp = { "blue10": "bA bE bA bE bA bE pA pE pE pA pA pE bE bA bE bA pE pA pA pE", "red10": "bE bA bE bA bE bA pE pA pA pE pE pA bA bE bA bE pA pE pE pA", "blue6": "bA bE bA bE bA bE pA pE pE pA pA pE pE pA pA pE" }[mode.join("")];
+      var nSteps = exp.split(" ").length;
+      ok(gr.seq === exp, (mode[0] === "blue" ? "primi noi" : "primi loro") + ", " + mode[1] + " ban: ordine dei turni corretto");
+      ok(gr.lit === nSteps && gr.done && !gr.dup, "  a ogni turno uno slot evidenziato, alla fine Draft completato (" + gr.cnt + "), nessun eroe doppio");
+    }
+    await p.evaluate(function () { S.guide = null; save(); go("draft") });
+    ok(await p.evaluate(function () { return !document.querySelector(".guide") && !document.querySelector("#v-draft .now") }), "modalità spenta: niente turni né evidenziazioni");
+
     section("Condividi draft");
     var shared = await p.evaluate(function () {
       S.banA = [NAMES[20], null, null, null, null]; S.banE = [null, NAMES[21], null, null, null]; S.allyLane[0] = "j"; save(); rDraft();
