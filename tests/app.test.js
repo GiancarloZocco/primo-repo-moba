@@ -61,6 +61,8 @@ async function run() {
     var info = await p.evaluate(function () { return { heroes: NAMES.length, items: Object.keys(ITEMS).length } });
     ok(info.heroes > 100, "dati caricati: " + info.heroes + " eroi, " + info.items + " oggetti");
     ok(errs.length === 0, "nessun errore JavaScript all'avvio" + (errs.length ? ": " + errs.join(" | ") : ""));
+    var first = await p.evaluate(function () { return { picks: used().length, hint: /Inizia dai ban/.test(document.querySelector("#v-draft").textContent) } });
+    ok(first.picks === 0 && first.hint, "prima apertura: draft vuoto con il suggerimento iniziale");
 
     section("Schermate");
     for (var v of ["draft", "tier", "heroes", "quiz", "profile"]) {

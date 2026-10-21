@@ -2901,7 +2901,7 @@
     function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] }) }
 
     /* ---------- stato ---------- */
-    var DEF = { allyLane: [null, null, null, null, null], recent: [], useMine: true, mph: [], banA: [null, null, null, null, null], banE: [null, null, null, null, null], ally: ["Layla", "Eudora", "Estes", "Lancelot", null], enemy: ["Fanny", null, null, null, null], keep: false, lanefit: true, avatar: null, rk: "all", algo: "meta", theme: "dark", nick: "DraftStrategist", main: "T", picks: 0, synSum: 0, synN: 0, quiz: { xp: 0, ok: 0, tot: 0, best: 0, streak: 0, rounds: 0 }, spoken: false };
+    var DEF = { allyLane: [null, null, null, null, null], recent: [], useMine: true, mph: [], banA: [null, null, null, null, null], banE: [null, null, null, null, null], ally: [null, null, null, null, null], enemy: [null, null, null, null, null], keep: false, lanefit: true, avatar: null, rk: "all", algo: "meta", theme: "dark", nick: "DraftStrategist", main: "T", picks: 0, synSum: 0, synN: 0, quiz: { xp: 0, ok: 0, tot: 0, best: 0, streak: 0, rounds: 0 }, spoken: false };
     var S; try { S = JSON.parse(localStorage.getItem("draftsync") || "null") } catch (e) { S = null }
     S = Object.assign({}, DEF, S || {}); S.quiz = Object.assign({}, DEF.quiz, S.quiz || {});
     function sanitizeTeam(t) { t = (t || []).slice(0, 5); while (t.length < 5) t.push(null); return t.map(function (h) { return h && H[h] ? h : null }) }
@@ -3103,6 +3103,7 @@
     function rDraft() {
       compute(); var v = $("v-draft"), full = S.ally.indexOf(null) < 0, algo = { meta: "Meta", bal: "Bilanciata", safe: "Safe pick" }[S.algo], free = LANES.filter(function (l) { return !cover[l] });
       v.innerHTML = '<div class="ttl"><div><h2>Draft Live<i></i></h2><p>5v5 · ' + algo + ' · ' + RKN[S.rk] + '</p></div><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><span class="pill am" title="Sinergia della squadra alleata">Sinergia ' + synergy() + '%</span><span class="pill bl">' + en().length + '/5 Nemici</span></span></div>' +
+        (used().length ? '' : '<div class="alert"><span class="a">' + IC.bulb + '</span><span>Inizia dai ban, poi aggiungi gli eroi nemici man mano che li scelgono: i consigli per ogni lane si aggiornano a ogni pick.</span></div>') +
         '<div class="teams"><div class="team ally"><h3>Alleati</h3><div id="ally"></div></div><div class="team enemy"><h3>Nemici</h3><div id="enemy"></div></div></div><div class="bans" id="bans"></div>' +
         '<div class="kv" style="align-items:center"><span class="k">Consigliati per lane</span><button class="lnk" id="lf">' + (S.lanefit ? "Solo lane libere ✓" : "Tutte le lane") + '</button></div><div class="lrows" id="lanes"></div><button class="lnk" id="lmore" style="align-self:center">' + (lMore ? "Mostra 3 per lane" : "Mostra 6 per lane") + '</button><div id="rec"></div>' +
         '<div class="two"><button class="btn sm" id="add"' + (en().length >= 5 ? " disabled" : "") + '>+ Nemico</button><button class="btn sm" id="det">' + (detOpen || S.keep ? "Chiudi analisi" : "Analisi dettagliata") + '</button></div><button class="btn sm" id="rp" style="width:100%;margin-top:8px">Azzera pick</button><div id="detail"></div><div id="alert"></div>';
