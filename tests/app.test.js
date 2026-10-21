@@ -57,6 +57,10 @@ async function run() {
     await p.waitForFunction(function () { return window.NAMES && document.querySelector("#v-draft.on") });
     arena.ids = await p.evaluate(function () { return Object.keys(HX).map(function (h) { return HX[h].id }) });
 
+    section("File generati");
+    var built = true; try { require("child_process").execFileSync("node", [path.join(ROOT, "tools/build.js"), "--check"], { stdio: "pipe" }) } catch (e) { built = false }
+    ok(built, "img/list.json e sw.js aggiornati (altrimenti lancia npm run build)");
+
     section("Avvio");
     var info = await p.evaluate(function () { return { heroes: NAMES.length, items: Object.keys(ITEMS).length } });
     ok(info.heroes > 100, "dati caricati: " + info.heroes + " eroi, " + info.items + " oggetti");

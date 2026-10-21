@@ -5,8 +5,9 @@
      Vengono salvate tutte all'installazione, così offline c'è tutto anche senza averle mai aperte.
    - Immagini e font esterni: dalla cache se già visti, altrimenti rete + salvataggio.
    - Aggiornamento dati live (arena.rone.dev): sempre dalla rete, mai in cache.
-   Se cambi i file da salvare all'installazione (CORE o le immagini), cambia anche VERSION. */
-var VERSION = "v6";
+   VERSION e CORE li scrive tools/build.js (npm run build): VERSION è un'impronta dei file,
+   quindi cambia da sola a ogni modifica e chi ha l'app installata riceve la versione nuova. */
+var VERSION = "b5b6bdda64";
 var CACHE = "mlbb-top-" + VERSION;
 var EXT = "mlbb-top-ext-v1";
 var EXT_MAX = 600;

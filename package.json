@@ -3,7 +3,8 @@
   "private": true,
   "description": "MLBB TOP - assistente per il draft di Mobile Legends (PWA statica)",
   "scripts": {
-    "test": "node tests/app.test.js"
+    "build": "node tools/build.js",
+    "test": "node tools/build.js --check && node tests/app.test.js"
   },
   "devDependencies": {
     "playwright": "1.56.1"
