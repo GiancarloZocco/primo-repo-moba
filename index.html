@@ -3175,6 +3175,18 @@
       $("share").onclick = function () { shareDraft(this) };
       $("lmore").onclick = function () { lMore = !lMore; rDraft() };
     }
+    /* ban consigliati: eroi forti nel meta, che counterano i nostri pick o che rendono di più con i pick nemici */
+    function banRecs() {
+      var u = used(), allies = S.ally.filter(Boolean), out = [];
+      NAMES.forEach(function (h) {
+        if (u.indexOf(h) > -1) return;
+        var m = M[h], mv = m.meta / 25, s = mv, parts = [{ v: mv, t: m.br != null ? "Meta: ban rate " + pc(m.br) + ", win rate " + pc(m.wr) + " (" + RKN[S.rk] + ")" : "Tier " + m.tier + " del suo ruolo" }];
+        allies.forEach(function (a) { var rc = realC(h, a), x = sc(h, a), v = Math.max(0, rc) + x.s * .5; if (v > 0) { s += v; parts.push({ v: v, t: rc > 0 ? "Countera " + a + " (+" + rc.toFixed(1) + "% di win rate contro di lui)" : cap(x.w) }) } });
+        en().forEach(function (e) { var v = findInc(HX[e] && HX[e].mate, h); if (v != null && v > 0) { s += v * .5; parts.push({ v: v * .5, t: "Forte in coppia con " + e + " (+" + v.toFixed(1) + "% di win rate)" }) } });
+        out.push({ n: h, s: Math.round(s * 10) / 10, parts: parts.sort(function (a, b) { return b.v - a.v }) });
+      });
+      return out.sort(function (a, b) { return b.s - a.s || M[b.n].score - M[a.n].score });
+    }
     function banRows() {
       var el = $("bans"); el.innerHTML = '<div class="bh"><span class="k">Ban</span><button class="lnk" id="rb">Azzera ban</button></div>';
       [["Alleati", S.banA], ["Nemici", S.banE]].forEach(function (g) {
@@ -3189,12 +3201,27 @@
           row.appendChild(b)
         })(i)
       });
+      var fi = S.banA.indexOf(null);
+      if (fi > -1) {
+        var br = banRecs().slice(0, lMore ? 6 : 3), row = document.createElement("div");
+        row.className = "lrow"; row.style.marginTop = "8px";
+        row.innerHTML = '<div class="lh"><b>BAN</b><small>consigli</small></div><div class="lc3"></div>';
+        br.forEach(function (r) {
+          var c = document.createElement("button"); c.className = "lcand";
+          c.innerHTML = tile(r.n, "sm") + '<b>' + esc(r.n) + '</b><small class="r">' + r.s + ' pt</small>';
+          c.title = r.parts.map(function (x) { return x.t }).join(" · "); c.setAttribute("aria-label", "Banna " + r.n + ": " + c.title);
+          c.onclick = function () { var i = S.banA.indexOf(null); if (i < 0) return; S.banA[i] = r.n; pushRecent(r.n); focus = null; save(); rDraft() };
+          row.lastChild.appendChild(c)
+        });
+        el.appendChild(row);
+        if (br[0]) { var hn = document.createElement("p"); hn.className = "hint"; hn.style.margin = "6px 2px 0"; hn.innerHTML = "Perché bannare <b>" + esc(br[0].n) + "</b>: " + br[0].parts.slice(0, 2).map(function (x) { return esc(x.t) }).join(" · ") + ". Tocca un eroe per bannarlo."; el.appendChild(hn) }
+      }
       $("rb").onclick = function () { S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; focus = null; save(); rDraft() }
     }
     /* ---------- condivisione: il draft viaggia nel link (#d=...) con gli id ufficiali degli eroi ---------- */
     function draftCode() {
       var ids = function (t) { return t.map(function (h) { return h && HX[h] ? HX[h].id : 0 }).join(".") };
-      return "a" + ids(S.ally) + "_e" + ids(S.enemy) + "_x" + ids(S.banA) + "_y" + ids(S.banE) + "_l" + S.allyLane.map(function (l) { return l || "-" }).join("");
+      return "a" + ids(S.ally) + "_e" + ids(S.enemy) + "_x" + ids(S.banA) + "_y" + ids(S.banE) + "_l" + S.allyLane.map(function (l, i) { return S.ally[i] && l || "-" }).join("");
     }
     function readCode(c) {
       var o = {}, k = { a: "ally", e: "enemy", x: "banA", y: "banE" };

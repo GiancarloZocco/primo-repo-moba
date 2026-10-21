@@ -88,7 +88,7 @@ async function run() {
       var r0 = recs.length;
       setSlot(S.enemy, 0, NAMES[3]); setSlot(S.enemy, 1, NAMES[40]); setSlot(S.ally, 0, NAMES[10]); rDraft();
       var r = focusRec();
-      return { r0: r0, rec: r && r.n, used: used().indexOf(r && r.n) > -1, lanes: document.querySelectorAll(".lrow").length };
+      return { r0: r0, rec: r && r.n, used: used().indexOf(r && r.n) > -1, lanes: document.querySelectorAll("#lanes .lrow").length };
     });
     ok(d.r0 > 0 && d.rec, "consigli presenti (consigliato: " + d.rec + ")");
     ok(!d.used, "il consigliato non è già in campo");
@@ -96,10 +96,26 @@ async function run() {
     var picked = await p.evaluate(function () { var n = focusRec().n; document.getElementById("pk").click(); return S.ally.indexOf(n) > -1 });
     ok(picked, "il pulsante Scegli mette il consigliato negli alleati");
 
+    section("Ban consigliati");
+    var bn = await p.evaluate(function () {
+      S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; go("draft");
+      var empty = document.querySelectorAll("#bans .lcand").length, top = banRecs()[0];
+      S.ally[0] = "Layla"; S.enemy[0] = "Fanny"; rDraft();
+      var withPick = banRecs(), cnt = withPick.slice(0, 10).filter(function (r) { return r.parts.some(function (x) { return /Countera Layla/.test(x.t) }) }).length;
+      var first = document.querySelector("#bans .lcand b").textContent; document.querySelector("#bans .lcand").click();
+      var banned = S.banA[0] === first, again = banRecs().some(function (r) { return r.n === first });
+      S.banA = NAMES.filter(function (h) { return used().indexOf(h) < 0 }).slice(0, 5); rDraft();
+      return { empty: empty, top: top && top.n, cnt: cnt, banned: banned, again: again, full: document.querySelectorAll("#bans .lcand").length, hint: /Perché bannare/.test(document.querySelector("#bans").textContent) };
+    });
+    ok(bn.empty === 3, "draft vuoto: 3 ban consigliati (primo: " + bn.top + ")");
+    ok(bn.cnt > 0, "con Layla in squadra, tra i primi 10 ban ci sono suoi counter (" + bn.cnt + ")");
+    ok(bn.banned && !bn.again, "toccando un consiglio l'eroe finisce nei ban alleati e sparisce dai consigli");
+    ok(bn.full === 0 && !bn.hint, "con i 5 ban alleati pieni i consigli spariscono");
+
     section("Condividi draft");
     var shared = await p.evaluate(function () {
-      S.banA[0] = NAMES[20]; S.banE[1] = NAMES[21]; S.allyLane[0] = "j"; save(); rDraft();
-      return { url: shareUrl(), st: JSON.stringify([S.ally, S.enemy, S.banA, S.banE, S.allyLane]) };
+      S.banA = [NAMES[20], null, null, null, null]; S.banE = [null, NAMES[21], null, null, null]; S.allyLane[0] = "j"; save(); rDraft();
+      return { url: shareUrl(), st: JSON.stringify([S.ally, S.enemy, S.banA, S.banE, S.allyLane.map(function (l, i) { return S.ally[i] ? l : null })]) };
     });
     ok(/#d=a[\d.]+_e[\d.]+_x[\d.]+_y[\d.]+_l[a-z-]{5}$/.test(shared.url), "link generato: " + shared.url.split("#")[1]);
     await ctx.grantPermissions(["clipboard-read", "clipboard-write"], { origin: URL0 });
@@ -110,7 +126,7 @@ async function run() {
     await ctx2.route(function (u) { return !u.href.startsWith(URL0) }, function (r) { return r.abort() });
     await p2.goto(shared.url); await p2.waitForFunction(function () { return window.NAMES && document.querySelector("#v-draft.on") });
     var got = await p2.evaluate(function () { return { st: JSON.stringify([S.ally, S.enemy, S.banA, S.banE, S.allyLane]), hash: location.hash } });
-    ok(got.st === shared.st, "chi apre il link vede lo stesso draft (pick, ban e lane)");
+    ok(got.st === shared.st, "chi apre il link vede lo stesso draft (pick, ban e lane)" + (got.st === shared.st ? "" : ": " + shared.st + " ≠ " + got.st));
     ok(got.hash === "", "il codice viene tolto dalla barra degli indirizzi dopo l'apertura");
     await p2.evaluate(function () { location.hash = "d=zzz" }); await p2.waitForTimeout(300);
     ok(/non valido/.test(p2.lastDialog || ""), "link rovinato: avviso, draft invariato");
