@@ -172,6 +172,23 @@ async function run() {
     ok(gd.plan, "guida: piano dal draft (iniziatore, bersagli, minacce, anti-cure)");
     ok(gd.phases && gd.jg, "guida: obiettivi per fase e consigli della lane scelta");
 
+    section("Ricerca unica");
+    var sr = await p.evaluate(function () {
+      var r = {}; document.getElementById("srch").click(); r.open = document.getElementById("ssheet").classList.contains("show");
+      var q = function (t) { var x = document.getElementById("sq"); x.value = t; x.oninput(); return [].map.call(document.querySelectorAll("#sres .ghd"), function (h) { return h.textContent }).join(",") };
+      r.lay = q("lay"); r.first = document.querySelector("#sres button b").textContent;
+      r.acc = q("ÀTHENA"); r.none = q("zzzz") === "" && /Nessun risultato/.test(document.getElementById("sres").textContent);
+      q("athena"); document.querySelector("#sres button").click();
+      r.item = cur === "heroes" && hsub === "itm" && document.querySelectorAll("#hlist details").length === 1 && !document.getElementById("ssheet").classList.contains("show");
+      document.getElementById("srch").click(); q("impost"); document.querySelector("#sres button").click(); r.scr = cur;
+      document.getElementById("srch").click(); q("layla"); var e = new KeyboardEvent("keydown", { key: "Enter" }); document.getElementById("sq").onkeydown(e); r.hero = cur + "|" + hero;
+      hsub = "her"; hq = ""; return r;
+    });
+    ok(sr.open && /^Eroi/.test(sr.lay) && sr.first === "Layla", "la lente apre la ricerca; «lay» trova per prima Layla (" + sr.lay + ")");
+    ok(sr.acc === "Oggetti" && sr.none, "ricerca senza accenti e maiuscole, messaggio se non trova nulla");
+    ok(sr.item, "un oggetto apre il database filtrato su quell'oggetto");
+    ok(sr.scr === "settings" && sr.hero === "hero|Layla", "trova anche le schermate; Invio apre il primo risultato");
+
     section("Build contro i nemici");
     var bv = await p.evaluate(function () {
       S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null];

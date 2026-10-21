@@ -94,7 +94,7 @@ input:focus-visible {
 /* header */
 .top {
   display: grid;
-  grid-template-columns: 40px 1fr 40px;
+  grid-template-columns: 76px 1fr 76px;
   align-items: center;
   padding: 12px 14px 10px;
   border-bottom: 1px solid var(--line);
@@ -3117,3 +3117,16 @@ ul.news {
 .gtips li.tg::marker { color: var(--green); }
 .gtips li.ta::marker { color: var(--amber); }
 .gtips li.tr::marker { color: var(--red); }
+
+/* ricerca unica (lente in alto) */
+.top .tr { display: flex; justify-content: flex-end; gap: 4px; }
+.sheet.top { align-items: flex-start; }
+.sheet.top .box { border-top: 0; border-bottom: 1px solid var(--blue); border-radius: 0 0 16px 16px; max-height: 88%; }
+.sheet.top .search input { flex: 1; min-width: 0; }
+.sres { display: flex; flex-direction: column; gap: 4px; }
+.sres button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px; border: 0; border-radius: 10px; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.sres button:hover, .sres button:focus-visible { background: var(--panel2); }
+.sres img, .sres .tile, .sres .ico0 { width: 32px; height: 32px; border-radius: 8px; flex: none; }
+.sres .ico0 { background: var(--bg); }
+.sres b { display: block; font-size: 13.5px; }
+.sres small { color: var(--mute); font-size: 11.5px; }
