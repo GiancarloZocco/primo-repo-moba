@@ -96,6 +96,29 @@ async function run() {
     var picked = await p.evaluate(function () { var n = focusRec().n; document.getElementById("pk").click(); return S.ally.indexOf(n) > -1 });
     ok(picked, "il pulsante Scegli mette il consigliato negli alleati");
 
+    section("Condividi draft");
+    var shared = await p.evaluate(function () {
+      S.banA[0] = NAMES[20]; S.banE[1] = NAMES[21]; S.allyLane[0] = "j"; save(); rDraft();
+      return { url: shareUrl(), st: JSON.stringify([S.ally, S.enemy, S.banA, S.banE, S.allyLane]) };
+    });
+    ok(/#d=a[\d.]+_e[\d.]+_x[\d.]+_y[\d.]+_l[a-z-]{5}$/.test(shared.url), "link generato: " + shared.url.split("#")[1]);
+    await ctx.grantPermissions(["clipboard-read", "clipboard-write"], { origin: URL0 });
+    await p.click("#share"); await p.waitForTimeout(300);
+    var clip = await p.evaluate(async function () { return { txt: await navigator.clipboard.readText(), btn: document.getElementById("share").textContent } });
+    ok(clip.txt === shared.url && /copiato/.test(clip.btn), "il pulsante Condividi copia il link e lo conferma");
+    var ctx2 = await browser.newContext(), errs2 = [], p2 = await newPage(ctx2, errs2);
+    await ctx2.route(function (u) { return !u.href.startsWith(URL0) }, function (r) { return r.abort() });
+    await p2.goto(shared.url); await p2.waitForFunction(function () { return window.NAMES && document.querySelector("#v-draft.on") });
+    var got = await p2.evaluate(function () { return { st: JSON.stringify([S.ally, S.enemy, S.banA, S.banE, S.allyLane]), hash: location.hash } });
+    ok(got.st === shared.st, "chi apre il link vede lo stesso draft (pick, ban e lane)");
+    ok(got.hash === "", "il codice viene tolto dalla barra degli indirizzi dopo l'apertura");
+    await p2.evaluate(function () { location.hash = "d=zzz" }); await p2.waitForTimeout(300);
+    ok(/non valido/.test(p2.lastDialog || ""), "link rovinato: avviso, draft invariato");
+    var still = await p2.evaluate(function () { return JSON.stringify([S.ally, S.enemy, S.banA, S.banE, S.allyLane]) });
+    ok(still === shared.st, "il draft resta quello di prima dopo un link rovinato");
+    ok(errs2.length === 0, "nessun errore JavaScript aprendo il link" + (errs2.length ? ": " + errs2.join(" | ") : ""));
+    await ctx2.close();
+
     section("Immagini locali");
     var im = await p.evaluate(async function () {
       var ls = await (await fetch("img/list.json")).json(), miss = [];

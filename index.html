@@ -3106,7 +3106,7 @@
         (used().length ? '' : '<div class="alert"><span class="a">' + IC.bulb + '</span><span>Inizia dai ban, poi aggiungi gli eroi nemici man mano che li scelgono: i consigli per ogni lane si aggiornano a ogni pick.</span></div>') +
         '<div class="teams"><div class="team ally"><h3>Alleati</h3><div id="ally"></div></div><div class="team enemy"><h3>Nemici</h3><div id="enemy"></div></div></div><div class="bans" id="bans"></div>' +
         '<div class="kv" style="align-items:center"><span class="k">Consigliati per lane</span><button class="lnk" id="lf">' + (S.lanefit ? "Solo lane libere ✓" : "Tutte le lane") + '</button></div><div class="lrows" id="lanes"></div><button class="lnk" id="lmore" style="align-self:center">' + (lMore ? "Mostra 3 per lane" : "Mostra 6 per lane") + '</button><div id="rec"></div>' +
-        '<div class="two"><button class="btn sm" id="add"' + (en().length >= 5 ? " disabled" : "") + '>+ Nemico</button><button class="btn sm" id="det">' + (detOpen || S.keep ? "Chiudi analisi" : "Analisi dettagliata") + '</button></div><button class="btn sm" id="rp" style="width:100%;margin-top:8px">Azzera pick</button><div id="detail"></div><div id="alert"></div>';
+        '<div class="two"><button class="btn sm" id="add"' + (en().length >= 5 ? " disabled" : "") + '>+ Nemico</button><button class="btn sm" id="det">' + (detOpen || S.keep ? "Chiudi analisi" : "Analisi dettagliata") + '</button></div><div class="two" style="margin-top:8px"><button class="btn sm" id="rp">Azzera pick</button><button class="btn sm" id="share"' + (used().length ? "" : " disabled") + '>Condividi draft</button></div><div id="detail"></div><div id="alert"></div>';
       slots($("ally"), S.ally, 1); slots($("enemy"), S.enemy, 0); banRows();
       LANES.forEach(function (l) {
         var row = document.createElement("div"), al = cover[l], list = (byLaneList[l] || []).slice(0, lMore ? 6 : 3);
@@ -3151,6 +3151,7 @@
       $("det").onclick = function () { detOpen = !detOpen; rDraft() };
       $("rp").onclick = function () { if (!used().length || !confirm("Azzerare i pick di entrambe le squadre? I ban restano.")) return; S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.allyLane = [null, null, null, null, null]; focus = null; save(); rDraft() };
       $("lf").onclick = function () { S.lanefit = !S.lanefit; focus = null; save(); rDraft() };
+      $("share").onclick = function () { shareDraft(this) };
       $("lmore").onclick = function () { lMore = !lMore; rDraft() };
     }
     function banRows() {
@@ -3169,6 +3170,42 @@
       });
       $("rb").onclick = function () { S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; focus = null; save(); rDraft() }
     }
+    /* ---------- condivisione: il draft viaggia nel link (#d=...) con gli id ufficiali degli eroi ---------- */
+    function draftCode() {
+      var ids = function (t) { return t.map(function (h) { return h && HX[h] ? HX[h].id : 0 }).join(".") };
+      return "a" + ids(S.ally) + "_e" + ids(S.enemy) + "_x" + ids(S.banA) + "_y" + ids(S.banE) + "_l" + S.allyLane.map(function (l) { return l || "-" }).join("");
+    }
+    function readCode(c) {
+      var o = {}, k = { a: "ally", e: "enemy", x: "banA", y: "banE" };
+      String(c || "").split("_").forEach(function (part) {
+        var t = part.charAt(0), v = part.slice(1);
+        if (k[t]) o[k[t]] = sanitizeTeam(v.split(".").map(function (n) { return ID2[+n] || null }));
+        else if (t === "l") o.allyLane = v.slice(0, 5).split("").map(function (l) { return LN[l] ? l : null });
+      });
+      if (!o.ally && !o.enemy && !o.banA && !o.banE) return null;
+      ["ally", "enemy", "banA", "banE"].forEach(function (t) { o[t] = o[t] || [null, null, null, null, null] });
+      while (!o.allyLane || o.allyLane.length < 5) o.allyLane = (o.allyLane || []).concat([null]);
+      var seen = {}; ["ally", "enemy", "banA", "banE"].forEach(function (t) { o[t] = o[t].map(function (h) { if (!h || seen[h]) return null; seen[h] = 1; return h }) });
+      o.allyLane = o.allyLane.map(function (l, i) { return o.ally[i] ? l : null });
+      return o;
+    }
+    function shareUrl() { return location.href.split("#")[0] + "#d=" + draftCode() }
+    function shareDraft(btn) {
+      var url = shareUrl(), done = function (t) { btn.textContent = t; setTimeout(function () { if (btn.isConnected) btn.textContent = "Condividi draft" }, 2500) };
+      var txt = "Draft MLBB TOP: " + S.ally.filter(Boolean).join(", ") + (en().length ? " contro " + en().join(", ") : "");
+      if (navigator.share) { navigator.share({ title: "Draft MLBB TOP", text: txt, url: url }).then(function () { done("Condiviso ✓") }).catch(function () { }); return }
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(url).then(function () { done("Link copiato ✓") }).catch(function () { prompt("Copia il link del draft:", url) }); return }
+      prompt("Copia il link del draft:", url);
+    }
+    function loadShared() {
+      var m = /[#&]d=([^&]*)/.exec(location.hash); if (!m) return false;
+      history.replaceState(null, "", location.href.split("#")[0]);
+      var o = readCode(decodeURIComponent(m[1]));
+      if (!o) { alert("Link del draft non valido."); return false }
+      if (used().length && !confirm("Aprire il draft condiviso? Sostituisce quello attuale.")) return false;
+      S.ally = o.ally; S.enemy = o.enemy; S.banA = o.banA; S.banE = o.banE; S.allyLane = o.allyLane; focus = null; save(); return true;
+    }
+    window.addEventListener("hashchange", function () { if (loadShared()) go("draft") });
     function slots(el, team, side) {
       for (var i = 0; i < 5; i++)(function (i) {
         var wrap = document.createElement("div"), b = document.createElement("button"), h = team[i];
@@ -3686,7 +3723,7 @@
     }
     function setAct() { var a = S.avatar && H[S.avatar] ? S.avatar : null; if (a) { $("act").innerHTML = tile(a, "xs"); $("act").setAttribute("aria-label", "Profilo") } }
     function applyTheme() { document.body.classList.toggle("hc", S.theme === "hc") }
-    applyTheme(); setAct(); go("draft", true);
+    applyTheme(); setAct(); loadShared(); go("draft", true);
   </script>
   <script>
     if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
