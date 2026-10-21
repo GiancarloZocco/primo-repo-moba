@@ -192,6 +192,24 @@ async function run() {
     var rnd2 = await p.evaluate(function () { newRound(); var a = JSON.stringify(QZ.r.map(function (q) { return q.q })); newRound(); return a !== JSON.stringify(QZ.r.map(function (q) { return q.q })) });
     ok(rnd2, "i round normali restano casuali");
 
+    section("Testi in italiano");
+    var tx = await p.evaluate(function () {
+      openHero("Layla", "ab"); var ab = document.querySelector("#hbody").textContent;
+      openHero("Layla", "mu"); var mu = document.querySelector("#hbody").textContent;
+      openHero("Layla", "bd"); var bd = document.querySelector("#hbody").textContent;
+      hsub = "itm"; go("heroes"); var itm = document.querySelector("#hlist").textContent;
+      return { on: ITON, ab: /danni fisici/.test(ab) && !/Physical Damage/.test(ab), mu: /tank lenti/.test(mu), bd: /Attacco adattivo|Penetrazione adattiva|Velocità di movimento/.test(bd), itm: /Velocità di movimento|Potere magico/.test(itm) && !/Movement Speed/.test(itm), hint: /tradott/.test(itm) };
+    });
+    ok(tx.on && tx.ab, "abilità in italiano (scheda di Layla)");
+    ok(tx.mu && tx.bd, "matchup ed emblemi della build in italiano");
+    ok(tx.itm && tx.hint, "oggetti del database in italiano, con la nota sulla traduzione");
+    await p.evaluate(function () { go("profile") });
+    await p.click("#lang button:nth-child(2)"); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
+    var en = await p.evaluate(function () { openHero("Layla", "ab"); return { on: ITON, ab: /Physical Damage/.test(document.querySelector("#hbody").textContent) } });
+    ok(!en.on && en.ab, "Profilo → Testi di gioco: Originale riporta i testi in inglese");
+    await p.evaluate(function () { S.lang = "it"; save() }); await p.reload(); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
+    ok(await p.evaluate(function () { return ITON }), "e si torna all'italiano");
+
     section("Condividi draft");
     var shared = await p.evaluate(function () {
       S.banA = [NAMES[20], null, null, null, null]; S.banE = [null, NAMES[21], null, null, null]; S.allyLane[0] = "j"; save(); go("draft");

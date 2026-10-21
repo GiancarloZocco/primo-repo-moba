@@ -3024,6 +3024,7 @@
     </div>
   </main>
   <script src="data.js"></script>
+  <script src="data-it.js"></script>
   <script>
     var META = { "src": "MLBB Academy (dati ufficiali Moonton) via arena.rone.dev · Wiki MLBB Fandom", "date": "20/10/2026", "win": "ultimi 7 giorni" };
     var R = { T: "Tank", F: "Combattente", A: "Assassino", M: "Mago", X: "Tiratore", S: "Supporto" };
@@ -3055,12 +3056,27 @@
     function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] }) }
 
     /* ---------- stato ---------- */
-    var DEF = { allyLane: [null, null, null, null, null], recent: [], useMine: true, mph: [], banA: [null, null, null, null, null], banE: [null, null, null, null, null], ally: [null, null, null, null, null], enemy: [null, null, null, null, null], keep: false, lanefit: true, avatar: null, rk: "all", algo: "meta", theme: "dark", nick: "DraftStrategist", main: "T", picks: 0, synSum: 0, synN: 0, quiz: { xp: 0, ok: 0, tot: 0, best: 0, streak: 0, rounds: 0 }, spoken: false, autoLive: true, guide: null, gbans: 10, games: [], daily: null, dstreak: 0, dlast: null };
+    var DEF = { allyLane: [null, null, null, null, null], recent: [], useMine: true, mph: [], banA: [null, null, null, null, null], banE: [null, null, null, null, null], ally: [null, null, null, null, null], enemy: [null, null, null, null, null], keep: false, lanefit: true, avatar: null, rk: "all", algo: "meta", theme: "dark", nick: "DraftStrategist", main: "T", picks: 0, synSum: 0, synN: 0, quiz: { xp: 0, ok: 0, tot: 0, best: 0, streak: 0, rounds: 0 }, spoken: false, autoLive: true, guide: null, gbans: 10, games: [], daily: null, dstreak: 0, dlast: null, lang: "it" };
     var S; try { S = JSON.parse(localStorage.getItem("draftsync") || "null") } catch (e) { S = null }
     S = Object.assign({}, DEF, S || {}); S.quiz = Object.assign({}, DEF.quiz, S.quiz || {});
     function sanitizeTeam(t) { t = (t || []).slice(0, 5); while (t.length < 5) t.push(null); return t.map(function (h) { return h && H[h] ? h : null }) }
     S.ally = sanitizeTeam(S.ally); S.enemy = sanitizeTeam(S.enemy); S.banA = sanitizeTeam(S.banA); S.banE = sanitizeTeam(S.banE); S.allyLane = (Array.isArray(S.allyLane) ? S.allyLane : []).slice(0, 5); while (S.allyLane.length < 5) S.allyLane.push(null); S.allyLane = S.allyLane.map(function (l) { return LN[l] ? l : null }); S.recent = (Array.isArray(S.recent) ? S.recent : []).filter(function (h) { return H[h] }).slice(0, 12); S.mph = Array.isArray(S.mph) ? S.mph : []; S.games = Array.isArray(S.games) ? S.games : [];
     function save() { try { localStorage.setItem("draftsync", JSON.stringify(S)) } catch (e) { } }
+    /* testi di gioco in italiano da data-it.js (gli originali inglesi restano in data.js; nel Profilo si può tornare all'inglese) */
+    function applyIT() {
+      if (S.lang === "en" || typeof IT === "undefined") return false;
+      Object.keys(IT.it).forEach(function (id) { var x = ITEMS[id], t = IT.it[id]; if (!x) return; if (t[0]) x[2] = t[0]; if (t[1]) x[3] = t[1] });
+      Object.keys(IT.tal).forEach(function (id) { if (TAL[id]) TAL[id][1] = IT.tal[id] });
+      Object.keys(IT.spl).forEach(function (id) { if (SPL[id]) SPL[id][1] = IT.spl[id] });
+      Object.keys(HX).forEach(function (h) {
+        var x = HX[h], k = IT.sk[h], r = IT.rel[h];
+        if (k) (x.sk || []).forEach(function (sk, i) { if (k[i]) sk.d = k[i] });
+        if (r && x.rel) Object.keys(r).forEach(function (t) { if (x.rel[t]) x.rel[t].d = r[t] });
+        Object.keys(x.bd || {}).forEach(function (l) { x.bd[l].forEach(function (b) { if (IT.ea[b.ea]) b.ea = IT.ea[b.ea] }) });
+      });
+      return true;
+    }
+    var ITON = applyIT();
     var focus = null, recs = [], detOpen = false, pk = null, cur = "draft", hist = [], hero = "Khufra", htab = "ab", bdl = null, hsub = "her", itf = "all", iq = "", tf = "all", tq = "", tsort = "wr", hf = "all", hq = "", QZ = null;
 
     /* ---------- motore ---------- */
@@ -3583,7 +3599,7 @@
         Object.keys(SPL).filter(function (k) { return SPL[k][0].toLowerCase().indexOf(q) > -1 }).forEach(function (k) { var x = SPL[k], d = document.createElement("div"); d.className = "ab"; d.innerHTML = '<span class="ic">' + (x[2] ? '<img src="' + x[2] + '" alt="">' : '') + '</span><div><div class="h"><b>' + esc(x[0]) + '</b><small>Spell</small></div><p>' + nl(x[1]) + '</p></div>'; L.appendChild(d) });
       }
       if (!L.children.length) L.innerHTML = '<p class="hint">Nessun risultato. Prova con un altro nome o filtro.</p>';
-      if (hsub !== "her") { var p = document.createElement("p"); p.className = "hint"; p.textContent = "Testi ufficiali in inglese dal gioco (MLBB Academy)."; L.appendChild(p) }
+      if (hsub !== "her") { var p = document.createElement("p"); p.className = "hint"; p.textContent = ITON ? "Testi ufficiali del gioco (MLBB Academy) tradotti in italiano." : "Testi ufficiali in inglese dal gioco (MLBB Academy)."; L.appendChild(p) }
     }
 
     /* ---------- HERO DETAIL ---------- */
@@ -3609,7 +3625,7 @@
         html += '<details class="fold"><summary class="sec">' + IC.shield + ' Profilo tattico</summary><div class="rows"><div class="ab"><span class="ic">' + ABI[tr[0]] + '</span><div><div class="h"><b>' + traits(h) + '</b><small>Tratti</small></div><p>' + tr.map(function (t) { return TRD[t] }).join(" ") + '</p></div></div>' +
           '<div class="ab"><span class="ic">' + IC.warn + '</span><div><div class="h"><b>Punto debole</b><small>' + (weakOf(h).map(function (t) { return TR[t] }).join(" · ") || "—") + '</small></div><p>Minacce principali: ' + (topCounters(h, 3).join(", ") || "nessuna diretta") + '.</p></div></div>' +
           '<div class="ab"><span class="ic">' + IC.bulb + '</span><div><div class="h"><b>Come giocarlo</b><small>' + LN[x.l[0]] + '</small></div><p>' + TIPS[x.r] + '</p></div></div></div></details>';
-        if (sk.length) html += '<p class="hint">Descrizioni ufficiali delle abilità (in inglese) dalla MLBB Academy.</p>';
+        if (sk.length) html += '<p class="hint">Descrizioni ufficiali delle abilità dalla MLBB Academy' + (ITON ? ', tradotte in italiano.' : ' (in inglese).') + '</p>';
         B.innerHTML = html;
       } else if (htab === "bd") {
         var bd = X.bd || {}, ls = Object.keys(bd);
@@ -3640,7 +3656,7 @@
         }
         if (X.by && X.by.length) html3 += '<div class="mu"><div class="neg"><h4>' + IC.down + ' Lo counterano</h4>' + chips(names(X.by), pctf(X.by)) + '</div><div class="pos"><h4>' + IC.up + ' Domina contro</h4>' + chips(names(X.vs), pctf(X.vs)) + '</div></div>';
         if (X.mate && X.mate.length) html3 += '<div class="mu"><div class="pos"><h4>' + IC.check + ' Compagni migliori</h4>' + chips(names(X.mate), pctf(X.mate)) + '</div><div class="neg"><h4>' + IC.warn + ' Compagni peggiori</h4>' + chips(names(X.bad), pctf(X.bad)) + '</div></div>';
-        if (X.by && X.by.length) html3 += '<p class="hint">Percentuali = variazione di win rate nel matchup (dati ufficiali, ' + META.win + '). Testi dei matchup ufficiali in inglese.</p>';
+        if (X.by && X.by.length) html3 += '<p class="hint">Percentuali = variazione di win rate nel matchup (dati ufficiali, ' + META.win + '). ' + (ITON ? 'Testi dei matchup ufficiali tradotti in italiano.' : 'Testi dei matchup ufficiali in inglese.') + '</p>';
         function rows(a, cls) { return a.slice(0, 5).map(function (o) { return '<button class="mrow" data-h="' + esc(o.n) + '"><span>' + o.n + '</span><span class="' + cls + '">' + (cls === "g" ? "+" : "-") + o.s + ' ctr</span></button>' }).join("") || '<p>Nessuno nel database.</p>' }
         html3 += '<details class="fold"><summary class="sec">' + IC.bolt + ' Motore tratti MLBB TOP</summary><div class="mu"><div class="pos"><h4>' + IC.up + ' Vantaggio</h4>' + rows(pos, "g") + '</div><div class="neg"><h4>' + IC.down + ' Svantaggio</h4>' + rows(neg, "r") + '</div></div></details>';
         B.innerHTML = html3;
@@ -3785,6 +3801,7 @@
         '<div class="set"><span><b>Azzera il draft</b><small>Svuota squadre e ban</small></span><button class="btn sm" id="reset">Azzera</button></div></div>' +
         '<div class="card"><div class="ph">' + IC.monitor + ' Impostazioni app & sistema</div>' +
         '<div class="set"><span><b>Tema interfaccia</b><small>Profilo colore del display</small></span><div class="seg" id="theme" style="width:170px"></div></div>' +
+        '<div class="set"><span><b>Testi di gioco</b><small>Abilità, oggetti, talenti e matchup</small></span><div class="seg" id="lang" style="width:170px"></div></div>' +
         '<div class="set" style="flex-direction:column;align-items:stretch"><div class="kv"><b style="font-family:var(--hd);font-weight:500;font-size:13px">Statistiche per rank</b><span class="a" style="font-size:10.5px;font-weight:700">' + RKN[S.rk].toUpperCase() + '</span></div><div class="seg" id="prk"></div></div>' +
         '<div class="set"><span><b>Aggiornamento automatico</b><small>Scarica le statistiche una volta al giorno quando c’è internet</small></span><button class="tg' + (S.autoLive !== false ? " on" : "") + '" id="tga" aria-label="Aggiornamento automatico"></button></div>' +
         '<div class="set"><span><b>Dati ufficiali</b><small>' + NAMES.length + ' eroi · ' + (META.live ? "aggiornati online il " : "snapshot del ") + META.date + '</small></span><button class="btn sm" id="live">Aggiorna</button></div>' +
@@ -3795,6 +3812,7 @@
       [["meta", "Meta competitivo"], ["bal", "Bilanciata"], ["safe", "Safe pick"]].forEach(function (a) { var b = document.createElement("button"); b.textContent = a[1]; b.className = S.algo === a[0] ? "on" : ""; b.onclick = function () { S.algo = a[0]; focus = null; save(); rProfile() }; $("algo").appendChild(b) });
       [["dark", "Cyber dark"], ["hc", "Alto contrasto"]].forEach(function (a) { var b = document.createElement("button"); b.textContent = a[1]; b.className = S.theme === a[0] ? "on" : ""; b.onclick = function () { S.theme = a[0]; applyTheme(); save(); rProfile() }; $("theme").appendChild(b) });
       Object.keys(RKN).forEach(function (k) { var b = document.createElement("button"); b.textContent = RKN[k]; b.className = S.rk === k ? "on" : ""; b.onclick = function () { S.rk = k; save(); calcMeta(); rProfile() }; $("prk").appendChild(b) });
+      [["it", "Italiano"], ["en", "Originale"]].forEach(function (a) { var b = document.createElement("button"); b.textContent = a[1]; b.className = (S.lang === "en" ? "en" : "it") === a[0] ? "on" : ""; b.onclick = function () { if ((S.lang === "en" ? "en" : "it") === a[0]) return; S.lang = a[0]; save(); location.reload() }; $("lang").appendChild(b) });
       mpCard();
       $("live").onclick = function () { liveUpdate(this) };
       $("av").onclick = function () { openPick("Scegli il tuo avatar", NAMES, function (n) { S.avatar = n; save(); setAct(); rProfile() }, { cur: fav }) };
