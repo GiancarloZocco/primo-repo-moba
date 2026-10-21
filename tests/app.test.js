@@ -143,6 +143,28 @@ async function run() {
     var lv = await p.evaluate(function () { var x = JSON.parse(localStorage.getItem("draftsync_live") || "null"); return x && Object.keys(x.rk).length });
     ok(lv > 100, "server ok: statistiche salvate per " + lv + " eroi");
 
+    section("Tendenze e aggiornamento automatico");
+    var prev = await p.evaluate(function () { return JSON.parse(localStorage.getItem("draftsync_prev") || "null") });
+    ok(prev && prev.date === "20/10/2026" && Object.keys(prev.rk).length > 100, "la classifica precedente (snapshot del " + (prev && prev.date) + ") è salvata per le tendenze");
+    var tr = await p.evaluate(function () { tf = "all"; tq = ""; tOpen = { SS: 1, S: 1, A: 1, B: 1 }; go("tier"); var r = document.querySelector(".radar").textContent; return { arrows: document.querySelectorAll("#tlist .dl").length, radar: /Dal 20\/10\/2026: in crescita/.test(r), hero: (openHero(NAMES[0]), document.querySelectorAll("#v-hero .dl").length) } });
+    ok(tr.arrows > 20, "frecce di tendenza nella Tier list: " + tr.arrows);
+    ok(tr.radar, "il riquadro Radar elenca chi sale e chi scende");
+    ok(tr.hero <= 1, "la scheda eroe mostra la variazione del win rate se c'è");
+    await p.evaluate(function () { go("profile") }); await p.click("#live"); await p.waitForTimeout(500);
+    var prev2 = await p.evaluate(function () { return JSON.parse(localStorage.getItem("draftsync_prev") || "null").date });
+    ok(prev2 === "20/10/2026", "un secondo aggiornamento nello stesso giorno non cancella il confronto");
+    var ctx3 = await browser.newContext(), errs3 = [], p3 = await newPage(ctx3, errs3), calls = { n: 0 };
+    await ctx3.route(function (u) { return !u.href.startsWith(URL0) }, function (r) { if (r.request().url().indexOf("arena.rone.dev") > -1) { calls.n++; return r.fulfill({ status: 200, contentType: "application/json", body: arenaBody(arena.ids) }) } return r.abort() });
+    await p3.goto(URL0); await p3.waitForTimeout(2500);
+    var auto = await p3.evaluate(function () { return { live: META.live, saved: !!localStorage.getItem("draftsync_live") } });
+    ok(auto.live && auto.saved && calls.n === 3, "all'apertura le statistiche si aggiornano da sole (" + calls.n + " richieste)");
+    await p3.reload(); await p3.waitForTimeout(2500);
+    ok(calls.n === 3, "riaprendo nello stesso giorno non riscarica");
+    await p3.evaluate(function () { localStorage.clear(); S.autoLive = false; save() }); await p3.reload(); await p3.waitForTimeout(2500);
+    ok(calls.n === 3, "con l'opzione spenta non scarica niente");
+    ok(errs3.length === 0, "nessun errore JavaScript" + (errs3.length ? ": " + errs3.join(" | ") : ""));
+    await ctx3.close();
+
     section("Offline (service worker)");
     await p.evaluate(function () { return navigator.serviceWorker.ready });
     await p.reload(); await p.waitForFunction(function () { return navigator.serviceWorker.controller });

@@ -954,6 +954,22 @@
       text-align: left
     }
 
+    .dl {
+      display: block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0;
+      margin-top: 1px
+    }
+
+    .dl.up {
+      color: var(--green)
+    }
+
+    .dl.dn {
+      color: var(--red)
+    }
+
     .tbl .tr:last-child {
       border-bottom: 0
     }
@@ -2901,7 +2917,7 @@
     function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] }) }
 
     /* ---------- stato ---------- */
-    var DEF = { allyLane: [null, null, null, null, null], recent: [], useMine: true, mph: [], banA: [null, null, null, null, null], banE: [null, null, null, null, null], ally: [null, null, null, null, null], enemy: [null, null, null, null, null], keep: false, lanefit: true, avatar: null, rk: "all", algo: "meta", theme: "dark", nick: "DraftStrategist", main: "T", picks: 0, synSum: 0, synN: 0, quiz: { xp: 0, ok: 0, tot: 0, best: 0, streak: 0, rounds: 0 }, spoken: false };
+    var DEF = { allyLane: [null, null, null, null, null], recent: [], useMine: true, mph: [], banA: [null, null, null, null, null], banE: [null, null, null, null, null], ally: [null, null, null, null, null], enemy: [null, null, null, null, null], keep: false, lanefit: true, avatar: null, rk: "all", algo: "meta", theme: "dark", nick: "DraftStrategist", main: "T", picks: 0, synSum: 0, synN: 0, quiz: { xp: 0, ok: 0, tot: 0, best: 0, streak: 0, rounds: 0 }, spoken: false, autoLive: true };
     var S; try { S = JSON.parse(localStorage.getItem("draftsync") || "null") } catch (e) { S = null }
     S = Object.assign({}, DEF, S || {}); S.quiz = Object.assign({}, DEF.quiz, S.quiz || {});
     function sanitizeTeam(t) { t = (t || []).slice(0, 5); while (t.length < 5) t.push(null); return t.map(function (h) { return h && H[h] ? h : null }) }
@@ -2941,6 +2957,11 @@
     }
     calcMeta();
     function pc(v) { return v == null ? "—" : v.toFixed(1) + "%" }
+    /* tendenze: win rate rispetto alla classifica precedente (salvata a ogni aggiornamento con data diversa) */
+    var PREV = null; try { PREV = JSON.parse(localStorage.getItem("draftsync_prev") || "null") } catch (e) { }
+    function prevWr(h) { var r = PREV && PREV.rk && PREV.rk[h]; r = r && (r[S.rk] || r.all); return r ? r[0] : null }
+    function dWr(h) { var a = M[h] && M[h].wr, b = prevWr(h); return a == null || b == null ? null : Math.round((a - b) * 10) / 10 }
+    function dTag(h) { var d = dWr(h); return d == null || Math.abs(d) < .1 ? "" : '<small class="dl ' + (d > 0 ? "up" : "dn") + '" title="Win rate rispetto al ' + esc(PREV.date) + '">' + (d > 0 ? "▲" : "▼") + Math.abs(d).toFixed(1) + '</small>' }
     function findInc(a, n) { if (!a) return null; for (var i = 0; i < a.length; i++)if (a[i][0] === n) return a[i][1]; return null }
     function realC(h, e) { var x = HX[e]; if (!x) return 0; var v = findInc(x.by, h); if (v != null) return v; v = findInc(x.vs, h); return v != null ? v : 0 }
     function topCounters(h, n) { var x = HX[h]; if (x && x.by && x.by.length) return x.by.slice(0, n).map(function (a) { return a[0] }); return beatenBy(h).slice(0, n).map(function (o) { return o.n }) }
@@ -3260,7 +3281,7 @@
           hs.slice(0, 1).forEach(function (h, i) {
             var m = M[h], c = topCounters(h, 2), d = document.createElement("div"); d.className = "tcard" + (i === 0 ? " top" : "");
             d.innerHTML = '<div class="hd">' + tile(h, "lg", rlab(h)) + '<div style="flex:1;min-width:0"><div class="nm">' + h + '</div><div class="sub"><span class="pill gr" style="font-size:9.5px">#' + m.rrank + ' ' + R[H[h].r] + '</span> ' + lanes(h) + '</div></div><span class="pill rd" style="font-size:9.5px">Diff. ' + diffL(h) + '</span></div>' +
-              '<div class="mets"><div class="met"><div class="k">Win rate</div><b class="g">' + pc(m.wr) + '</b>' + bar(Math.max(5, Math.min(100, ((m.wr || 50) - 40) * 5)), "var(--green)") + '</div><div class="met"><div class="k">Ban rate</div><b class="r">' + pc(m.br) + '</b>' + bar(Math.min(100, m.br || 0), "#FCA5A5") + '</div><div class="met"><div class="k">Pick rate</div><b class="b">' + pc(m.pr) + '</b>' + bar(Math.min(100, (m.pr || 0) * 40), "var(--blue2)") + '</div></div>' +
+              '<div class="mets"><div class="met"><div class="k">Win rate</div><b class="g">' + pc(m.wr) + '</b>' + dTag(h) + bar(Math.max(5, Math.min(100, ((m.wr || 50) - 40) * 5)), "var(--green)") + '</div><div class="met"><div class="k">Ban rate</div><b class="r">' + pc(m.br) + '</b>' + bar(Math.min(100, m.br || 0), "#FCA5A5") + '</div><div class="met"><div class="k">Pick rate</div><b class="b">' + pc(m.pr) + '</b>' + bar(Math.min(100, (m.pr || 0) * 40), "var(--blue2)") + '</div></div>' +
               '<div class="ft"><span class="a">' + IC.warn + '</span><span style="flex:1">Counter principali: ' + (c.join(", ") || "nessuno") + '</span><button class="lnk">Analisi ›</button></div>';
             d.querySelector(".lnk").onclick = function () { openHero(h) }; sec.appendChild(d)
           }); hs = hs.slice(1)
@@ -3269,7 +3290,7 @@
           var tb = document.createElement("div"); tb.className = "tbl"; tb.innerHTML = '<div class="th"><span>Eroe & ruolo</span><span>WR</span><span>Ban</span><span>Pick</span></div>';
           hs.forEach(function (h) {
             var m = M[h], b = document.createElement("button"); b.className = "tr";
-            b.innerHTML = '<span class="who">' + tile(h, "", rlab(h)) + '<span style="min-width:0"><b>' + h + '</b><small>' + roleLane(h) + '</small></span></span><span class="' + (m.wr >= 52 ? "g" : m.wr >= 49 ? "a" : "r") + '">' + pc(m.wr) + '</span><span>' + pc(m.br) + '</span><span class="b">' + pc(m.pr) + '</span>';
+            b.innerHTML = '<span class="who">' + tile(h, "", rlab(h)) + '<span style="min-width:0"><b>' + h + '</b><small>' + roleLane(h) + '</small></span></span><span class="' + (m.wr >= 52 ? "g" : m.wr >= 49 ? "a" : "r") + '">' + pc(m.wr) + dTag(h) + '</span><span>' + pc(m.br) + '</span><span class="b">' + pc(m.pr) + '</span>';
             b.onclick = function () { openHero(h) }; tb.appendChild(b)
           }); sec.appendChild(tb)
         }
@@ -3277,8 +3298,10 @@
       });
       if (!L.children.length) { L.innerHTML = '<p class="hint">Nessun eroe trovato. Prova con un altro nome o filtro.</p>'; return }
       var top = NAMES.filter(function (h) { return M[h].wr != null }).sort(function (a, b) { return M[b].wr - M[a].wr }).slice(0, 3), ban = NAMES.filter(function (h) { return M[h].br != null }).sort(function (a, b) { return M[b].br - M[a].br }).slice(0, 3);
+      var mv = NAMES.filter(function (h) { return dWr(h) != null }).sort(function (a, b) { return dWr(b) - dWr(a) }), upL = mv.filter(function (h) { return dWr(h) >= .1 }).slice(0, 3), dnL = mv.filter(function (h) { return dWr(h) <= -.1 }).reverse().slice(0, 3);
+      var trend = PREV && (upL.length || dnL.length) ? ' Dal ' + esc(PREV.date) + ': in crescita <span class="g">' + (upL.map(function (h) { return h + " +" + dWr(h).toFixed(1) }).join(", ") || "nessuno") + '</span>, in calo <span class="r">' + (dnL.map(function (h) { return h + " " + dWr(h).toFixed(1) }).join(", ") || "nessuno") + '</span>.' : "";
       var r = document.createElement("div"); r.className = "card radar";
-      r.innerHTML = '<div class="hd"><b>' + IC.chart + ' MLBB TOP Radar</b><span class="k">' + RKN[S.rk] + '</span></div>Win rate più alto: <span class="g">' + top.map(function (h) { return h + " " + pc(M[h].wr) }).join(", ") + '</span>. Più bannati: <span class="r">' + ban.map(function (h) { return h + " " + pc(M[h].br) }).join(", ") + '</span>. I tier sono calcolati per ruolo combinando win rate, pick rate e ban rate ufficiali (' + META.win + '). Fonte: ' + META.src + '.';
+      r.innerHTML = '<div class="hd"><b>' + IC.chart + ' MLBB TOP Radar</b><span class="k">' + RKN[S.rk] + '</span></div>Win rate più alto: <span class="g">' + top.map(function (h) { return h + " " + pc(M[h].wr) }).join(", ") + '</span>. Più bannati: <span class="r">' + ban.map(function (h) { return h + " " + pc(M[h].br) }).join(", ") + '</span>.' + trend + ' I tier sono calcolati per ruolo combinando win rate, pick rate e ban rate ufficiali (' + META.win + '). Fonte: ' + META.src + '.';
       L.appendChild(r);
     }
     function diffL(h) { var a = HX[h] && HX[h].ab; if (a && a.length === 4) { var f = a[3]; return f >= 75 ? "Estrema" : f >= 60 ? "Alta" : f >= 40 ? "Media" : "Facile" } return diff(h) }
@@ -3335,7 +3358,7 @@
       v.innerHTML = '<div class="strip"><span class="pill bl">' + R[x.r] + ' / ' + x.l.split("").map(function (k) { return LS[k] }).join(" · ") + '</span><span>Tier ' + m.tier + ' · #' + m.rrank + ' ' + R[x.r] + '</span><span class="live"><i></i>' + (m.wr != null ? "Dati ufficiali " + META.date : "Stima offline") + '</span></div>' +
         '<div class="hcard"><div class="top2">' + tile(h, "xl", "DIFF. " + diffL(h).toUpperCase(), X.pt) + '<div style="flex:1;min-width:0"><div class="ep">' + esc(ep) + '</div><div class="nm">' + h + '</div><div class="spec">' + (X.sp && X.sp.length ? "Specialità: " + X.sp.join(", ") : "Tratti: " + traits(h)) + (X.dt ? " · Danni " + ({ Physical: "fisici", Magic: "magici", Mixed: "misti" }[X.dt] || X.dt) : "") + '</div>' +
         bars.map(function (s) { return '<div class="st"><div class="kv"><span>' + s[0] + '</span><span>' + s[1] + ' / 100</span></div>' + bar(s[1], s[2]) + '</div>' }).join("") +
-        '</div></div><div class="boxes">' + (m.wr != null ? '<div><span class="k">Win rate</span><b class="' + (m.wr >= 52 ? "g" : m.wr >= 49 ? "a" : "r") + '">' + pc(m.wr) + '</b></div><div><span class="k">Ban rate</span><b class="r">' + pc(m.br) + '</b></div><div><span class="k">Pick rate</span><b class="b">' + pc(m.pr) + '</b></div>' : '<div><span class="k">Counter</span><b class="g">' + m.ci + '</b></div><div><span class="k">Sicurezza</span><b class="a">' + m.sf + '</b></div><div><span class="k">Rank ruolo</span><b class="b">#' + m.rrank + '</b></div>') + '</div></div>' +
+        '</div></div><div class="boxes">' + (m.wr != null ? '<div><span class="k">Win rate</span><b class="' + (m.wr >= 52 ? "g" : m.wr >= 49 ? "a" : "r") + '">' + pc(m.wr) + '</b>' + dTag(h) + '</div><div><span class="k">Ban rate</span><b class="r">' + pc(m.br) + '</b></div><div><span class="k">Pick rate</span><b class="b">' + pc(m.pr) + '</b></div>' : '<div><span class="k">Counter</span><b class="g">' + m.ci + '</b></div><div><span class="k">Sicurezza</span><b class="a">' + m.sf + '</b></div><div><span class="k">Rank ruolo</span><b class="b">#' + m.rrank + '</b></div>') + '</div></div>' +
         '<div class="tabs" id="htabs"></div><div id="hbody" class="rows" style="gap:12px"></div>' +
         '<div class="two"><button class="btn p" id="lock">' + IC.pad + ' Lock-in alleati</button><button class="btn rd" id="lockE">Aggiungi ai nemici</button></div>';
       [["ab", "Abilità"], ["bd", "Build & emblemi"], ["mu", "Matchup"], ["lo", "Lore"]].forEach(function (t) { var b = document.createElement("button"); b.textContent = t[1]; b.className = htab === t[0] ? "on" : ""; b.onclick = function () { htab = t[0]; rHero() }; $("htabs").appendChild(b) });
@@ -3459,6 +3482,7 @@
         '<div class="card"><div class="ph">' + IC.monitor + ' Impostazioni app & sistema</div>' +
         '<div class="set"><span><b>Tema interfaccia</b><small>Profilo colore del display</small></span><div class="seg" id="theme" style="width:170px"></div></div>' +
         '<div class="set" style="flex-direction:column;align-items:stretch"><div class="kv"><b style="font-family:var(--hd);font-weight:500;font-size:13px">Statistiche per rank</b><span class="a" style="font-size:10.5px;font-weight:700">' + RKN[S.rk].toUpperCase() + '</span></div><div class="seg" id="prk"></div></div>' +
+        '<div class="set"><span><b>Aggiornamento automatico</b><small>Scarica le statistiche una volta al giorno quando c’è internet</small></span><button class="tg' + (S.autoLive !== false ? " on" : "") + '" id="tga" aria-label="Aggiornamento automatico"></button></div>' +
         '<div class="set"><span><b>Dati ufficiali</b><small>' + NAMES.length + ' eroi · ' + (META.live ? "aggiornati online il " : "snapshot del ") + META.date + '</small></span><button class="btn sm" id="live">Aggiorna</button></div>' +
         '<div class="set"><span><b>Azzera progressi quiz</b><small>XP, serie e record</small></span><button class="btn rd sm" id="rq">Azzera</button></div>' +
         '<p class="hint" style="padding-top:10px;border-top:1px solid var(--line)">Win rate, pick rate, ban rate, counter, compagni e build: dati ufficiali MLBB Academy (via arena.rone.dev, ' + META.win + '). Abilità e titoli: MLBB Academy e Wiki MLBB. Il pulsante Aggiorna scarica le statistiche più recenti (serve internet). Tier e punteggi del draft sono calcolati da MLBB TOP.</p>' +
@@ -3472,6 +3496,7 @@
       $("av").onclick = function () { openPick("Scegli il tuo avatar", NAMES, function (n) { S.avatar = n; save(); setAct(); rProfile() }, { cur: fav }) };
       $("nick").onchange = function () { S.nick = this.value.trim() || "DraftStrategist"; save() };
       $("tg").onclick = function () { S.keep = !S.keep; save(); rProfile() };
+      $("tga").onclick = function () { S.autoLive = S.autoLive === false; save(); rProfile(); autoLive() };
       $("tgm").onclick = function () { S.useMine = S.useMine === false; focus = null; save(); rProfile() };
       $("reset").onclick = function () { S.allyLane = [null, null, null, null, null]; S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; focus = null; save(); go("draft") };
       $("rq").onclick = function () { S.quiz = Object.assign({}, DEF.quiz); QZ = null; save(); rProfile() };
@@ -3710,20 +3735,44 @@
         $("mshot").onclick = function () { var o = document.createElement("div"); o.style.cssText = "position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:12px"; o.innerHTML = '<img src="' + shot + '" alt="" style="max-width:100%;max-height:100%;object-fit:contain">'; o.onclick = function () { o.remove() }; document.body.appendChild(o) }
       }
     }
-    function liveUpdate(btn) {
-      btn.disabled = true; btn.textContent = "..."; var ks = [["all", "all"], ["myth", "mythic"], ["glory", "glory"]], out = {}, n = 0, fail = 0;
+    /* scarica le 3 classifiche (tutti, mitico, gloria); cb(LV o null, classifiche fallite) */
+    function fetchLive(cb) {
+      var ks = [["all", "all"], ["myth", "mythic"], ["glory", "glory"]], out = {}, n = 0, fail = 0;
       ks.forEach(function (k) {
         fetch("https://arena.rone.dev/api/heroes/rank?days=7&rank=" + k[1] + "&size=200").then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json() }).then(function (d) { if (!d || !d.data || !Array.isArray(d.data.records)) throw new Error("risposta non valida"); d.data.records.forEach(function (r) { var x = r.data, h = ID2[x.main_heroid]; if (!h) return; (out[h] = out[h] || {})[k[0]] = [+(x.main_hero_win_rate * 100).toFixed(2), +(x.main_hero_appearance_rate * 100).toFixed(2), +(x.main_hero_ban_rate * 100).toFixed(2)] }) }).catch(function () { fail++ }).then(function () {
           if (++n < 3) return;
-          if (!Object.keys(out).length) { btn.disabled = false; btn.textContent = "Riprova"; alert("Aggiornamento non riuscito: controlla la connessione e riprova."); return }
-          var LV = { rk: out, date: new Date().toLocaleDateString("it-IT") }; try { localStorage.setItem("draftsync_live", JSON.stringify(LV)) } catch (e) { }
-          applyLive(LV); calcMeta(); rProfile(); if (fail) alert("Aggiornamento parziale: classifiche non scaricate " + fail + " su 3, le altre sono aggiornate.")
+          if (!Object.keys(out).length) { cb(null, fail); return }
+          var LV = { rk: out, date: today(), t: Date.now() };
+          /* la classifica in uso diventa quella "precedente" per le tendenze, ma solo se è di un altro giorno */
+          if (META.date !== LV.date) { var old = {}; NAMES.forEach(function (h) { if (HX[h] && HX[h].rk) old[h] = HX[h].rk }); PREV = { rk: old, date: META.date }; try { localStorage.setItem("draftsync_prev", JSON.stringify(PREV)) } catch (e) { } }
+          try { localStorage.setItem("draftsync_live", JSON.stringify(LV)) } catch (e) { }
+          applyLive(LV); calcMeta(); cb(LV, fail)
         })
+      })
+    }
+    function today() { return new Date().toLocaleDateString("it-IT") }
+    function liveUpdate(btn) {
+      btn.disabled = true; btn.textContent = "...";
+      fetchLive(function (LV, fail) {
+        if (!LV) { btn.disabled = false; btn.textContent = "Riprova"; alert("Aggiornamento non riuscito: controlla la connessione e riprova."); return }
+        rProfile(); if (fail) alert("Aggiornamento parziale: classifiche non scaricate " + fail + " su 3, le altre sono aggiornate.")
+      })
+    }
+    /* aggiornamento automatico: una volta al giorno, in silenzio, solo se c'è internet (al massimo un tentativo ogni 3 ore) */
+    function autoLive() {
+      if (S.autoLive === false || !navigator.onLine || (META.live && META.date === today())) return;
+      var last = 0; try { last = +localStorage.getItem("draftsync_live_try") || 0 } catch (e) { }
+      if (Date.now() - last < 3 * 3600e3) return;
+      try { localStorage.setItem("draftsync_live_try", String(Date.now())) } catch (e) { }
+      fetchLive(function (LV) {
+        if (!LV) return;
+        var a = document.activeElement; if ((a && a.tagName === "INPUT") || $("sheet").classList.contains("show")) return;
+        var y = $("v-" + cur).scrollTop; ({ draft: rDraft, tier: rTier, heroes: rHeroes, hero: rHero, quiz: function () { }, profile: rProfile })[cur](); $("v-" + cur).scrollTop = y
       })
     }
     function setAct() { var a = S.avatar && H[S.avatar] ? S.avatar : null; if (a) { $("act").innerHTML = tile(a, "xs"); $("act").setAttribute("aria-label", "Profilo") } }
     function applyTheme() { document.body.classList.toggle("hc", S.theme === "hc") }
-    applyTheme(); setAct(); loadShared(); go("draft", true);
+    applyTheme(); setAct(); loadShared(); go("draft", true); setTimeout(autoLive, 1500); window.addEventListener("online", autoLive);
   </script>
   <script>
     if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
