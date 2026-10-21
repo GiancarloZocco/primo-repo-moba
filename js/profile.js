@@ -4,12 +4,14 @@ function rProfile() {
   var z = S.quiz, v = $("v-profile"), acc = z.tot ? Math.round(100 * z.ok / z.tot) : 0, syn = S.synN ? Math.round(S.synSum / S.synN) : synergy(), fav = S.avatar && H[S.avatar] ? S.avatar : (S.ally.filter(Boolean)[0] || "Khufra");
   v.innerHTML = '<div class="pcard"><span class="ribbon">' + RANKS[rankOf(z.xp)][0].split(" ")[0].toUpperCase() + '</span><div class="hd">' + '<button class="avb" id="av" aria-label="Cambia avatar">' + tile(fav, "lg", String(rankOf(z.xp) + 1) + "★") + '<span class="avc">' + IC.pen + '</span></button>' + '<div style="flex:1;min-width:0"><input class="nick" id="nick" value="' + esc(S.nick) + '" aria-label="Nickname" maxlength="20"><div class="hint">Profilo locale · dati salvati sul dispositivo</div><div class="a" style="font-size:11.5px;margin-top:4px">' + IC.star + ' ' + RANKS[rankOf(z.xp)][0] + ' · ' + z.xp + ' XP</div></div></div>' +
     '<div class="card" style="background:var(--bg);padding:10px 12px"><div class="kv"><span class="k">Ruolo principale</span><span class="k">Precisione quiz</span></div><div class="kv" style="margin-top:4px;align-items:center"><b style="font-family:var(--hd);font-size:15px">' + R[S.main] + '</b><b class="g" style="font-family:var(--hd);font-size:18px">' + acc + '%</b></div></div>' +
-    '<div class="chips" id="mainr" style="margin:0;padding:0"></div></div>' +
+    '<div class="chips" id="mainr" style="margin:0;padding:0"></div><div class="k" style="margin-top:4px">Lane preferita</div><div class="chips" id="plane" style="margin:0;padding:0"></div></div>' +
+    '<div class="card">' + poolBox("ppool") + '</div>' +
     '<div class="kv"><span class="k">' + IC.trend + ' Telemetria draft</span><span class="k">Sessione locale</span></div>' +
     '<div class="stats3"><div><span class="k">Eroi scelti</span><b>' + S.picks + '</b>' + bar(Math.min(100, S.picks * 2), "var(--blue2)") + '</div><div><span class="k">Precisione</span><b>' + acc + '%</b>' + bar(acc, "var(--green)") + '</div><div><span class="k">Sinergia media</span><b class="a">' + syn + '%</b>' + bar(syn, "var(--amber)") + '</div></div>' +
     '<div class="card" id="mpc"></div>' +
     '<button class="btn sm" id="toset" style="width:100%">' + IC.sliders + ' Impostazioni dell\'app</button>';
   Object.keys(R).forEach(function (k) { var b = document.createElement("button"); b.className = "chip" + (S.main === k ? " on" : ""); b.textContent = R[k]; b.onclick = function () { S.main = k; save(); rProfile() }; $("mainr").appendChild(b) });
+  laneChips($("plane"), rProfile); poolBind("ppool", rProfile);
   mpCard();
   $("toset").onclick = function () { go("settings") };
   $("av").onclick = function () { openPick("Scegli il tuo avatar", NAMES, function (n) { S.avatar = n; save(); setAct(); rProfile() }, { cur: fav }) };

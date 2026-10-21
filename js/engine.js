@@ -61,6 +61,9 @@ function mineBonus(h) {
   b = Math.max(0, Math.round(b * 10) / 10);
   return { v: b, t: "È tra i tuoi eroi più usati" + (x.g != null || x.w != null ? " (" + [x.g != null ? x.g + " partite" : "", x.w != null ? x.w + "% di vittorie" : ""].filter(Boolean).join(", ") + ")" : "") }
 }
+/* pool scelto dal giocatore (primo avvio o Profilo): bonus fisso, un po' di più nella sua lane preferita */
+function inPool(h) { return S.useMine !== false && S.pool.indexOf(h) > -1 }
+function poolBonus(h, l) { if (!inPool(h)) return null; var lp = S.lane && l === S.lane; return { v: lp ? 2 : 1.5, t: "È nel tuo pool di eroi" + (lp ? ", nella tua lane preferita" : "") } }
 function compute() {
   var u = used(), gaps = missing(), out = [];
   NAMES.forEach(function (h) {
@@ -83,21 +86,24 @@ function compute() {
     out.push({ n: h, s: Math.round(s * 10) / 10, why: why, risk: risk, parts: parts, warn: warn });
   });
   out.sort(function (a, b) { return b.s - a.s || M[b.n].score - M[a.n].score });
-  cover = laneAssign(); byLane = {}; byLaneList = {};
+  cover = laneAssign(); byLane = {}; byLaneList = {}; var poolBest = {};
   LANES.forEach(function (l) {
     var c = out.filter(function (o) { return H[o.n].l.indexOf(l) > -1 }).map(function (o) {
       var f = fit(o.n, l), main = H[o.n].l[0] === l, pp = o.parts.concat([{ v: 2 * f, t: (main ? "Lane principale" : "Lane secondaria") + ": " + Math.round(f * 100) + "% delle sue build ufficiali sono in " + LN[l] }]);
       if (!cover[l]) pp.push({ v: 0, t: "Copre la " + LN[l] + ", ancora libera" });
-      return Object.assign({}, o, { lane: l, fit: f, s: Math.round((o.s + 2 * f) * 10) / 10, parts: pp })
+      var pb = poolBonus(o.n, l); if (pb) pp.push(pb);
+      return Object.assign({}, o, { lane: l, fit: f, s: Math.round((o.s + 2 * f + (pb ? pb.v : 0)) * 10) / 10, parts: pp })
     }).sort(function (a, b) { return b.s - a.s || M[b.n].score - M[a.n].score });
-    byLaneList[l] = c.slice(0, 6); if (c[0]) byLane[l] = c[0]
+    byLaneList[l] = c.slice(0, 6); if (c[0]) byLane[l] = c[0];
+    c.forEach(function (r) { if (inPool(r.n) && (!poolBest[r.n] || r.s > poolBest[r.n].s)) poolBest[r.n] = r })
   });
+  poolRecs = Object.keys(poolBest).map(function (h) { return poolBest[h] }).sort(function (a, b) { return b.s - a.s });
   var free = LANES.filter(function (l) { return !cover[l] });
   if (S.lanefit && free.length && S.ally.indexOf(null) > -1) recs = free.map(function (l) { return byLane[l] }).filter(Boolean).sort(function (a, b) { return b.s - a.s });
   else recs = LANES.map(function (l) { return byLane[l] }).filter(Boolean).sort(function (a, b) { return b.s - a.s }).filter(function (r, i, a) { return a.findIndex(function (z) { return z.n === r.n }) === i }).slice(0, 4);
   if (!focus || !focusRec()) { focus = recs[0] && recs[0].n; focusL = recs[0] && recs[0].lane }
 }
-var LANES = ["o", "e", "m", "j", "r"], byLane = {}, byLaneList = {}, cover = {}, laneIdx = {}, focusL = null, lMore = false;
+var LANES = ["o", "e", "m", "j", "r"], poolRecs = [], byLane = {}, byLaneList = {}, cover = {}, laneIdx = {}, focusL = null, lMore = false;
 var LS3 = { o: "GOLD", e: "EXP", m: "MID", j: "JGL", r: "ROAM" };
 function laneAssign() {
   var map = {}, idx = {}, fixed = {}, al = [], best = null;

@@ -54,7 +54,7 @@ async function run() {
     });
     var errs = [], p = await newPage(ctx, errs);
     await p.goto(URL0);
-    await p.waitForFunction(function () { return window.NAMES && document.querySelector("#v-home.on") });
+    await p.waitForFunction(function () { return window.NAMES && document.querySelector("#v-start.on") });
     arena.ids = await p.evaluate(function () { return Object.keys(HX).map(function (h) { return HX[h].id }) });
 
     section("File generati");
@@ -69,6 +69,7 @@ async function run() {
     var mg = await pm.evaluate(function () { save(); return { old: localStorage.getItem("draftsync") || localStorage.getItem("draftsync_prev"), s: JSON.parse(localStorage.getItem("mlbb-top")), prev: !!localStorage.getItem("mlbb-top-prev") } });
     ok(!mg.old && mg.s.nick === "Vecchio" && mg.s.ally[0] === "Layla" && mg.s.quiz.xp === 120 && mg.prev, "i dati salvati coi vecchi nomi (draftsync) passano ai nuovi senza perdite");
     ok(mg.s.v === 2, "i salvataggi hanno il numero di versione dello schema (" + mg.s.v + ")");
+    ok(await pm.evaluate(function () { return cur === "home" && S.onb === true }), "chi aggiorna l'app non rivede la configurazione iniziale");
     await ctxm.close();
 
     section("Avvio");
@@ -76,8 +77,22 @@ async function run() {
     ok(info.heroes > 100, "dati caricati: " + info.heroes + " eroi, " + info.items + " oggetti");
     ok(await p.evaluate(function () { return getComputedStyle(document.querySelector(".app")).display === "flex" && getComputedStyle(document.body).backgroundColor === "rgb(6, 8, 12)" }), "foglio di stile caricato (css/app.css)");
     ok(errs.length === 0, "nessun errore JavaScript all'avvio" + (errs.length ? ": " + errs.join(" | ") : ""));
-    var first = await p.evaluate(function () { var home = cur === "home"; go("draft"); return { home: home, picks: used().length, hint: /Inizia dai ban/.test(document.querySelector("#v-draft").textContent) } });
-    ok(first.home, "l'app si apre sulla Home");
+    var ob = await p.evaluate(function () {
+      var r = { start: cur === "start" && !!document.getElementById("spool") };
+      [].filter.call(document.querySelectorAll("#srole button"), function (b) { return b.textContent === "Tiratore" })[0].click();
+      [].filter.call(document.querySelectorAll("#slane button"), function (b) { return b.textContent === "Gold Lane" })[0].click();
+      r.sugg = [].map.call(document.querySelectorAll("#spools button"), function (b) { return b.textContent.replace("+", "") });
+      document.querySelector("#spools button").click(); document.querySelector("#spool .pch.add").click();
+      r.sheet = document.getElementById("sheet").classList.contains("show"); document.querySelector("#grid button").click();
+      r.pool = S.pool.slice(); document.getElementById("snick").value = "Tester"; document.getElementById("sgo").click();
+      r.after = cur + "|" + S.onb + "|" + S.main + "|" + S.lane + "|" + S.nick + "|" + JSON.parse(localStorage.getItem("mlbb-top")).pool.length;
+      return r;
+    });
+    ok(ob.start, "primo avvio: si apre la configurazione iniziale");
+    ok(ob.sugg.length && ob.pool.length === 2 && ob.pool[0] === ob.sugg[0].trim(), "pool: eroi suggeriti per la lane e aggiunta dal selettore (" + ob.pool.join(", ") + ")");
+    ok(ob.after === "home|true|X|o|Tester|2" && ob.sheet, "a fine configurazione si va alla Home con ruolo, lane, nickname e pool salvati (" + ob.after + ")");
+    var first = await p.evaluate(function () { S.pool = []; save(); var home = cur === "home"; go("draft"); return { home: home, picks: used().length, hint: /Inizia dai ban/.test(document.querySelector("#v-draft").textContent) } });
+    ok(first.home, "dopo la configurazione l'app è sulla Home");
     ok(first.picks === 0 && first.hint, "prima apertura: draft vuoto con il suggerimento iniziale");
 
     section("Schermate");
@@ -128,6 +143,20 @@ async function run() {
     ok(d.r0 > 0 && d.rec, "consigli presenti (consigliato: " + d.rec + ")");
     ok(!d.used, "il consigliato non è già in campo");
     ok(d.lanes === 5, "5 righe di lane");
+    var pl = await p.evaluate(function () {
+      var c = H[NAMES[50]].l.charAt(0), h = NAMES.filter(function (x) { return used().indexOf(x) < 0 && H[x].l.indexOf(c) > -1 })[5];
+      S.pool = []; compute(); var a = poolRecs.length;
+      S.pool = [h]; S.lane = c; go("draft"); var r = poolRecs[0], row = document.querySelectorAll("#poolr .lcand").length;
+      var bonus = r && r.parts.some(function (x) { return /pool/.test(x.t) && x.v === 2 });
+      openPick("x", free(), function () { }, { quick: 1 }); var g = document.querySelector("#grid .ghd").textContent, g1 = document.querySelector("#grid .ghd + button").textContent; document.getElementById("sheet").classList.remove("show");
+      S.useMine = false; compute(); var off = poolRecs.length; S.useMine = true;
+      S.pool = []; S.lane = null; save(); go("draft");
+      return { a: a, h: h, r: r && r.n, lane: r && r.lane === c, row: row, bonus: bonus, g: g, g1: g1, off: off };
+    });
+    ok(pl.a === 0 && pl.r === pl.h && pl.lane && pl.row === 1, "pool: riga «Dal tuo pool» nel draft con " + pl.h);
+    ok(pl.bonus, "pool: bonus nei consigli, più alto nella lane preferita");
+    ok(pl.g === "Il tuo pool" && pl.g1 === pl.h, "pool: primo gruppo nel selettore degli eroi");
+    ok(pl.off === 0, "pool: si disattiva con «Usa i miei eroi nei consigli»");
     var picked = await p.evaluate(function () { var n = focusRec().n; document.getElementById("pk").click(); return S.ally.indexOf(n) > -1 });
     ok(picked, "il pulsante Scegli mette il consigliato negli alleati");
 

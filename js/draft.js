@@ -6,7 +6,7 @@ function rDraft() {
     '<div class="srt" style="margin-top:0"><span class="k">Guidato:</span><div class="seg" id="gd"></div></div>' + (S.guide ? '<div class="srt" style="margin-top:0"><span class="k">Ban:</span><div class="seg" id="gbn"></div></div>' : '') + guideBox() + resultBox() +
     (used().length || S.guide || gameMsg ? '' : '<div class="alert"><span class="a">' + IC.bulb + '</span><span>Inizia dai ban, poi aggiungi gli eroi nemici man mano che li scelgono: i consigli per ogni lane si aggiornano a ogni pick.</span></div>') +
     '<div class="teams"><div class="team ally"><h3>Alleati</h3><div id="ally"></div></div><div class="team enemy"><h3>Nemici</h3><div id="enemy"></div></div></div><div class="bans" id="bans"></div>' +
-    '<div class="kv" style="align-items:center"><span class="k">Consigliati per lane</span><button class="lnk" id="lf">' + (S.lanefit ? "Solo lane libere ✓" : "Tutte le lane") + '</button></div><div class="lrows" id="lanes"></div><button class="lnk" id="lmore" style="align-self:center">' + (lMore ? "Mostra 3 per lane" : "Mostra 6 per lane") + '</button><div id="rec"></div>' +
+    '<div class="kv" style="align-items:center"><span class="k">Consigliati per lane</span><button class="lnk" id="lf">' + (S.lanefit ? "Solo lane libere ✓" : "Tutte le lane") + '</button></div><div class="lrows" id="lanes"></div><button class="lnk" id="lmore" style="align-self:center">' + (lMore ? "Mostra 3 per lane" : "Mostra 6 per lane") + '</button>' + (poolRecs.length && !full ? '<div class="card prow"><div class="kv"><b class="hh">' + IC.star + ' Dal tuo pool</b><span class="k">' + poolRecs.length + ' disponibili</span></div><div class="hrow" id="poolr"></div></div>' : '') + '<div id="rec"></div>' +
     '<div class="two"><button class="btn sm" id="add"' + (en().length >= 5 ? " disabled" : "") + '>+ Nemico</button><button class="btn sm" id="det">' + (detOpen || S.keep ? "Chiudi analisi" : "Analisi dettagliata") + '</button></div><div class="two" style="margin-top:8px"><button class="btn sm" id="rp">Azzera pick</button><button class="btn sm" id="share"' + (used().length ? "" : " disabled") + '>Condividi draft</button></div><div id="detail"></div><div id="alert"></div>';
   slots($("ally"), S.ally, 1); slots($("enemy"), S.enemy, 0); banRows();
   LANES.forEach(function (l) {
@@ -15,11 +15,16 @@ function rDraft() {
     row.innerHTML = '<div class="lh"><b>' + LS3[l] + '</b><small>' + (al ? "✓ " + esc(al) : "libera") + '</small></div><div class="lc3"></div>';
     list.forEach(function (r) {
       var c = document.createElement("button"); c.className = "lcand" + (r.n === focus && r.lane === focusL ? " on" : "");
-      c.innerHTML = tile(r.n, "sm") + '<b>' + esc(r.n) + '</b><small class="a">' + r.s + ' pt</small>'; c.setAttribute("aria-label", r.n + " in " + LN[l] + ", " + r.s + " punti");
+      c.innerHTML = tile(r.n, "sm") + '<b>' + (inPool(r.n) ? '<i class="pst" title="Nel tuo pool">★</i>' : '') + esc(r.n) + '</b><small class="a">' + r.s + ' pt</small>'; c.setAttribute("aria-label", r.n + " in " + LN[l] + ", " + r.s + " punti");
       c.onclick = function () { focus = r.n; focusL = l; rDraft() }; row.lastChild.appendChild(c)
     });
     if (!list.length) row.lastChild.innerHTML = '<small class="hint">Nessun eroe disponibile</small>';
     $("lanes").appendChild(row)
+  });
+  if ($("poolr")) poolRecs.slice(0, 3).forEach(function (r) {
+    var c = document.createElement("button"); c.className = "lcand" + (r.n === focus && r.lane === focusL ? " on" : "");
+    c.innerHTML = tile(r.n, "sm") + '<b>' + esc(r.n) + '</b><small class="a">' + LS3[r.lane] + ' · ' + r.s + ' pt</small>';
+    c.onclick = function () { focus = r.n; focusL = r.lane; rDraft() }; $("poolr").appendChild(c)
   });
   var m = focusRec();
   if (m) {

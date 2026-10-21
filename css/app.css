@@ -3090,3 +3090,14 @@ ul.news {
   font-size: 12px;
   line-height: 1.45
 }
+
+/* pool di eroi (primo avvio, Profilo, draft) */
+.pool { display: flex; flex-wrap: wrap; gap: 6px; }
+.pch { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
+.pch .tile { width: 24px; height: 24px; border-radius: 50%; font-size: 9px; }
+.pch i { font-style: normal; color: var(--mute); font-size: 14px; line-height: 1; }
+.pch.on { border-color: var(--amber); }
+.pch.on i { color: var(--amber); }
+.pch.add { padding: 6px 12px; color: var(--blue2); border-style: dashed; }
+.pst { font-style: normal; color: var(--amber); margin-right: 2px; }
+.prow { padding: 10px 12px; }

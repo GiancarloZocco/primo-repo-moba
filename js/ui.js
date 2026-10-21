@@ -36,7 +36,7 @@ var ABI = { m: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stro
 /* schermate: gruppo nella barra in basso (g), nome nella barra del gruppo (t, se manca non compare),
    sottotitolo nell'intestazione (sub) e funzione che la disegna (r, cercata per nome perché sta in un altro file) */
 var SCR = {
-  home: { g: "home", sub: "Tactical Telemetry", r: "rHome" },
+  home: { g: "home", sub: "Tactical Telemetry", r: "rHome" }, start: { g: "home", sub: "Benvenuto", r: "rStart" },
   news: { g: "home", sub: "Novità", r: "rNews" },
   draft: { g: "play", t: "Draft", sub: "Draft live", r: "rDraft" },
   games: { g: "play", t: "Storico", sub: "Storico partite", r: "rGames" },
@@ -93,9 +93,12 @@ function fillPick() {
   }, head = function (t) { var d = document.createElement("div"); d.className = "ghd"; d.textContent = t; g.appendChild(d) };
   if (!q && pk.quick) {
     var rc = (S.recent || []).filter(function (h) { return pk.list.indexOf(h) > -1 && h !== pk.cur }).slice(0, 6), mine = (S.mp && S.mp.h || []).map(function (z) { return z && z.n }).filter(function (h) { return h && pk.list.indexOf(h) > -1 && rc.indexOf(h) < 0 && h !== pk.cur });
+    var pl = S.pool.filter(function (h) { return pk.list.indexOf(h) > -1 && h !== pk.cur });
+    rc = rc.filter(function (h) { return pl.indexOf(h) < 0 }); mine = mine.filter(function (h) { return pl.indexOf(h) < 0 });
+    if (pl.length) { head("Il tuo pool"); pl.forEach(btn) }
     if (rc.length) { head("Usati di recente"); rc.forEach(btn) }
     if (mine.length) { head("I tuoi eroi"); mine.forEach(btn) }
-    if (rc.length || mine.length) head("Tutti gli eroi");
+    if (pl.length || rc.length || mine.length) head("Tutti gli eroi");
   }
   pk.list.filter(function (h) { return h.toLowerCase().indexOf(q) > -1 }).forEach(btn)
 }

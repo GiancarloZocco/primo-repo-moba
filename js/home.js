@@ -3,6 +3,8 @@
 var NEWS = [
   {
     v: "2026-10-21", t: "Nuova organizzazione e tante funzioni", items: [
+      "Primo avvio guidato: scegli ruolo, lane preferita e il tuo pool di eroi.",
+      "Pool di eroi: bonus nei consigli del draft, riga «Dal tuo pool» e primi nel selettore (si modifica dal Profilo).",
       "Home: riassunto di draft, sfida del giorno, eroi in crescita e ultime partite.",
       "Barra in basso a gruppi: Gioca (Draft, Storico), Studia (Tier list, Eroi, Confronto, Quiz), Io (Profilo, Impostazioni).",
       "Impostazioni in una schermata a parte.",
@@ -29,6 +31,7 @@ function rHome() {
   var news = S.newsSeen !== NEWS[0].v;
   v.innerHTML = '<div class="ttl"><div><h2>Ciao, ' + esc(S.nick) + '</h2><p>' + RANKS[ri][0] + ' · ' + z.xp + ' XP · dati ' + (META.live ? "live " : "") + META.date + '</p></div>' + tile(S.avatar && H[S.avatar] ? S.avatar : "Layla", "") + '</div>' +
     (news ? '<button class="card hl hnews" id="hnews"><b>' + IC.star + ' Novità: ' + esc(NEWS[0].t) + '</b><small>Tocca per vedere cosa è cambiato</small></button>' : '') +
+    (!S.onb ? '<button class="card hl hnews" id="hstart"><b>' + IC.sliders + ' Configura l\'app</b><small>Ruolo, lane preferita e il tuo pool di eroi</small></button>' : '') +
     '<button class="btn p" id="hdraft" style="width:100%">' + IC.pad + ' ' + (inDraft ? "Continua il draft (" + al + "/5 alleati · " + ne + "/5 nemici)" : "Nuovo draft") + '</button>' +
     '<div class="card"><div class="kv"><b class="hh">' + IC.star + ' Sfida del giorno</b>' + (d ? '<span class="pill gr">' + d.res.filter(Boolean).length + ' / ' + d.res.length + '</span>' : '<span class="pill am">Da giocare</span>') + '</div>' +
     '<p class="hint" style="margin:6px 0 8px">' + (d ? "Fatta! Giorni di fila: " + S.dstreak + ". Domani ce n'è una nuova." : "5 domande uguali per tutti oggi.") + '</p><button class="btn sm" id="hquiz" style="width:100%">' + (d ? "Vai al quiz" : "Gioca la sfida") + '</button></div>' +
@@ -39,6 +42,7 @@ function rHome() {
     '<div class="two"><button class="btn sm" id="hcmp">' + IC.swap + ' Confronta eroi</button><button class="btn sm" id="htier">Tier list</button></div>';
   top.forEach(function (h) { var b = document.createElement("button"); b.className = "lcand"; b.innerHTML = tile(h, "sm") + '<b>' + esc(h) + '</b><small class="' + (mv.length ? "g" : "a") + '">' + (mv.length ? "+" + dWr(h).toFixed(1) : pc(M[h].wr)) + '</small>'; b.onclick = function () { openHero(h) }; $("htop").appendChild(b) });
   if ($("hnews")) $("hnews").onclick = function () { go("news") };
+  if ($("hstart")) $("hstart").onclick = function () { go("start") };
   $("hdraft").onclick = function () { go("draft") };
   $("hquiz").onclick = function () { if (!d && (!QZ || !QZ.daily)) newRound(true); go("quiz") };
   $("hgames").onclick = function () { go("games") };
