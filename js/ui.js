@@ -33,20 +33,49 @@ var IC = {
 var ABI = { m: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>', r: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>', t: IC.shield, c: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M5 19l3-3M16 8l3-3"/></svg>', s: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-8-4.5-8-11a5 5 0 0110-1 5 5 0 0110 1c0 6.5-8 11-8 11z"/></svg>', p: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg>', b: IC.bolt };
 
 /* ---------- navigazione ---------- */
-var NAV = [["draft", "Draft", IC.pad], ["tier", "Tier List", '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M2 20h20"/></svg>'], ["heroes", "Heroes", '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6M16 4.5a3.5 3.5 0 010 7M18 14c2.4.6 4 2.9 4 6"/></svg>'], ["quiz", "Quiz", '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="7"/><path d="M9.5 8.5a2.5 2.5 0 015 .5c0 1.5-2.5 2-2.5 3.5M12 15h.01M9 20h6"/></svg>'], ["profile", "Profile", '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3"/><path d="M6.5 18.5c1.2-2 3.2-3 5.5-3s4.3 1 5.5 3"/></svg>']];
-NAV.forEach(function (n) { var b = document.createElement("button"); b.innerHTML = n[2] + "<span>" + n[1] + "</span>"; b.dataset.v = n[0]; b.onclick = function () { go(n[0]) }; $("nav").appendChild(b) });
-var SUB = { draft: "Tactical Telemetry", tier: "Tactical Telemetry", heroes: "Database Eroi", quiz: "Prova della Conoscenza", profile: "Profilo & Sistema" };
+/* schermate: gruppo nella barra in basso (g), nome nella barra del gruppo (t, se manca non compare),
+   sottotitolo nell'intestazione (sub) e funzione che la disegna (r, cercata per nome perché sta in un altro file) */
+var SCR = {
+  home: { g: "home", sub: "Tactical Telemetry", r: "rHome" },
+  news: { g: "home", sub: "Novità", r: "rNews" },
+  draft: { g: "play", t: "Draft", sub: "Draft live", r: "rDraft" },
+  games: { g: "play", t: "Storico", sub: "Storico partite", r: "rGames" },
+  tier: { g: "study", t: "Tier list", sub: "Meta tier list", r: "rTier" },
+  heroes: { g: "study", t: "Eroi", sub: "Database", r: "rHeroes" },
+  hero: { g: "study", r: "rHero" },
+  cmp: { g: "study", t: "Confronto", sub: "Confronto 1 contro 1", r: "rCmp" },
+  quiz: { g: "study", t: "Quiz", sub: "Prova della conoscenza", r: "rQuiz" },
+  profile: { g: "me", t: "Profilo", sub: "Profilo giocatore", r: "rProfile" },
+  settings: { g: "me", t: "Impostazioni", sub: "Impostazioni", r: "rSettings" }
+};
+var NAVG = [
+  ["home", "Home", '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>'],
+  ["play", "Gioca", IC.pad],
+  ["study", "Studia", '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 5h7a3 3 0 013 3v12a2 2 0 00-2-2H2zM22 5h-7a3 3 0 00-3 3v12a2 2 0 012-2h8z"/></svg>'],
+  ["me", "Io", '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3"/><path d="M6.5 18.5c1.2-2 3.2-3 5.5-3s4.3 1 5.5 3"/></svg>']
+];
+var lastIn = { home: "home", play: "draft", study: "tier", me: "profile" };
+/* una sezione per ogni schermata, creata qui così index.html resta corto */
+Object.keys(SCR).forEach(function (k) { if (!$("v-" + k)) { var sec = document.createElement("section"); sec.className = "scr"; sec.id = "v-" + k; $("nav").parentNode.insertBefore(sec, $("nav")) } });
+NAVG.forEach(function (n) { var b = document.createElement("button"); b.innerHTML = n[2] + "<span>" + n[1] + "</span>"; b.dataset.g = n[0]; b.onclick = function () { go(lastIn[n[0]]) }; $("nav").appendChild(b) });
+function rerender() { var f = window[SCR[cur].r]; if (f) f() }
 function go(v, noPush) {
+  if (!SCR[v]) v = "home";
   if (!noPush && v !== cur) hist.push(cur); cur = v;
-  ["draft", "tier", "heroes", "hero", "quiz", "profile", "cmp"].forEach(function (x) { $("v-" + x).classList.toggle("on", x === v) });
-  var nv = v === "hero" || v === "cmp" ? "heroes" : v;[].forEach.call($("nav").children, function (b) { b.classList.toggle("on", b.dataset.v === nv) });
-  $("sub").textContent = v === "hero" ? "• Scheda eroe: " + hero : v === "cmp" ? "Confronto 1 contro 1" : SUB[v];
+  var g = SCR[v].g; if (SCR[v].t || v === "home") lastIn[g] = v;
+  Object.keys(SCR).forEach(function (x) { var el = $("v-" + x); if (el) el.classList.toggle("on", x === v) });
+  [].forEach.call($("nav").children, function (b) { b.classList.toggle("on", b.dataset.g === g) });
+  var tabs = Object.keys(SCR).filter(function (k) { return SCR[k].g === g && SCR[k].t }), sn = $("subnav");
+  sn.innerHTML = ""; sn.classList.toggle("show", tabs.length > 1);
+  tabs.forEach(function (k) { var b = document.createElement("button"); b.textContent = SCR[k].t; b.className = k === v || (v === "hero" && k === "heroes") ? "on" : ""; b.onclick = function () { go(k) }; sn.appendChild(b) });
+  $("sub").textContent = v === "hero" ? "• Scheda eroe: " + hero : SCR[v].sub || "";
   $("back").classList.toggle("hide", !hist.length);
-  ({ draft: rDraft, tier: rTier, heroes: rHeroes, hero: rHero, quiz: rQuiz, profile: rProfile, cmp: rCmp })[v]();
+  rerender();
   $("v-" + v).scrollTop = 0
 }
 $("back").onclick = function () { if (hist.length) go(hist.pop(), true) };
-$("act").onclick = function () { go("profile") };
+/* con l'avatar scelto il pulsante porta al profilo, altrimenti (icona impostazioni) alle impostazioni */
+$("act").onclick = function () { go(S.avatar && H[S.avatar] ? "profile" : "settings") };
 function openHero(h, tab) { hero = h; htab = tab || "ab"; go("hero") }
 
 /* ---------- picker ---------- */

@@ -54,7 +54,7 @@ async function run() {
     });
     var errs = [], p = await newPage(ctx, errs);
     await p.goto(URL0);
-    await p.waitForFunction(function () { return window.NAMES && document.querySelector("#v-draft.on") });
+    await p.waitForFunction(function () { return window.NAMES && document.querySelector("#v-home.on") });
     arena.ids = await p.evaluate(function () { return Object.keys(HX).map(function (h) { return HX[h].id }) });
 
     section("File generati");
@@ -76,7 +76,8 @@ async function run() {
     ok(info.heroes > 100, "dati caricati: " + info.heroes + " eroi, " + info.items + " oggetti");
     ok(await p.evaluate(function () { return getComputedStyle(document.querySelector(".app")).display === "flex" && getComputedStyle(document.body).backgroundColor === "rgb(6, 8, 12)" }), "foglio di stile caricato (css/app.css)");
     ok(errs.length === 0, "nessun errore JavaScript all'avvio" + (errs.length ? ": " + errs.join(" | ") : ""));
-    var first = await p.evaluate(function () { return { picks: used().length, hint: /Inizia dai ban/.test(document.querySelector("#v-draft").textContent) } });
+    var first = await p.evaluate(function () { var home = cur === "home"; go("draft"); return { home: home, picks: used().length, hint: /Inizia dai ban/.test(document.querySelector("#v-draft").textContent) } });
+    ok(first.home, "l'app si apre sulla Home");
     ok(first.picks === 0 && first.hint, "prima apertura: draft vuoto con il suggerimento iniziale");
 
     section("Schermate");
@@ -96,6 +97,25 @@ async function run() {
     }
     ok(!bad.length, "schede eroe (" + heroes.length + " eroi × 4 schede)" + (bad.length ? ": vuote " + bad.join(", ") : ""));
     ok(errs.length === 0, "nessun errore JavaScript nelle schermate" + (errs.length ? ": " + errs.join(" | ") : ""));
+
+    section("Home e navigazione");
+    var nv = await p.evaluate(function () {
+      go("home");
+      var groups = [].map.call(document.querySelectorAll("#nav button"), function (b) { return b.textContent }).join(","), r = { groups: groups };
+      document.querySelector('#nav button[data-g="study"]').click(); r.study = cur + "|" + [].map.call(document.querySelectorAll("#subnav button"), function (b) { return b.textContent }).join(",");
+      document.querySelector('#nav button[data-g="play"]').click(); r.play = cur + "|" + [].map.call(document.querySelectorAll("#subnav button"), function (b) { return b.textContent }).join(",");
+      document.querySelector('#nav button[data-g="me"]').click(); [].filter.call(document.querySelectorAll("#subnav button"), function (b) { return b.textContent === "Impostazioni" })[0].click(); r.set = cur === "settings" && !!document.getElementById("bkx") && !document.querySelector("#v-profile #bkx");
+      go("heroes"); openHero("Layla"); r.heroNav = document.querySelector("#nav button.on").dataset.g + "|" + document.querySelector("#subnav button.on").textContent;
+      go("home"); document.getElementById("hdraft").click(); r.draft = cur;
+      S.newsSeen = "vecchia"; go("home"); r.news1 = !!document.getElementById("hnews"); document.getElementById("hnews").click(); r.newsPage = cur === "news" && document.querySelectorAll("#v-news li").length > 5; go("home"); r.news2 = !!document.getElementById("hnews");
+      return r;
+    });
+    ok(nv.groups === "Home,Gioca,Studia,Io", "barra in basso a gruppi: " + nv.groups);
+    ok(/^(tier|heroes|cmp|quiz)\|Tier list,Eroi,Confronto,Quiz$/.test(nv.study) && /^(draft|games)\|Draft,Storico$/.test(nv.play), "barra del gruppo: Studia e Gioca con le loro schermate (" + nv.study + " · " + nv.play + ")");
+    ok(nv.set, "Impostazioni in una schermata a parte (non più nel Profilo)");
+    ok(nv.heroNav === "study|Eroi", "la scheda eroe resta sotto Studia → Eroi");
+    ok(nv.draft === "draft", "dalla Home si va al draft");
+    ok(nv.news1 && nv.newsPage && !nv.news2, "avviso Novità in Home finché non apri la pagina, poi sparisce");
 
     section("Draft");
     var d = await p.evaluate(function () {
@@ -161,7 +181,7 @@ async function run() {
       var after = { games: S.games.length, me: S.games[0].me, r: S.games[0].r, empty: used().length === 0, msg: /Partita salvata: vittoria con/.test(document.querySelector("#v-draft").textContent) };
       S.ally = five.slice(); S.enemy = foes.slice(); rDraft(); document.getElementById("glose").click();
       S.ally = five.slice(); S.enemy = foes.slice(); rDraft(); document.getElementById("gwin").click();
-      go("profile"); var t = document.querySelector("#v-profile").textContent;
+      go("games"); var t = document.querySelector("#v-games").textContent;
       return { before: before, shown: shown, after: after, n: S.games.length, prof: /Partite segnate3/.test(t) && /Vittorie2 \(67%\)/.test(t), mine: /I tuoi eroi/.test(t), team: /Con questi in squadra vinci di più/.test(t), dots: document.querySelectorAll(".gdots i").length };
     });
     ok(!hs.before && hs.shown, "Vittoria/Sconfitta compaiono solo con 5 alleati");
@@ -175,7 +195,7 @@ async function run() {
       var wait = function () { return new Promise(function (r) { setTimeout(r, 120) }) };
       openHero("Layla"); document.getElementById("cmpb").click(); await wait();
       [].filter.call(document.querySelectorAll("#grid button"), function (b) { return b.textContent === "Diggie" })[0].click(); await wait();
-      var t = document.querySelector("#v-cmp").textContent, r = { cur: cur, a: cmpA, b: cmpB, rows: document.querySelectorAll(".cmpt .cr").length, duel: /Diggie è favorito: Layla ha -2\.4%/.test(t), nav: document.querySelector('#nav button.on').dataset.v };
+      var t = document.querySelector("#v-cmp").textContent, r = { cur: cur, a: cmpA, b: cmpB, rows: document.querySelectorAll(".cmpt .cr").length, duel: /Diggie è favorito: Layla ha -2\.4%/.test(t), nav: document.querySelector('#nav button.on').dataset.g };
       document.getElementById("csw").click(); r.sw = cmpA === "Diggie" && cmpB === "Layla" && /Diggie è favorito: Diggie ha \+2\.4%/.test(document.querySelector("#v-cmp").textContent);
       r.h2h = [h2h("Diggie", "Layla"), h2h("Layla", "Diggie")];
       hsub = "her"; go("heroes"); document.getElementById("cmpo").click(); await wait(); document.querySelectorAll("#grid button")[0].click(); await wait(); document.querySelectorAll("#grid button")[0].click(); await wait();
@@ -185,7 +205,7 @@ async function run() {
     ok(cm.cur === "cmp" && cm.a === "Layla" && cm.b === "Diggie" && cm.rows >= 8, "dalla scheda di Layla: confronto con Diggie (" + cm.rows + " righe)");
     ok(cm.duel && cm.sw, "scontro diretto dai dati ufficiali, anche dopo lo scambio (Diggie +2.4% contro Layla)");
     ok(cm.h2h[0] === 2.44 && cm.h2h[1] === -2.44, "il calcolo dello scontro è simmetrico");
-    ok(cm.nav === "heroes", "nella barra resta evidenziato Heroes");
+    ok(cm.nav === "study", "nella barra resta evidenziato Studia");
     ok(cm.db, "dal Database: scegli due eroi e si apre il confronto");
 
     section("Quiz: sfida del giorno");
@@ -218,7 +238,7 @@ async function run() {
     ok(tx.on && tx.ab, "abilità in italiano (scheda di Layla)");
     ok(tx.mu && tx.bd, "matchup ed emblemi della build in italiano");
     ok(tx.itm && tx.hint, "oggetti del database in italiano, con la nota sulla traduzione");
-    await p.evaluate(function () { go("profile") });
+    await p.evaluate(function () { go("settings") });
     await p.click("#lang button:nth-child(2)"); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
     var en = await p.evaluate(function () { openHero("Layla", "ab"); return { on: ITON, ab: /Physical Damage/.test(document.querySelector("#hbody").textContent) } });
     ok(!en.on && en.ab, "Profilo → Testi di gioco: Originale riporta i testi in inglese");
@@ -260,15 +280,15 @@ async function run() {
     var ocr = await p.evaluate(function () { delete window.Tesseract; document.getElementById("mocr").click(); return document.getElementById("mst").textContent });
     await ctx.setOffline(false);
     ok(/Sei offline/.test(ocr), "OCR senza rete: messaggio chiaro invece di bloccarsi");
-    await p.evaluate(function () { S.games = [{ d: 1, r: 1, a: NAMES.slice(0, 5), e: NAMES.slice(5, 10), me: NAMES[0] }]; S.nick = "Backup1"; save(); go("profile") });
+    await p.evaluate(function () { S.games = [{ d: 1, r: 1, a: NAMES.slice(0, 5), e: NAMES.slice(5, 10), me: NAMES[0] }]; S.nick = "Backup1"; save(); go("settings") });
     var dl = await Promise.all([p.waitForEvent("download"), p.click("#bkx")]);
     var bpath = await dl[0].path(), bk = JSON.parse(fs.readFileSync(bpath, "utf8"));
     ok(bk.app === "mlbb-top" && bk.S.nick === "Backup1" && bk.S.games.length === 1 && bk.shot === PNG, "Esporta: file con profilo, storico partite e screenshot (" + dl[0].suggestedFilename() + ")");
-    await p.evaluate(async function () { S.nick = "Altro"; S.games = []; save(); await shotSet(null); SHOT = ""; go("profile") });
+    await p.evaluate(async function () { S.nick = "Altro"; S.games = []; save(); await shotSet(null); SHOT = ""; go("settings") });
     await p.setInputFiles("#bkf", bpath); await p.waitForTimeout(800); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
     var rs = await p.evaluate(async function () { return { nick: S.nick, games: S.games.length, shot: (await shotGet()) || "" } });
     ok(rs.nick === "Backup1" && rs.games === 1 && rs.shot === PNG, "Importa: dopo la conferma tornano profilo, storico e screenshot");
-    await p.evaluate(function () { go("profile") });
+    await p.evaluate(function () { go("settings") });
     var bad = path.join(require("os").tmpdir(), "non-backup.json"); fs.writeFileSync(bad, '{"x":1}');
     await p.setInputFiles("#bkf", bad); await p.waitForTimeout(300);
     ok(await p.evaluate(function () { return /non è un backup/.test(document.getElementById("toasts").textContent) && S.nick === "Backup1" }), "un file sbagliato viene rifiutato senza toccare i dati");
@@ -291,11 +311,11 @@ async function run() {
 
     section("Aggiornamento live (simulato)");
     p.lastDialog = null; arena.mode = "fail";
-    await p.evaluate(function () { localStorage.removeItem("mlbb-top-live"); go("profile") });
+    await p.evaluate(function () { localStorage.removeItem("mlbb-top-live"); go("settings") });
     await p.click("#live"); await p.waitForTimeout(500);
     ok(await p.evaluate(function () { return /non riuscito/.test(document.getElementById("toasts").textContent) && !localStorage.getItem("mlbb-top-live") }), "server in errore: avviso dentro l'app, niente salvato");
     arena.mode = "ok"; p.lastDialog = null;
-    await p.evaluate(function () { go("profile") });
+    await p.evaluate(function () { go("settings") });
     await p.click("#live"); await p.waitForFunction(function () { return !!localStorage.getItem("mlbb-top-live") }, null, { timeout: 5000 }).catch(function () { });
     var lv = await p.evaluate(function () { var x = JSON.parse(localStorage.getItem("mlbb-top-live") || "null"); return x && Object.keys(x.rk).length });
     ok(lv > 100, "server ok: statistiche salvate per " + lv + " eroi");
@@ -307,7 +327,7 @@ async function run() {
     ok(tr.arrows > 20, "frecce di tendenza nella Tier list: " + tr.arrows);
     ok(tr.radar, "il riquadro Radar elenca chi sale e chi scende");
     ok(tr.hero <= 1, "la scheda eroe mostra la variazione del win rate se c'è");
-    await p.evaluate(function () { go("profile") }); await p.click("#live"); await p.waitForTimeout(500);
+    await p.evaluate(function () { go("settings") }); await p.click("#live"); await p.waitForTimeout(500);
     var prev2 = await p.evaluate(function () { return JSON.parse(localStorage.getItem("mlbb-top-prev") || "null").date });
     ok(prev2 === "20/10/2026", "un secondo aggiornamento nello stesso giorno non cancella il confronto");
     var ctx3 = await browser.newContext(), errs3 = [], p3 = await newPage(ctx3, errs3), calls = { n: 0 };

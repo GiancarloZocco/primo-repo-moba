@@ -44,7 +44,7 @@ function liveUpdate(btn) {
   btn.disabled = true; btn.textContent = "...";
   fetchLive(function (LV, fail) {
     if (!LV) { btn.disabled = false; btn.textContent = "Riprova"; toast("Aggiornamento non riuscito: controlla la connessione e riprova.", "err"); return }
-    rProfile(); if (fail) toast("Aggiornamento parziale: classifiche non scaricate " + fail + " su 3, le altre sono aggiornate."); else toast("Statistiche aggiornate.", "ok")
+    rerender(); if (fail) toast("Aggiornamento parziale: classifiche non scaricate " + fail + " su 3, le altre sono aggiornate."); else toast("Statistiche aggiornate.", "ok")
   })
 }
 /* aggiornamento automatico: una volta al giorno, in silenzio, solo se c'è internet (al massimo un tentativo ogni 3 ore) */
@@ -56,11 +56,12 @@ function autoLive() {
   fetchLive(function (LV) {
     if (!LV) return;
     var a = document.activeElement; if ((a && a.tagName === "INPUT") || $("sheet").classList.contains("show")) return;
-    var y = $("v-" + cur).scrollTop; ({ draft: rDraft, tier: rTier, heroes: rHeroes, hero: rHero, quiz: function () { }, profile: rProfile, cmp: rCmp })[cur](); $("v-" + cur).scrollTop = y
+    if (cur === "quiz") return;
+    var y = $("v-" + cur).scrollTop; rerender(); $("v-" + cur).scrollTop = y
   })
 }
 function setAct() { var a = S.avatar && H[S.avatar] ? S.avatar : null; if (a) { $("act").innerHTML = tile(a, "xs"); $("act").setAttribute("aria-label", "Profilo") } }
 function applyTheme() { document.body.classList.toggle("hc", S.theme === "hc") }
-applyTheme(); setAct(); loadShared(); go("draft", true); setTimeout(autoLive, 1500); window.addEventListener("online", autoLive);
+applyTheme(); setAct(); go(loadShared() ? "draft" : "home", true); setTimeout(autoLive, 1500); window.addEventListener("online", autoLive);
 if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
   window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () { }) });    }

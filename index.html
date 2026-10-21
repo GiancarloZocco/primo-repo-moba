@@ -23,7 +23,7 @@
           <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg></button>
       <div class="brand"><b>MLBB TOP</b><small id="sub">Tactical Telemetry</small></div>
-      <button class="ib" id="act" aria-label="Impostazioni"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+      <button class="ib" id="act" aria-label="Profilo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2">
           <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" />
           <circle cx="16" cy="6" r="2" />
@@ -31,13 +31,8 @@
           <circle cx="18" cy="18" r="2" />
         </svg></button>
     </header>
-    <section class="scr" id="v-draft"></section>
-    <section class="scr" id="v-tier"></section>
-    <section class="scr" id="v-heroes"></section>
-    <section class="scr" id="v-hero"></section>
-    <section class="scr" id="v-quiz"></section>
-    <section class="scr" id="v-profile"></section>
-    <section class="scr" id="v-cmp"></section>
+    <div class="subnav" id="subnav"></div>
+    <!-- le sezioni delle schermate (id="v-...") le crea js/ui.js -->
     <nav id="nav"></nav>
     <div class="toasts" id="toasts" aria-live="polite"></div>
     <div class="sheet" id="sheet">
@@ -63,6 +58,8 @@
   <script src="js/heroes.js"></script>
   <script src="js/quiz.js"></script>
   <script src="js/profile.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/home.js"></script>
   <script src="js/system.js"></script>
 </body>
 

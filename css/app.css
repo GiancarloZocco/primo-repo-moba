@@ -145,6 +145,40 @@ input:focus-visible {
   text-overflow: ellipsis
 }
 
+/* barra delle schermate del gruppo (sotto l'intestazione) */
+.subnav {
+  display: none;
+  gap: 4px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(14, 18, 26, .92);
+  overflow-x: auto;
+  scrollbar-width: none
+}
+
+.subnav.show {
+  display: flex
+}
+
+.subnav button {
+  flex: 1 0 auto;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--mute);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase
+}
+
+.subnav button.on {
+  color: var(--blue2);
+  border-color: var(--line2);
+  background: var(--panel2)
+}
+
 /* screens */
 .scr {
   flex: 1;
@@ -1827,7 +1861,7 @@ input:focus-visible {
 
 nav {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   border-top: 1px solid var(--line);
   background: rgba(14, 18, 26, .96);
   padding: 8px 4px calc(8px + env(safe-area-inset-bottom, 0px))
@@ -3005,4 +3039,54 @@ details.bcard>summary::-webkit-details-marker {
   color: var(--mute);
   font: inherit;
   cursor: pointer
+}
+
+/* Home */
+.hh {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--hd);
+  font-size: 14px
+}
+
+.hnews {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  color: var(--text);
+  font: inherit;
+  width: 100%
+}
+
+.hnews b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--amber);
+  font-family: var(--hd);
+  font-size: 14px
+}
+
+.hnews small {
+  color: var(--mute);
+  font-size: 11px
+}
+
+.hrow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 8px
+}
+
+ul.news {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.45
 }

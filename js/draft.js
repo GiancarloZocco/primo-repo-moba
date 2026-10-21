@@ -157,7 +157,7 @@ function resultBox() {
   if (S.ally.indexOf(null) > -1) return gameMsg ? '<div class="alert good"><span class="g">' + IC.check + '</span><span>' + gameMsg + '</span></div>' : "";
   if (S.ally.indexOf(gameMe) < 0) gameMe = null;
   return '<div class="card"><div class="ph">' + IC.medal + ' Com’è andata la partita?</div><div class="k" style="margin-bottom:6px">Il tuo eroe (facoltativo)</div><div class="chips" id="gme" style="margin:0 0 10px;padding:0;flex-wrap:wrap"></div>' +
-    '<div class="two"><button class="btn sm" id="gwin" style="border-color:var(--green);color:var(--green)">Vittoria</button><button class="btn rd sm" id="glose">Sconfitta</button></div><p class="hint">La partita va nello storico del Profilo e il draft si svuota per la prossima.</p></div>';
+    '<div class="two"><button class="btn sm" id="gwin" style="border-color:var(--green);color:var(--green)">Vittoria</button><button class="btn rd sm" id="glose">Sconfitta</button></div><p class="hint">La partita va nello Storico (Gioca) e il draft si svuota per la prossima.</p></div>';
 }
 function resultBind() {
   if (!$("gwin")) return;
@@ -189,6 +189,11 @@ function histCard() {
     (st.vs.length ? '<div class="k">Nemici più difficili</div>' + st.vs.slice(0, 3).map(row).join("") : '') +
     (st.al.length || st.vs.length ? '' : '<p class="hint">Compagni e nemici compaiono quando un eroe ha almeno 2 partite.</p>') +
     '<div class="set"><span><b>Cancella storico</b><small>Elimina tutte le partite segnate</small></span><button class="btn rd sm" id="ghx">Cancella</button></div></div>';
+}
+function rGames() {
+  var v = $("v-games");
+  v.innerHTML = '<div class="ttl"><div><h2>Storico partite</h2><p>Le partite segnate a fine draft</p></div></div>' + histCard();
+  if ($("ghx")) $("ghx").onclick = function () { if (!confirm("Cancellare tutte le partite dello storico?")) return; S.games = []; save(); rGames() };
 }
 function shareUrl() { return location.href.split("#")[0] + "#d=" + draftCode() }
 function shareDraft(btn) {
