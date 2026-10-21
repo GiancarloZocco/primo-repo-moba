@@ -173,6 +173,25 @@ async function run() {
     ok(cm.nav === "heroes", "nella barra resta evidenziato Heroes");
     ok(cm.db, "dal Database: scegli due eroi e si apre il confronto");
 
+    section("Quiz: sfida del giorno");
+    var qa = await p.evaluate(function () { S.daily = null; QZ = null; go("quiz"); document.getElementById("dgo").click(); return JSON.stringify(QZ.r.map(function (q) { return [q.q, q.o, q.a] })) });
+    var ctx4 = await browser.newContext({ locale: "en-US" }), errs4 = [], p4 = await newPage(ctx4, errs4);
+    await ctx4.route(function (u) { return !u.href.startsWith(URL0) }, function (r) { return r.abort() });
+    await p4.goto(URL0); await p4.waitForFunction(function () { return window.NAMES });
+    var qb = await p4.evaluate(function () { newRound(true); return JSON.stringify(QZ.r.map(function (q) { return [q.q, q.o, q.a] })) });
+    ok(qa === qb && JSON.parse(qa).length === 5, "stesse 5 domande e risposte su un altro dispositivo (anche in inglese)");
+    ok(errs4.length === 0, "nessun errore JavaScript sul secondo dispositivo"); await ctx4.close();
+    var dq = await p.evaluate(function () {
+      for (var i = 0; i < 5; i++) { document.querySelectorAll("#opts .opt")[i % 2 ? 0 : QZ.r[QZ.i].a].click(); document.getElementById("qgo").click(); document.getElementById("qgo").click() }
+      var t = document.querySelector("#v-quiz").textContent, d = S.daily;
+      return { d: d && d.d === today() && d.res.length === 5, txt: d && dailyText(), noReplay: !document.getElementById("dgo"), share: !!document.getElementById("dsh"), streak: S.dstreak, wrQ: JSON.stringify(QZ.r).indexOf("win rate più alto") < 0 };
+    });
+    ok(dq.d && dq.noReplay && dq.share, "a fine sfida il risultato resta salvato e non si può rigiocare oggi");
+    ok(/^MLBB TOP · Sfida del giorno \d\d\/\d\d\/\d{4}: \d\/5 [🟩🟥]{5}$/u.test(dq.txt || ""), "testo da condividere: " + dq.txt);
+    ok(dq.streak === 1 && dq.wrQ, "giorni di fila = 1, nessuna domanda sul win rate nella sfida");
+    var rnd2 = await p.evaluate(function () { newRound(); var a = JSON.stringify(QZ.r.map(function (q) { return q.q })); newRound(); return a !== JSON.stringify(QZ.r.map(function (q) { return q.q })) });
+    ok(rnd2, "i round normali restano casuali");
+
     section("Condividi draft");
     var shared = await p.evaluate(function () {
       S.banA = [NAMES[20], null, null, null, null]; S.banE = [null, NAMES[21], null, null, null]; S.allyLane[0] = "j"; save(); go("draft");
