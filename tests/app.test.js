@@ -155,6 +155,24 @@ async function run() {
     var cleared = await p.evaluate(function () { document.getElementById("ghx").click(); return S.games.length });
     ok(cleared === 0, "Cancella storico (con conferma) svuota le partite");
 
+    section("Confronto 1 contro 1");
+    var cm = await p.evaluate(async function () {
+      var wait = function () { return new Promise(function (r) { setTimeout(r, 120) }) };
+      openHero("Layla"); document.getElementById("cmpb").click(); await wait();
+      [].filter.call(document.querySelectorAll("#grid button"), function (b) { return b.textContent === "Diggie" })[0].click(); await wait();
+      var t = document.querySelector("#v-cmp").textContent, r = { cur: cur, a: cmpA, b: cmpB, rows: document.querySelectorAll(".cmpt .cr").length, duel: /Diggie è favorito: Layla ha -2\.4%/.test(t), nav: document.querySelector('#nav button.on').dataset.v };
+      document.getElementById("csw").click(); r.sw = cmpA === "Diggie" && cmpB === "Layla" && /Diggie è favorito: Diggie ha \+2\.4%/.test(document.querySelector("#v-cmp").textContent);
+      r.h2h = [h2h("Diggie", "Layla"), h2h("Layla", "Diggie")];
+      hsub = "her"; go("heroes"); document.getElementById("cmpo").click(); await wait(); document.querySelectorAll("#grid button")[0].click(); await wait(); document.querySelectorAll("#grid button")[0].click(); await wait();
+      r.db = cur === "cmp" && cmpA && cmpB && cmpA !== cmpB;
+      return r;
+    });
+    ok(cm.cur === "cmp" && cm.a === "Layla" && cm.b === "Diggie" && cm.rows >= 8, "dalla scheda di Layla: confronto con Diggie (" + cm.rows + " righe)");
+    ok(cm.duel && cm.sw, "scontro diretto dai dati ufficiali, anche dopo lo scambio (Diggie +2.4% contro Layla)");
+    ok(cm.h2h[0] === 2.44 && cm.h2h[1] === -2.44, "il calcolo dello scontro è simmetrico");
+    ok(cm.nav === "heroes", "nella barra resta evidenziato Heroes");
+    ok(cm.db, "dal Database: scegli due eroi e si apre il confronto");
+
     section("Condividi draft");
     var shared = await p.evaluate(function () {
       S.banA = [NAMES[20], null, null, null, null]; S.banE = [null, NAMES[21], null, null, null]; S.allyLane[0] = "j"; save(); go("draft");

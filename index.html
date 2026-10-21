@@ -2508,6 +2508,67 @@
       background: var(--red)
     }
 
+    .cmph {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 8px;
+      align-items: center
+    }
+
+    .cmph .ch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+      padding: 10px 6px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      color: var(--text);
+      font: inherit
+    }
+
+    .cmph .ch b {
+      font-family: var(--hd);
+      font-size: 15px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .cmph .ch small {
+      font-size: 9.5px;
+      color: var(--mute);
+      text-align: center
+    }
+
+    .cmpt .cr {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px
+    }
+
+    .cmpt .cr>span:first-child {
+      text-align: left
+    }
+
+    .cmpt .cr>span:last-child {
+      text-align: right
+    }
+
+    .cmpt .cr>span.g {
+      font-weight: 700
+    }
+
+    .cmpt .cr .k {
+      text-align: center;
+      font-size: 9.5px
+    }
+
     .slot.now,
     .bslot.now {
       border: 1px solid var(--amber);
@@ -2947,6 +3008,7 @@
     <section class="scr" id="v-hero"></section>
     <section class="scr" id="v-quiz"></section>
     <section class="scr" id="v-profile"></section>
+    <section class="scr" id="v-cmp"></section>
     <nav id="nav"></nav>
     <div class="sheet" id="sheet">
       <div class="box">
@@ -3157,11 +3219,11 @@
     var SUB = { draft: "Tactical Telemetry", tier: "Tactical Telemetry", heroes: "Database Eroi", quiz: "Prova della Conoscenza", profile: "Profilo & Sistema" };
     function go(v, noPush) {
       if (!noPush && v !== cur) hist.push(cur); cur = v;
-      ["draft", "tier", "heroes", "hero", "quiz", "profile"].forEach(function (x) { $("v-" + x).classList.toggle("on", x === v) });
-      var nv = v === "hero" ? "heroes" : v;[].forEach.call($("nav").children, function (b) { b.classList.toggle("on", b.dataset.v === nv) });
-      $("sub").textContent = v === "hero" ? "• Scheda eroe: " + hero : SUB[v];
+      ["draft", "tier", "heroes", "hero", "quiz", "profile", "cmp"].forEach(function (x) { $("v-" + x).classList.toggle("on", x === v) });
+      var nv = v === "hero" || v === "cmp" ? "heroes" : v;[].forEach.call($("nav").children, function (b) { b.classList.toggle("on", b.dataset.v === nv) });
+      $("sub").textContent = v === "hero" ? "• Scheda eroe: " + hero : v === "cmp" ? "Confronto 1 contro 1" : SUB[v];
       $("back").classList.toggle("hide", !hist.length);
-      ({ draft: rDraft, tier: rTier, heroes: rHeroes, hero: rHero, quiz: rQuiz, profile: rProfile })[v]();
+      ({ draft: rDraft, tier: rTier, heroes: rHeroes, hero: rHero, quiz: rQuiz, profile: rProfile, cmp: rCmp })[v]();
       $("v-" + v).scrollTop = 0
     }
     $("back").onclick = function () { if (hist.length) go(hist.pop(), true) };
@@ -3486,11 +3548,12 @@
     /* ---------- HEROES ---------- */
     function rHeroes() {
       var v = $("v-heroes"), T = { her: "Eroi", itm: "Oggetti", emb: "Talenti", spl: "Spell" };
-      v.innerHTML = '<div class="ttl"><div><h2>Database<i></i></h2><p>' + NAMES.length + ' eroi · ' + Object.keys(ITEMS).length + ' oggetti · ' + Object.keys(TAL).length + ' talenti · ' + Object.keys(SPL).length + ' spell</p></div></div><div class="seg" id="hsub"></div><div class="search">' + IC.search + '<input id="hq" placeholder="Cerca..." aria-label="Cerca" value="' + esc(hq) + '"></div><div class="chips" id="hchips"></div><div class="rows" id="hlist"></div>';
+      v.innerHTML = '<div class="ttl"><div><h2>Database<i></i></h2><p>' + NAMES.length + ' eroi · ' + Object.keys(ITEMS).length + ' oggetti · ' + Object.keys(TAL).length + ' talenti · ' + Object.keys(SPL).length + ' spell</p></div></div><div class="seg" id="hsub"></div>' + (hsub === "her" ? '<button class="btn sm" id="cmpo">' + IC.swap + ' Confronta due eroi</button>' : '') + '<div class="search">' + IC.search + '<input id="hq" placeholder="Cerca..." aria-label="Cerca" value="' + esc(hq) + '"></div><div class="chips" id="hchips"></div><div class="rows" id="hlist"></div>';
       Object.keys(T).forEach(function (k) { var b = document.createElement("button"); b.textContent = T[k]; b.className = hsub === k ? "on" : ""; b.onclick = function () { hsub = k; hq = ""; rHeroes() }; $("hsub").appendChild(b) });
       var ch = hsub === "her" ? [["all", "Tutti"]].concat(Object.keys(R).map(function (k) { return [k, R[k]] })) : hsub === "itm" ? [["all", "Tutti"]].concat(ITYPES.map(function (t) { return [t, ITN[t] || t] })) : [];
       ch.forEach(function (c) { var cur = hsub === "her" ? hf : itf, b = document.createElement("button"); b.className = "chip" + (cur === c[0] ? " on" : ""); b.textContent = c[1]; b.onclick = function () { if (hsub === "her") hf = c[0]; else itf = c[0]; rHeroes() }; $("hchips").appendChild(b) });
       $("hq").oninput = function () { hq = this.value; fillHeroes() }; fillHeroes();
+      if ($("cmpo")) $("cmpo").onclick = function () { openPick("Primo eroe da confrontare", NAMES, function (a) { setTimeout(function () { openPick("Confronta " + a + " con…", NAMES.filter(function (n) { return n !== a }), function (b) { cmpA = a; cmpB = b; go("cmp") }, { quick: 1 }) }, 50) }, { quick: 1 }) };
     }
     var ITN = { Attack: "Attacco", Magic: "Magia", Defense: "Difesa", Movement: "Movimento", Jungling: "Giungla", Jungle: "Giungla", Roaming: "Roam", Roam: "Roam" };
     var ITYPES = []; Object.keys(ITEMS).forEach(function (k) { var t = ITEMS[k][1]; if (t && ITYPES.indexOf(t) < 0) ITYPES.push(t) });
@@ -3537,7 +3600,7 @@
         bars.map(function (s) { return '<div class="st"><div class="kv"><span>' + s[0] + '</span><span>' + s[1] + ' / 100</span></div>' + bar(s[1], s[2]) + '</div>' }).join("") +
         '</div></div><div class="boxes">' + (m.wr != null ? '<div><span class="k">Win rate</span><b class="' + (m.wr >= 52 ? "g" : m.wr >= 49 ? "a" : "r") + '">' + pc(m.wr) + '</b>' + dTag(h) + '</div><div><span class="k">Ban rate</span><b class="r">' + pc(m.br) + '</b></div><div><span class="k">Pick rate</span><b class="b">' + pc(m.pr) + '</b></div>' : '<div><span class="k">Counter</span><b class="g">' + m.ci + '</b></div><div><span class="k">Sicurezza</span><b class="a">' + m.sf + '</b></div><div><span class="k">Rank ruolo</span><b class="b">#' + m.rrank + '</b></div>') + '</div></div>' +
         '<div class="tabs" id="htabs"></div><div id="hbody" class="rows" style="gap:12px"></div>' +
-        '<div class="two"><button class="btn p" id="lock">' + IC.pad + ' Lock-in alleati</button><button class="btn rd" id="lockE">Aggiungi ai nemici</button></div>';
+        '<div class="two"><button class="btn p" id="lock">' + IC.pad + ' Lock-in alleati</button><button class="btn rd" id="lockE">Aggiungi ai nemici</button></div><button class="btn sm" id="cmpb" style="width:100%">' + IC.swap + ' Confronta con un altro eroe</button>';
       [["ab", "Abilità"], ["bd", "Build & emblemi"], ["mu", "Matchup"], ["lo", "Lore"]].forEach(function (t) { var b = document.createElement("button"); b.textContent = t[1]; b.className = htab === t[0] ? "on" : ""; b.onclick = function () { htab = t[0]; rHero() }; $("htabs").appendChild(b) });
       var B = $("hbody"), pos = beats(h), neg = beatenBy(h), tr = x.t.split("");
       if (htab === "ab") {
@@ -3588,7 +3651,48 @@
           '<p class="hint">Titolo, regione e citazione dalla Wiki MLBB (Fandom); riassunto in italiano MLBB TOP.</p>';
       }
       $("lock").onclick = function () { var i = S.ally.indexOf(null); if (used().indexOf(h) < 0 && i > -1) setSlot(S.ally, i, h); go("draft") };
+      $("cmpb").onclick = function () { openPick("Confronta " + h + " con…", NAMES.filter(function (n) { return n !== h }), function (n) { cmpA = h; cmpB = n; go("cmp") }, { quick: 1 }) };
       $("lockE").onclick = function () { var i = S.enemy.indexOf(null); if (used().indexOf(h) < 0 && i > -1) setSlot(S.enemy, i, h); go("draft") };
+    }
+
+    /* ---------- CONFRONTO 1 CONTRO 1 ---------- */
+    var cmpA = null, cmpB = null;
+    /* variazione di win rate di a quando affronta b (dati ufficiali, in una delle due direzioni) */
+    function h2h(a, b) {
+      var v = findInc(HX[b] && HX[b].by, a); if (v == null) v = findInc(HX[b] && HX[b].vs, a); if (v != null) return v;
+      v = findInc(HX[a] && HX[a].by, b); if (v == null) v = findInc(HX[a] && HX[a].vs, b); return v != null ? -v : null;
+    }
+    function rCmp() {
+      var v = $("v-cmp");
+      if (!H[cmpA] || !H[cmpB]) { cmpA = cmpA && H[cmpA] ? cmpA : NAMES[0]; cmpB = cmpB && H[cmpB] && cmpB !== cmpA ? cmpB : NAMES[1] }
+      var a = cmpA, b = cmpB, A = HX[a] || {}, B = HX[b] || {}, ma = M[a], mb = M[b];
+      var head = function (h, id) { return '<button class="ch" id="' + id + '">' + tile(h, "lg", rlab(h)) + '<b>' + esc(h) + '</b><small>' + roleLane(h) + '</small><span class="tb ' + M[h].tier + '">' + M[h].tier + '</span></button>' };
+      /* riga: valori, chi è meglio (1 = a, -1 = b, 0 = pari/non confrontabile) */
+      var row = function (lab, va, vb, better) { return '<div class="cr"><span class="' + (better > 0 ? "g" : "") + '">' + va + '</span><span class="k">' + lab + '</span><span class="' + (better < 0 ? "g" : "") + '">' + vb + '</span></div>' };
+      var cmpN = function (x, y, hi) { return x == null || y == null || x === y ? 0 : (x > y) === hi ? 1 : -1 };
+      var abA = A.ab && A.ab.length === 4 ? A.ab : null, abB = B.ab && B.ab.length === 4 ? B.ab : null;
+      var DT = { Physical: "Fisici", Magic: "Magici", Mixed: "Misti" }, AT = { Melee: "Mischia", Ranged: "Distanza", Hybrid: "Ibrido" };
+      var rows = row("Win rate", pc(ma.wr), pc(mb.wr), cmpN(ma.wr, mb.wr, true)) + row("Ban rate", pc(ma.br), pc(mb.br), 0) + row("Pick rate", pc(ma.pr), pc(mb.pr), 0) +
+        row("Tier ruolo", ma.tier + " #" + ma.rrank, mb.tier + " #" + mb.rrank, H[a].r === H[b].r ? cmpN(ma.rrank, mb.rrank, false) : 0) +
+        (abA && abB ? row("Durabilità", abA[0], abB[0], cmpN(abA[0], abB[0], true)) + row("Offesa", abA[1], abB[1], cmpN(abA[1], abB[1], true)) + row("Controllo", abA[2], abB[2], cmpN(abA[2], abB[2], true)) + row("Difficoltà", diffL(a), diffL(b), 0) : row("Difficoltà", diffL(a), diffL(b), 0)) +
+        row("Danni", DT[A.dt] || "—", DT[B.dt] || "—", 0) + row("Attacco", AT[A.at] || "—", AT[B.at] || "—", 0) + row("Tratti", traits(a), traits(b), 0);
+      var d = h2h(a, b), ta = sc(a, b), tb2 = sc(b, a), duel;
+      if (d != null && Math.abs(d) >= .05) duel = '<b class="' + (d > 0 ? "g" : "r") + '">' + esc(d > 0 ? a : b) + '</b> è favorito: ' + esc(a) + ' ha ' + (d > 0 ? "+" : "") + d.toFixed(1) + '% di win rate quando affronta ' + esc(b) + ' (dati ufficiali, ' + META.win + ').';
+      else duel = 'Nessun dato ufficiale sullo scontro diretto.';
+      var eng = ta.s || tb2.s ? (ta.s >= tb2.s ? cap(ta.w) + " (vantaggio " + esc(a) + ")" : cap(tb2.w) + " (vantaggio " + esc(b) + ")") : "";
+      var mate = findInc(A.mate, b); if (mate == null) mate = findInc(B.mate, a); if (mate == null) { mate = findInc(A.bad, b); if (mate == null) mate = findInc(B.bad, a) }
+      var ca = topCounters(a, 8), cb = topCounters(b, 8), both = ca.filter(function (n) { return cb.indexOf(n) > -1 });
+      v.innerHTML = '<div class="ttl"><div><h2>Confronto<i></i></h2><p>' + RKN[S.rk] + ' · ' + META.win + '</p></div>' + srcPill() + '</div>' +
+        '<div class="cmph">' + head(a, "ca") + '<button class="btn sm" id="csw" aria-label="Scambia">' + IC.swap + '</button>' + head(b, "cb") + '</div>' +
+        '<div class="card rows cmpt">' + rows + '</div>' +
+        '<div class="card rows"><div class="ph">' + IC.swap + ' Scontro diretto</div><p style="margin:0">' + duel + '</p>' + (eng ? '<p class="hint" style="margin:0">Tratti: ' + eng + '.</p>' : '') + '</div>' +
+        '<div class="card rows"><div class="ph">' + IC.check + ' Insieme in squadra</div><p style="margin:0">' + (mate != null ? 'In coppia: <b class="' + (mate >= 0 ? "g" : "r") + '">' + (mate >= 0 ? "+" : "") + mate.toFixed(1) + '%</b> di win rate (dati ufficiali).' : 'Nessun dato ufficiale sulla coppia.') + '</p>' +
+        '<p class="hint" style="margin:0">Counter in comune: ' + (both.length ? both.map(esc).join(", ") + ' — attenzione se li schierate insieme.' : 'nessuno tra i principali.') + '</p></div>' +
+        '<div class="two"><button class="btn sm" id="cha">Scheda ' + esc(a) + '</button><button class="btn sm" id="chb">Scheda ' + esc(b) + '</button></div>';
+      var change = function (side) { var other = side ? a : b; openPick("Cambia eroe", NAMES.filter(function (n) { return n !== other }), function (n) { if (side) cmpB = n; else cmpA = n; rCmp() }, { cur: side ? b : a, quick: 1 }) };
+      $("ca").onclick = function () { change(0) }; $("cb").onclick = function () { change(1) };
+      $("csw").onclick = function () { cmpA = b; cmpB = a; rCmp() };
+      $("cha").onclick = function () { openHero(a) }; $("chb").onclick = function () { openHero(b) };
     }
 
     /* ---------- QUIZ ---------- */
@@ -3946,7 +4050,7 @@
       fetchLive(function (LV) {
         if (!LV) return;
         var a = document.activeElement; if ((a && a.tagName === "INPUT") || $("sheet").classList.contains("show")) return;
-        var y = $("v-" + cur).scrollTop; ({ draft: rDraft, tier: rTier, heroes: rHeroes, hero: rHero, quiz: function () { }, profile: rProfile })[cur](); $("v-" + cur).scrollTop = y
+        var y = $("v-" + cur).scrollTop; ({ draft: rDraft, tier: rTier, heroes: rHeroes, hero: rHero, quiz: function () { }, profile: rProfile, cmp: rCmp })[cur](); $("v-" + cur).scrollTop = y
       })
     }
     function setAct() { var a = S.avatar && H[S.avatar] ? S.avatar : null; if (a) { $("act").innerHTML = tile(a, "xs"); $("act").setAttribute("aria-label", "Profilo") } }
