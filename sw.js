@@ -1,14 +1,16 @@
-/* MLBB TOP - service worker (uso offline)
-   - File dell'app: precache + aggiornamento in background (alla prossima apertura vedi la versione nuova)
-   - Immagini locali (img/): nomi con l'hash del contenuto, quindi non cambiano mai: dalla cache
-   - Immagini e font esterni: salvati man mano che vengono caricati
-   - Aggiornamento dati live (arena.rone.dev): sempre dalla rete, mai in cache
-   A ogni rilascio cambia VERSION: il browser installa il nuovo service worker, riscarica tutto,
-   cancella la cache vecchia e la pagina si ricarica da sola con la versione nuova. */
-var VERSION = "2026-10-21.1";
+/* MLBB TOP - service worker
+   - File dell'app: prima la rete, così dopo ogni aggiornamento vedi subito la versione nuova.
+     La copia salvata si usa solo offline o se la rete non risponde entro 4 secondi.
+   - Immagini locali (img/): nomi con l'hash del contenuto, quindi non cambiano mai: dalla cache.
+     Vengono salvate tutte all'installazione, così offline c'è tutto anche senza averle mai aperte.
+   - Immagini e font esterni: dalla cache se già visti, altrimenti rete + salvataggio.
+   - Aggiornamento dati live (arena.rone.dev): sempre dalla rete, mai in cache.
+   Se cambi i file da salvare all'installazione (CORE o le immagini), cambia anche VERSION. */
+var VERSION = "v3";
 var CACHE = "mlbb-top-" + VERSION;
 var EXT = "mlbb-top-ext-v1";
 var EXT_MAX = 600;
+var WAIT = 4000;
 var CORE = ["./", "./index.html", "./data.js", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 /* scarica saltando la cache HTTP del browser, così una versione nuova non riceve file vecchi */
@@ -38,12 +40,18 @@ function trim(cache) {
   });
 }
 
+function fromCache(cache, req) {
+  return cache.match(req, { ignoreSearch: true }).then(function (hit) {
+    if (hit || req.mode !== "navigate") return hit;
+    return cache.match("./index.html").then(function (h) { return h || cache.match("./") });
+  });
+}
+
 self.addEventListener("fetch", function (e) {
   var req = e.request, url = new URL(req.url);
   if (req.method !== "GET") return;
   if (url.hostname === "arena.rone.dev") return;
 
-  /* file dell'app (stessa origine) */
   if (url.origin === self.location.origin) {
     /* immagini locali: immutabili, basta la cache */
     if (/\/img\/[0-9a-f]+\.webp$/.test(url.pathname)) {
@@ -54,25 +62,22 @@ self.addEventListener("fetch", function (e) {
       }));
       return;
     }
-    /* resto: cache subito, rete in background */
+    /* resto dei file dell'app: rete prima, cache come riserva */
     e.respondWith(caches.open(CACHE).then(function (cache) {
-      return cache.match(req, { ignoreSearch: true }).then(function (hit) {
-        var net = fetch(req).then(function (res) {
-          if (res && res.ok) cache.put(req, res.clone());
-          return res;
-        }).catch(function () { return null });
-        if (hit) { e.waitUntil(net); return hit }
-        return net.then(function (res) {
-          if (res) return res;
-          if (req.mode === "navigate") return cache.match("./index.html");
-          return Response.error();
-        });
+      var net = fetch(url.href, { cache: "no-cache", credentials: "same-origin" }).then(function (res) {
+        if (res && res.ok) return cache.put(req, res.clone()).then(function () { return res });
+        return res;
+      });
+      e.waitUntil(net.catch(function () { }));
+      var timer = new Promise(function (ok, no) { setTimeout(function () { no(new Error("timeout")) }, WAIT) });
+      return Promise.race([net, timer]).catch(function () {
+        return fromCache(cache, req).then(function (hit) { return hit || net }).catch(function () { return Response.error() });
       });
     }));
     return;
   }
 
-  /* immagini e font esterni: dalla cache se già visti, altrimenti rete + salvataggio */
+  /* immagini e font esterni: cache se già visti, altrimenti rete + salvataggio */
   if (url.protocol === "https:") {
     e.respondWith(caches.open(EXT).then(function (cache) {
       return cache.match(req.url).then(function (hit) {

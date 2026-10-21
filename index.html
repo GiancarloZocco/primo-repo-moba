@@ -3689,11 +3689,7 @@
   </script>
   <script>
     if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
-      window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () { }) });
-      /* nuova versione installata (cambio di VERSION in sw.js): ricarica una volta per mostrarla subito */
-      var hadSW = !!navigator.serviceWorker.controller, reloaded = false;
-      navigator.serviceWorker.addEventListener("controllerchange", function () { if (hadSW && !reloaded) { reloaded = true; location.reload() } });
-    }
+      window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () { }) });    }
   </script>
 </body>
 
