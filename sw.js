@@ -6,12 +6,12 @@
    - Immagini e font esterni: dalla cache se già visti, altrimenti rete + salvataggio.
    - Aggiornamento dati live (arena.rone.dev): sempre dalla rete, mai in cache.
    Se cambi i file da salvare all'installazione (CORE o le immagini), cambia anche VERSION. */
-var VERSION = "v5";
+var VERSION = "v6";
 var CACHE = "mlbb-top-" + VERSION;
 var EXT = "mlbb-top-ext-v1";
 var EXT_MAX = 600;
 var WAIT = 4000;
-var CORE = ["./", "./index.html", "./data.js", "./data-it.js", "./manifest.json", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png"];
+var CORE = ["./", "./index.html", "./css/app.css", "./data.js", "./data-it.js", "./js/core.js", "./js/engine.js", "./js/ui.js", "./js/draft.js", "./js/tier.js", "./js/heroes.js", "./js/quiz.js", "./js/profile.js", "./js/system.js", "./manifest.json", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png"];
 
 /* scarica saltando la cache HTTP del browser, così una versione nuova non riceve file vecchi */
 function fresh(u) { return new Request(u, { cache: "reload" }) }

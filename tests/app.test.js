@@ -6,7 +6,7 @@ var http = require("http"), fs = require("fs"), path = require("path");
 var chromium = require("playwright").chromium;
 
 var ROOT = path.join(__dirname, ".."), PORT = +process.env.PORT || 8790, URL0 = "http://127.0.0.1:" + PORT + "/";
-var TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json", ".png": "image/png", ".webp": "image/webp" };
+var TYPES = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json", ".png": "image/png", ".webp": "image/webp" };
 
 var fails = 0, passes = 0;
 function ok(cond, msg) { if (cond) { passes++; console.log("  ✓ " + msg) } else { fails++; console.log("  ✗ " + msg) } }
@@ -60,6 +60,7 @@ async function run() {
     section("Avvio");
     var info = await p.evaluate(function () { return { heroes: NAMES.length, items: Object.keys(ITEMS).length } });
     ok(info.heroes > 100, "dati caricati: " + info.heroes + " eroi, " + info.items + " oggetti");
+    ok(await p.evaluate(function () { return getComputedStyle(document.querySelector(".app")).display === "flex" && getComputedStyle(document.body).backgroundColor === "rgb(6, 8, 12)" }), "foglio di stile caricato (css/app.css)");
     ok(errs.length === 0, "nessun errore JavaScript all'avvio" + (errs.length ? ": " + errs.join(" | ") : ""));
     var first = await p.evaluate(function () { return { picks: used().length, hint: /Inizia dai ban/.test(document.querySelector("#v-draft").textContent) } });
     ok(first.picks === 0 && first.hint, "prima apertura: draft vuoto con il suggerimento iniziale");
