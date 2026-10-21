@@ -61,6 +61,16 @@ async function run() {
     var built = true; try { require("child_process").execFileSync("node", [path.join(ROOT, "tools/build.js"), "--check"], { stdio: "pipe" }) } catch (e) { built = false }
     ok(built, "img/list.json e sw.js aggiornati (altrimenti lancia npm run build)");
 
+    section("Salvataggi");
+    var ctxm = await browser.newContext(), pm = await newPage(ctxm, errs);
+    await ctxm.route(function (u) { return !u.href.startsWith(URL0) }, function (r) { return r.abort() });
+    await ctxm.addInitScript(function () { if (!sessionStorage.getItem("seed")) { sessionStorage.setItem("seed", 1); localStorage.setItem("draftsync", JSON.stringify({ nick: "Vecchio", ally: ["Layla", null, null, null, null], quiz: { xp: 120 } })); localStorage.setItem("draftsync_prev", JSON.stringify({ rk: {}, date: "01/01/2026" })) } });
+    await pm.goto(URL0); await pm.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
+    var mg = await pm.evaluate(function () { save(); return { old: localStorage.getItem("draftsync") || localStorage.getItem("draftsync_prev"), s: JSON.parse(localStorage.getItem("mlbb-top")), prev: !!localStorage.getItem("mlbb-top-prev") } });
+    ok(!mg.old && mg.s.nick === "Vecchio" && mg.s.ally[0] === "Layla" && mg.s.quiz.xp === 120 && mg.prev, "i dati salvati coi vecchi nomi (draftsync) passano ai nuovi senza perdite");
+    ok(mg.s.v === 2, "i salvataggi hanno il numero di versione dello schema (" + mg.s.v + ")");
+    await ctxm.close();
+
     section("Avvio");
     var info = await p.evaluate(function () { return { heroes: NAMES.length, items: Object.keys(ITEMS).length } });
     ok(info.heroes > 100, "dati caricati: " + info.heroes + " eroi, " + info.items + " oggetti");
@@ -242,7 +252,7 @@ async function run() {
     var PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
     await p.evaluate(function (png) { localStorage.setItem("draftsync_shot", png) }, PNG);
     await p.reload(); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") }); await p.waitForTimeout(300);
-    var mig = await p.evaluate(async function () { return { ls: localStorage.getItem("draftsync_shot"), idb: await shotGet(), mem: SHOT.length } });
+    var mig = await p.evaluate(async function () { return { ls: localStorage.getItem("draftsync_shot") || localStorage.getItem(KEY.shot), idb: await shotGet(), mem: SHOT.length } });
     ok(!mig.ls && mig.idb && mig.mem > 0, "lo screenshot salvato in localStorage passa in IndexedDB al primo avvio");
     await p.reload(); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") }); await p.waitForTimeout(300);
     ok(await p.evaluate(function () { go("profile"); return !!document.getElementById("mshot") }), "dopo il riavvio lo screenshot compare nel Profilo");
@@ -281,29 +291,29 @@ async function run() {
 
     section("Aggiornamento live (simulato)");
     p.lastDialog = null; arena.mode = "fail";
-    await p.evaluate(function () { localStorage.removeItem("draftsync_live"); go("profile") });
+    await p.evaluate(function () { localStorage.removeItem("mlbb-top-live"); go("profile") });
     await p.click("#live"); await p.waitForTimeout(500);
-    ok(await p.evaluate(function () { return /non riuscito/.test(document.getElementById("toasts").textContent) && !localStorage.getItem("draftsync_live") }), "server in errore: avviso dentro l'app, niente salvato");
+    ok(await p.evaluate(function () { return /non riuscito/.test(document.getElementById("toasts").textContent) && !localStorage.getItem("mlbb-top-live") }), "server in errore: avviso dentro l'app, niente salvato");
     arena.mode = "ok"; p.lastDialog = null;
     await p.evaluate(function () { go("profile") });
-    await p.click("#live"); await p.waitForFunction(function () { return !!localStorage.getItem("draftsync_live") }, null, { timeout: 5000 }).catch(function () { });
-    var lv = await p.evaluate(function () { var x = JSON.parse(localStorage.getItem("draftsync_live") || "null"); return x && Object.keys(x.rk).length });
+    await p.click("#live"); await p.waitForFunction(function () { return !!localStorage.getItem("mlbb-top-live") }, null, { timeout: 5000 }).catch(function () { });
+    var lv = await p.evaluate(function () { var x = JSON.parse(localStorage.getItem("mlbb-top-live") || "null"); return x && Object.keys(x.rk).length });
     ok(lv > 100, "server ok: statistiche salvate per " + lv + " eroi");
 
     section("Tendenze e aggiornamento automatico");
-    var prev = await p.evaluate(function () { return JSON.parse(localStorage.getItem("draftsync_prev") || "null") });
+    var prev = await p.evaluate(function () { return JSON.parse(localStorage.getItem("mlbb-top-prev") || "null") });
     ok(prev && prev.date === "20/10/2026" && Object.keys(prev.rk).length > 100, "la classifica precedente (snapshot del " + (prev && prev.date) + ") è salvata per le tendenze");
     var tr = await p.evaluate(function () { tf = "all"; tq = ""; tOpen = { SS: 1, S: 1, A: 1, B: 1 }; go("tier"); var r = document.querySelector(".radar").textContent; return { arrows: document.querySelectorAll("#tlist .dl").length, radar: /Dal 20\/10\/2026: in crescita/.test(r), hero: (openHero(NAMES[0]), document.querySelectorAll("#v-hero .dl").length) } });
     ok(tr.arrows > 20, "frecce di tendenza nella Tier list: " + tr.arrows);
     ok(tr.radar, "il riquadro Radar elenca chi sale e chi scende");
     ok(tr.hero <= 1, "la scheda eroe mostra la variazione del win rate se c'è");
     await p.evaluate(function () { go("profile") }); await p.click("#live"); await p.waitForTimeout(500);
-    var prev2 = await p.evaluate(function () { return JSON.parse(localStorage.getItem("draftsync_prev") || "null").date });
+    var prev2 = await p.evaluate(function () { return JSON.parse(localStorage.getItem("mlbb-top-prev") || "null").date });
     ok(prev2 === "20/10/2026", "un secondo aggiornamento nello stesso giorno non cancella il confronto");
     var ctx3 = await browser.newContext(), errs3 = [], p3 = await newPage(ctx3, errs3), calls = { n: 0 };
     await ctx3.route(function (u) { return !u.href.startsWith(URL0) }, function (r) { if (r.request().url().indexOf("arena.rone.dev") > -1) { calls.n++; return r.fulfill({ status: 200, contentType: "application/json", body: arenaBody(arena.ids) }) } return r.abort() });
     await p3.goto(URL0); await p3.waitForTimeout(2500);
-    var auto = await p3.evaluate(function () { return { live: META.live, saved: !!localStorage.getItem("draftsync_live") } });
+    var auto = await p3.evaluate(function () { return { live: META.live, saved: !!localStorage.getItem("mlbb-top-live") } });
     ok(auto.live && auto.saved && calls.n === 3, "all'apertura le statistiche si aggiornano da sole (" + calls.n + " richieste)");
     await p3.reload(); await p3.waitForTimeout(2500);
     ok(calls.n === 3, "riaprendo nello stesso giorno non riscarica");

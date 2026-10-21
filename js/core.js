@@ -1,4 +1,21 @@
 /* MLBB TOP - Costanti, preparazione dei dati e stato salvato */
+/* dati salvati sul dispositivo: nomi delle chiavi e versione dello schema.
+   Al primo avvio i dati con i vecchi nomi (draftsync...) vengono spostati qui. */
+var KEY = { s: "mlbb-top", live: "mlbb-top-live", prev: "mlbb-top-prev", liveTry: "mlbb-top-live-try", shot: "mlbb-top-shot" };
+var SAVE_V = 2;
+(function () {
+  try {
+    [["draftsync", KEY.s], ["draftsync_live", KEY.live], ["draftsync_prev", KEY.prev], ["draftsync_live_try", KEY.liveTry], ["draftsync_shot", KEY.shot]].forEach(function (p) {
+      var v = localStorage.getItem(p[0]); if (v == null) return;
+      if (localStorage.getItem(p[1]) == null) localStorage.setItem(p[1], v);
+      localStorage.removeItem(p[0]);
+    });
+  } catch (e) { }
+})();
+/* aggiornamenti dello schema: UPG[n] porta i dati dalla versione n-1 alla n */
+var UPG = {
+  2: function (s) { /* v2: nuovi nomi delle chiavi (spostati sopra); i campi aggiunti prendono i valori di DEF */ }
+};
 var META = { "src": "MLBB Academy (dati ufficiali Moonton) via arena.rone.dev · Wiki MLBB Fandom", "date": "20/10/2026", "win": "ultimi 7 giorni" };
 var R = { T: "Tank", F: "Combattente", A: "Assassino", M: "Mago", X: "Tiratore", S: "Supporto" };
 var RC = { T: ["#2B5BD7", "#60A5FA"], F: ["#B45309", "#F59E0B"], A: ["#9F1239", "#F43F5E"], M: ["#5B21B6", "#A78BFA"], X: ["#15803D", "#4ADE80"], S: ["#0E7490", "#22D3EE"] };
@@ -23,7 +40,7 @@ var LW = {}; Object.keys(H).forEach(function (h) {
 function fit(h, l) { return (LW[h] || {})[l] || 0 }
 var ID2 = {}; Object.keys(HX).forEach(function (h) { ID2[HX[h].id] = h });
 function applyLive(LV) { Object.keys(LV.rk).forEach(function (h) { if (HX[h]) HX[h].rk = LV.rk[h] }); META.date = LV.date; META.live = 1 }
-try { var LV0 = JSON.parse(localStorage.getItem("draftsync_live") || "null"); if (LV0 && LV0.rk) applyLive(LV0) } catch (e) { }
+try { var LV0 = JSON.parse(localStorage.getItem(KEY.live) || "null"); if (LV0 && LV0.rk) applyLive(LV0) } catch (e) { }
 var NAMES = Object.keys(H).sort(function (a, b) { return a.localeCompare(b) });
 var $ = function (i) { return document.getElementById(i) };
 /* avviso dentro l'app al posto di alert(): kind "err" (rosso) o "ok" (verde) */
@@ -48,11 +65,12 @@ function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "
 
 /* ---------- stato ---------- */
 var DEF = { allyLane: [null, null, null, null, null], recent: [], useMine: true, mph: [], banA: [null, null, null, null, null], banE: [null, null, null, null, null], ally: [null, null, null, null, null], enemy: [null, null, null, null, null], keep: false, lanefit: true, avatar: null, rk: "all", algo: "meta", theme: "dark", nick: "DraftStrategist", main: "T", picks: 0, synSum: 0, synN: 0, quiz: { xp: 0, ok: 0, tot: 0, best: 0, streak: 0, rounds: 0 }, spoken: false, autoLive: true, guide: null, gbans: 10, games: [], daily: null, dstreak: 0, dlast: null, lang: "it" };
-var S; try { S = JSON.parse(localStorage.getItem("draftsync") || "null") } catch (e) { S = null }
+var S; try { S = JSON.parse(localStorage.getItem(KEY.s) || "null") } catch (e) { S = null }
+if (S && typeof S === "object") { for (var sv = (S.v || 1) + 1; sv <= SAVE_V; sv++) if (UPG[sv]) UPG[sv](S) }
 S = Object.assign({}, DEF, S || {}); S.quiz = Object.assign({}, DEF.quiz, S.quiz || {});
 function sanitizeTeam(t) { t = (t || []).slice(0, 5); while (t.length < 5) t.push(null); return t.map(function (h) { return h && H[h] ? h : null }) }
 S.ally = sanitizeTeam(S.ally); S.enemy = sanitizeTeam(S.enemy); S.banA = sanitizeTeam(S.banA); S.banE = sanitizeTeam(S.banE); S.allyLane = (Array.isArray(S.allyLane) ? S.allyLane : []).slice(0, 5); while (S.allyLane.length < 5) S.allyLane.push(null); S.allyLane = S.allyLane.map(function (l) { return LN[l] ? l : null }); S.recent = (Array.isArray(S.recent) ? S.recent : []).filter(function (h) { return H[h] }).slice(0, 12); S.mph = Array.isArray(S.mph) ? S.mph : []; S.games = Array.isArray(S.games) ? S.games : [];
-function save() { try { localStorage.setItem("draftsync", JSON.stringify(S)) } catch (e) { } }
+function save() { S.v = SAVE_V; try { localStorage.setItem(KEY.s, JSON.stringify(S)) } catch (e) { } }
 /* testi di gioco in italiano da data-it.js (gli originali inglesi restano in data.js; nel Profilo si può tornare all'inglese) */
 function applyIT() {
   if (S.lang === "en" || typeof IT === "undefined") return false;
@@ -70,9 +88,9 @@ function applyIT() {
 var ITON = applyIT();
 var SHOT = "";
 (function () {
-  var old = null; try { old = localStorage.getItem("draftsync_shot") } catch (e) { }
+  var old = null; try { old = localStorage.getItem(KEY.shot) } catch (e) { }
   var show = function () { if (cur === "profile" && $("mpc")) mpCard() };
-  if (old) { SHOT = old; shotSet(old).then(function () { try { localStorage.removeItem("draftsync_shot") } catch (e) { } }).catch(function () { }) }
+  if (old) { SHOT = old; shotSet(old).then(function () { try { localStorage.removeItem(KEY.shot) } catch (e) { } }).catch(function () { }) }
   else shotGet().then(function (v) { SHOT = v || ""; if (SHOT) show() }).catch(function () { });
 })();
 var focus = null, recs = [], detOpen = false, pk = null, cur = "draft", hist = [], hero = "Khufra", htab = "ab", bdl = null, hsub = "her", itf = "all", iq = "", tf = "all", tq = "", tsort = "wr", hf = "all", hq = "", QZ = null;

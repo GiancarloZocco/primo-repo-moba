@@ -32,7 +32,7 @@ function calcMeta() {
 calcMeta();
 function pc(v) { return v == null ? "—" : v.toFixed(1) + "%" }
 /* tendenze: win rate rispetto alla classifica precedente (salvata a ogni aggiornamento con data diversa) */
-var PREV = null; try { PREV = JSON.parse(localStorage.getItem("draftsync_prev") || "null") } catch (e) { }
+var PREV = null; try { PREV = JSON.parse(localStorage.getItem(KEY.prev) || "null") } catch (e) { }
 function prevWr(h) { var r = PREV && PREV.rk && PREV.rk[h]; r = r && (r[S.rk] || r.all); return r ? r[0] : null }
 function dWr(h) { var a = M[h] && M[h].wr, b = prevWr(h); return a == null || b == null ? null : Math.round((a - b) * 10) / 10 }
 function dTag(h) { var d = dWr(h); return d == null || Math.abs(d) < .1 ? "" : '<small class="dl ' + (d > 0 ? "up" : "dn") + '" title="Win rate rispetto al ' + esc(PREV.date) + '">' + (d > 0 ? "▲" : "▼") + Math.abs(d).toFixed(1) + '</small>' }

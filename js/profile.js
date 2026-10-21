@@ -271,12 +271,12 @@ function mpCard() {
     var f = this.files[0]; if (!f) return;
     mpShot(f, function (d) {
       if (!d) { toast("Immagine non valida.", "err"); return }
-      shotSet(d).then(function () { SHOT = d; mpCard() }).catch(function () { try { localStorage.setItem("draftsync_shot", d); SHOT = d; mpCard() } catch (e) { toast("Memoria del dispositivo piena: screenshot non salvato.", "err") } })
+      shotSet(d).then(function () { SHOT = d; mpCard() }).catch(function () { try { localStorage.setItem(KEY.shot, d); SHOT = d; mpCard() } catch (e) { toast("Memoria del dispositivo piena: screenshot non salvato.", "err") } })
     })
   };
   if (shot) {
     $("mocr").onclick = function () { var b = this, st = $("mst"); if (!window.Tesseract && !navigator.onLine) { st.textContent = "Sei offline: la prima volta il lettore dello screenshot va scaricato da internet. Riprova con la connessione, oppure compila a mano i campi qui sotto."; return } b.disabled = true; $("mres").innerHTML = ""; mpRead(shot, st).then(function (R) { st.textContent = ""; mpShow(R) }).catch(function () { st.textContent = "Lettura non riuscita: serve la connessione la prima volta per scaricare il lettore. Riprova online." }).then(function () { b.disabled = false }) };
-    $("mdel").onclick = function () { try { localStorage.removeItem("draftsync_shot") } catch (e) { } shotSet(null).catch(function () { }); SHOT = ""; mpCard() };
+    $("mdel").onclick = function () { try { localStorage.removeItem(KEY.shot) } catch (e) { } shotSet(null).catch(function () { }); SHOT = ""; mpCard() };
     $("mshot").onclick = function () { var o = document.createElement("div"); o.style.cssText = "position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:12px"; o.innerHTML = '<img src="' + shot + '" alt="" style="max-width:100%;max-height:100%;object-fit:contain">'; o.onclick = function () { o.remove() }; document.body.appendChild(o) }
   }
 }

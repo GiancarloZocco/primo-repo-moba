@@ -2,7 +2,7 @@
 /* ---------- backup: un file JSON con tutto ciò che l'app salva sul dispositivo ---------- */
 function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || "null") } catch (e) { return null } }
 function exportBackup() {
-  var data = { app: "mlbb-top", v: 1, at: new Date().toISOString(), S: S, live: lsGet("draftsync_live"), prev: lsGet("draftsync_prev"), shot: SHOT || null };
+  var data = { app: "mlbb-top", v: SAVE_V, at: new Date().toISOString(), S: S, live: lsGet(KEY.live), prev: lsGet(KEY.prev), shot: SHOT || null };
   var blob = new Blob([JSON.stringify(data)], { type: "application/json" }), a = document.createElement("a");
   a.href = URL.createObjectURL(blob); a.download = "mlbb-top-backup-" + new Date().toISOString().slice(0, 10) + ".json";
   document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove() }, 1000);
@@ -15,9 +15,9 @@ function importBackup(file) {
     if (!d || d.app !== "mlbb-top" || !d.S || typeof d.S !== "object") { toast("File non valido: non è un backup di MLBB TOP.", "err"); return }
     if (!confirm("Ripristinare il backup del " + new Date(d.at).toLocaleDateString("it-IT") + "? I dati attuali verranno sostituiti.")) return;
     try {
-      localStorage.setItem("draftsync", JSON.stringify(d.S));
-      if (d.live) localStorage.setItem("draftsync_live", JSON.stringify(d.live)); else localStorage.removeItem("draftsync_live");
-      if (d.prev) localStorage.setItem("draftsync_prev", JSON.stringify(d.prev)); else localStorage.removeItem("draftsync_prev");
+      localStorage.setItem(KEY.s, JSON.stringify(d.S));
+      if (d.live) localStorage.setItem(KEY.live, JSON.stringify(d.live)); else localStorage.removeItem(KEY.live);
+      if (d.prev) localStorage.setItem(KEY.prev, JSON.stringify(d.prev)); else localStorage.removeItem(KEY.prev);
     } catch (e) { toast("Memoria del dispositivo piena: backup non ripristinato.", "err"); return }
     shotSet(typeof d.shot === "string" && /^data:image\//.test(d.shot) ? d.shot : null).catch(function () { }).then(function () { location.reload() })
   };
@@ -33,8 +33,8 @@ function fetchLive(cb) {
       if (!Object.keys(out).length) { cb(null, fail); return }
       var LV = { rk: out, date: today(), t: Date.now() };
       /* la classifica in uso diventa quella "precedente" per le tendenze, ma solo se è di un altro giorno */
-      if (META.date !== LV.date) { var old = {}; NAMES.forEach(function (h) { if (HX[h] && HX[h].rk) old[h] = HX[h].rk }); PREV = { rk: old, date: META.date }; try { localStorage.setItem("draftsync_prev", JSON.stringify(PREV)) } catch (e) { } }
-      try { localStorage.setItem("draftsync_live", JSON.stringify(LV)) } catch (e) { }
+      if (META.date !== LV.date) { var old = {}; NAMES.forEach(function (h) { if (HX[h] && HX[h].rk) old[h] = HX[h].rk }); PREV = { rk: old, date: META.date }; try { localStorage.setItem(KEY.prev, JSON.stringify(PREV)) } catch (e) { } }
+      try { localStorage.setItem(KEY.live, JSON.stringify(LV)) } catch (e) { }
       applyLive(LV); calcMeta(); cb(LV, fail)
     })
   })
@@ -50,9 +50,9 @@ function liveUpdate(btn) {
 /* aggiornamento automatico: una volta al giorno, in silenzio, solo se c'è internet (al massimo un tentativo ogni 3 ore) */
 function autoLive() {
   if (S.autoLive === false || !navigator.onLine || (META.live && META.date === today())) return;
-  var last = 0; try { last = +localStorage.getItem("draftsync_live_try") || 0 } catch (e) { }
+  var last = 0; try { last = +localStorage.getItem(KEY.liveTry) || 0 } catch (e) { }
   if (Date.now() - last < 3 * 3600e3) return;
-  try { localStorage.setItem("draftsync_live_try", String(Date.now())) } catch (e) { }
+  try { localStorage.setItem(KEY.liveTry, String(Date.now())) } catch (e) { }
   fetchLive(function (LV) {
     if (!LV) return;
     var a = document.activeElement; if ((a && a.tagName === "INPUT") || $("sheet").classList.contains("show")) return;
