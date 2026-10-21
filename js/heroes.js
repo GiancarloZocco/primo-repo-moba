@@ -70,7 +70,7 @@ function rHero() {
     if (!ls.length) { B.innerHTML = '<div class="card"><p class="hint">Build ufficiali non disponibili per ' + h + '. Consiglio generico: incantesimo ' + SPELL[x.l[0]][0] + ' — ' + SPELL[x.l[0]][1] + '</p></div>'; }
     else {
       if (ls.indexOf(bdl) < 0) bdl = ls[0];
-      var html2 = '<div class="sec">' + IC.shield + ' Build più usate nel rank<span class="pill">' + LN[bdl] + '</span></div>' + (ls.length > 1 ? '<div class="seg" id="bdl"></div>' : '');
+      var html2 = (en().length ? buildBox(h, bdl) : '') + '<div class="sec">' + IC.shield + ' Build più usate nel rank<span class="pill">' + LN[bdl] + '</span></div>' + (ls.length > 1 ? '<div class="seg" id="bdl"></div>' : '');
       bd[bdl].forEach(function (b, i) {
         html2 += '<details class="card bcard"' + (i === 0 ? " open" : "") + '><summary class="kv"><b class="bt">Build #' + (i + 1) + '</b><span><span class="pill gr">WR ' + b.wr + '%</span> <span class="pill bl">Uso ' + b.pr + '%</span></span></summary>' +
           '<div class="k" style="margin:10px 0 6px">Oggetti core</div><div class="items">' + b.it.map(function (id) { var it = ITEMS[id] || ["#" + id, "", "", "", ""]; return '<button class="item it" data-i="' + id + '">' + (it[4] ? '<img src="' + it[4] + '" alt="">' : '') + '<b>' + esc(it[0]) + '</b><small>' + (ITN[it[1]] || it[1]) + '</small></button>' }).join("") + '</div>' +

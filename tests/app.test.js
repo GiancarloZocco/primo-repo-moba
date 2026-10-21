@@ -157,6 +157,26 @@ async function run() {
     ok(pl.bonus, "pool: bonus nei consigli, più alto nella lane preferita");
     ok(pl.g === "Il tuo pool" && pl.g1 === pl.h, "pool: primo gruppo nel selettore degli eroi");
     ok(pl.off === 0, "pool: si disattiva con «Usa i miei eroi nei consigli»");
+
+    section("Build contro i nemici");
+    var bv = await p.evaluate(function () {
+      S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null];
+      var none = situItems("Layla", "o", []).items.length;
+      ["Estes", "Kagura", "Eudora", "Layla", "Tigreal"].forEach(function (h, i) { setSlot(S.enemy, i, h) });
+      var mm = situItems("Moskov", "o", en()), mg = situItems("Kagura", "m", en()), tk = situItems("Tigreal", "r", en());
+      var ids = function (r) { return r.items.map(function (o) { return o.id }) };
+      detOpen = true; go("draft"); var m = focusRec(), box = document.querySelector("#detail .bvs"), line = document.querySelector("#rec .spl1");
+      openHero(m.n, "bd"); var hb = !!document.querySelector("#hbody .bvs"); detOpen = false;
+      var cc = spellFor("Layla", "o", ["Tigreal", "Atlas", "Franco", "Khufra"].filter(function (h) { return H[h] }));
+      return { none: none, mm: mm.type + ":" + ids(mm), mg: mg.type + ":" + ids(mg), tk: tk.type + ":" + ids(tk), box: !!box && box.querySelectorAll(".sit li").length, line: line && line.textContent, hb: hb, jg: spellFor(NAMES.filter(function (h) { return H[h].l.charAt(0) === "j" })[0], "j", []).sp, cc: cc.alt && cc.alt.id };
+    });
+    ok(bv.none === 0, "senza nemici nessun oggetto situazionale");
+    ok(/^atk:/.test(bv.mm) && bv.mm.indexOf("3013") > -1 && bv.mm.indexOf("3205") > -1, "tiratore contro Estes e maghi: Sea Halberd e Athena's Shield (" + bv.mm + ")");
+    ok(/^mag:/.test(bv.mg) && bv.mg.indexOf("3105") > -1, "mago contro Estes: Glowing Wand (" + bv.mg + ")");
+    ok(/^tank:/.test(bv.tk) && bv.tk.indexOf("3206") > -1, "tank contro Estes: Dominance Ice (" + bv.tk + ")");
+    ok(bv.box > 0 && bv.hb, "riquadro build nell'analisi dettagliata e nella scheda eroe (" + bv.box + " oggetti)");
+    ok(/Spell: .+Emblema: /.test(bv.line || ""), "spell ed emblema nel consigliato: " + bv.line);
+    ok(bv.jg === 20020 && bv.cc === 20080, "giungla: Retribution; contro tanti controlli si suggerisce Purify");
     var picked = await p.evaluate(function () { var n = focusRec().n; document.getElementById("pk").click(); return S.ally.indexOf(n) > -1 });
     ok(picked, "il pulsante Scegli mette il consigliato negli alleati");
 

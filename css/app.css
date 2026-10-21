@@ -3101,3 +3101,12 @@ ul.news {
 .pch.add { padding: 6px 12px; color: var(--blue2); border-style: dashed; }
 .pst { font-style: normal; color: var(--amber); margin-right: 2px; }
 .prow { padding: 10px 12px; }
+
+/* build contro i nemici */
+.sit { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.sit li, .spem .erow { display: flex; gap: 10px; align-items: center; }
+.sit img { width: 34px; height: 34px; border-radius: 8px; flex: none; }
+.sit b, .spem b { display: block; font-size: 13px; }
+.sit small, .spem small { color: var(--mute); font-size: 11.5px; }
+.spem { display: flex; flex-direction: column; gap: 8px; }
+.spl1 { margin: 2px 0 8px; }

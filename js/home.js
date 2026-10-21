@@ -5,6 +5,8 @@ var NEWS = [
     v: "2026-10-21", t: "Nuova organizzazione e tante funzioni", items: [
       "Primo avvio guidato: scegli ruolo, lane preferita e il tuo pool di eroi.",
       "Pool di eroi: bonus nei consigli del draft, riga «Dal tuo pool» e primi nel selettore (si modifica dal Profilo).",
+      "Build contro i nemici: oggetti situazionali (anti-cure, difese, penetrazione, stivali) in base al draft, nell'analisi dettagliata e nella scheda eroe.",
+      "Spell ed emblema consigliati per il pick suggerito, con Purify come alternativa contro molti controlli.",
       "Home: riassunto di draft, sfida del giorno, eroi in crescita e ultime partite.",
       "Barra in basso a gruppi: Gioca (Draft, Storico), Studia (Tier list, Eroi, Confronto, Quiz), Io (Profilo, Impostazioni).",
       "Impostazioni in una schermata a parte.",
