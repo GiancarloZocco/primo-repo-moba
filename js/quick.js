@@ -50,9 +50,9 @@ function quickBox() {
   return '<div class="card qe" id="qebox"><div class="kv"><b class="hh">' + IC.search + ' Inserimento rapido</b><label class="qonly"><input type="checkbox" id="qonly"' + (S.only ? " checked" : "") + '> Solo pick nemici</label></div>' +
     '<div class="qrow"><span class="qto ' + t.charAt(1) + '" id="qto">' + QT[t] + '</span><input id="qin" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Scrivi 2-3 lettere e Invio" aria-label="Eroe da inserire" value="' + esc(QE.q) + '"></div>' +
     '<div class="qsug" id="qsug"></div>' +
-    (!S.only && !g ? '<div class="seg qts" id="qts"></div>' : '') +
-    '<div class="k" style="margin-top:8px">' + (S.only ? "Pick nemici probabili" : "Probabili · " + QT[t]) + '</div><div class="qlike" id="qlike"></div>' +
-    '<p class="hint" style="margin:6px 0 0">Invio = primo risultato · Backspace a casella vuota = annulla · ' + (g && !S.only ? "Tab = salta turno · " : "") + 'prefissi: n, a, bn, ba</p></div>';
+    '<div class="qlike" id="qlike"></div>' +
+    '<details class="qopt"><summary>Opzioni e scorciatoie</summary>' + (!S.only && !g ? '<div class="seg qts" id="qts"></div>' : '') +
+    '<p class="hint" style="margin:6px 0 0">Invio = primo risultato · Backspace a casella vuota = annulla · ' + (g && !S.only ? "Tab = salta turno · " : "") + 'prefissi: n, a, bn, ba</p></details></div>';
 }
 function quickBind() {
   var inp = $("qin"); if (!inp) return; var t = qTarget(), g = guideNow(); if (g && !g.t) g = null; if (g && !g.t) g = null;
@@ -73,7 +73,7 @@ function quickBind() {
   };
   if (QE.q) sug();
   if ($("qts")) ["pE", "bE", "pA", "bA"].forEach(function (k) { var b = document.createElement("button"); b.textContent = QT[k]; b.className = t === k ? "on" : ""; b.onclick = function () { S.qt = k; save(); rDraft(); $("qin").focus() }; $("qts").appendChild(b) });
-  qLikely(t).forEach(function (h) { var b = document.createElement("button"); b.className = "lcand"; b.innerHTML = tile(h, "sm") + '<b>' + esc(h) + '</b>'; b.onclick = function () { if (qPlace(t, h)) done() }; $("qlike").appendChild(b) });
+  qLikely(t).slice(0, 4).forEach(function (h) { var b = document.createElement("button"); b.className = "lcand"; b.innerHTML = tile(h, "sm") + '<b>' + esc(h) + '</b>'; b.onclick = function () { if (qPlace(t, h)) done() }; $("qlike").appendChild(b) });
   $("qonly").onchange = function () { S.only = this.checked; save(); rDraft() };
 }
 /* "/" porta subito alla casella, da qualsiasi punto del draft (sul computer) */

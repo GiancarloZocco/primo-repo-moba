@@ -416,7 +416,7 @@ async function run() {
     await p.keyboard.press("Backspace");
     ok(await p.evaluate(function () { return S.banE[0] === null && S.ally[0] === "Layla" }), "Backspace a casella vuota annulla l'ultimo inserito");
     await p.evaluate(function () { document.querySelector("#qlike .lcand").click() });
-    ok(await p.evaluate(function () { return S.enemy.filter(Boolean).length === 2 && document.querySelectorAll("#qlike .lcand").length === 8 }), "eroi probabili a un tocco (8 proposte)");
+    ok(await p.evaluate(function () { return S.enemy.filter(Boolean).length === 2 && document.querySelectorAll("#qlike .lcand").length === 4 }), "eroi probabili a un tocco (4 proposte)");
     /* draft guidato ranked: la destinazione segue il turno, Tab salta un turno */
     await p.evaluate(function () { qClean(); S.guide = "blue"; S.gmode = "rank"; S.gbans = 10; save(); go("draft") });
     await p.click("#qin"); await p.keyboard.type("mas"); await p.keyboard.press("Enter");

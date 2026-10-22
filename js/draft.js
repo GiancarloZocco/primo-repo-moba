@@ -4,11 +4,13 @@ function rDraft() {
   if (!used().length) { S.gskip = []; QE.hist = [] }
   compute(); var v = $("v-draft"), full = S.ally.indexOf(null) < 0, algo = { meta: "Meta", bal: "Bilanciata", safe: "Safe pick" }[S.algo], free = LANES.filter(function (l) { return !cover[l] });
   v.innerHTML = '<div class="ttl"><div><h2>Draft Live<i></i></h2><p>5v5 · ' + algo + ' · ' + RKN[S.rk] + '</p></div><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><span class="pill am" title="Sinergia della squadra alleata">Sinergia ' + synergy() + '%</span><span class="pill bl">' + en().length + '/5 Nemici</span></span></div>' +
-    '<div class="srt" style="margin-top:0"><span class="k">Guidato:</span><div class="seg" id="gd"></div></div>' + (S.guide ? '<div class="srt" style="margin-top:0"><span class="k">Modalità:</span><div class="seg" id="gmo"></div></div><div class="srt" style="margin-top:0"><span class="k">Ban:</span><div class="seg" id="gbn"></div></div>' : '') + guideBox() + resultBox() + quickBox() +
+    '<details class="gset" id="gset"' + (gsetOpen ? " open" : "") + '><summary><span class="k">Draft guidato</span><b>' + (S.guide ? (S.gmode === "tour" ? "Torneo" : "Ranked") + ' · ' + (S.guide === "blue" ? "Primi noi" : "Primi loro") + ' · ' + S.gbans + ' ban' : "No") + '</b><span class="gear">' + IC.sliders + '</span></summary>' +
+    '<div class="srt" style="margin-top:8px"><span class="k">Guidato:</span><div class="seg" id="gd"></div></div>' + (S.guide ? '<div class="srt" style="margin-top:0"><span class="k">Modalità:</span><div class="seg" id="gmo"></div></div><div class="srt" style="margin-top:0"><span class="k">Ban:</span><div class="seg" id="gbn"></div></div>' : '') + '</details>' + guideBox() + resultBox() + quickBox() +
     (used().length || S.guide || gameMsg ? '' : '<div class="alert"><span class="a">' + IC.bulb + '</span><span>Inizia dai ban, poi aggiungi gli eroi nemici man mano che li scelgono: i consigli per ogni lane si aggiornano a ogni pick.</span></div>') +
-    '<div class="teams"><div class="team ally"><h3>Alleati</h3><div id="ally"></div></div><div class="team enemy"><h3>Nemici</h3><div id="enemy"></div></div></div>' + (S.ally.some(Boolean) && en().length ? laneCard() : '') + '<div class="bans" id="bans"></div>' +
-    '<div class="kv" style="align-items:center"><span class="k">Consigliati per lane</span><button class="lnk" id="lf">' + (S.lanefit ? "Solo lane libere ✓" : "Tutte le lane") + '</button></div><div class="lrows" id="lanes"></div><button class="lnk" id="lmore" style="align-self:center">' + (lMore ? "Mostra 3 per lane" : "Mostra 6 per lane") + '</button>' + (poolRecs.length && !full ? '<div class="card prow"><div class="kv"><b class="hh">' + IC.star + ' Dal tuo pool</b><span class="k">' + poolRecs.length + ' disponibili</span></div><div class="hrow" id="poolr"></div></div>' : '') + '<div id="rec"></div>' +
-    '<div class="two"><button class="btn sm" id="add"' + (en().length >= 5 ? " disabled" : "") + '>+ Nemico</button><button class="btn sm" id="det">' + (detOpen || S.keep ? "Chiudi analisi" : "Analisi dettagliata") + '</button></div><div class="two" style="margin-top:8px"><button class="btn sm" id="rp">Azzera pick</button><button class="btn sm" id="share"' + (used().length ? "" : " disabled") + '>Condividi draft</button></div><div id="detail"></div><div id="alert"></div>';
+    '<div class="teams"><div class="team ally"><h3>Alleati</h3><div id="ally"></div></div><div class="team enemy"><h3>Nemici</h3><div id="enemy"></div></div></div>' + (S.ally.some(Boolean) && en().length ? tend("lane", "Lane 1v1", laneSum(), laneCard()) : '') + tend("bans", "Ban", banSum(), '<div class="bans" id="bans"></div>') +
+    foldOpen("recs", "Consigliati", recSum()) + '<div class="kv" style="align-items:center"><span class="k">Consigliati per lane</span><button class="lnk" id="lf">' + (S.lanefit ? "Solo lane libere ✓" : "Tutte le lane") + '</button></div><div class="lrows" id="lanes"></div><button class="lnk" id="lmore" style="align-self:center">' + (lMore ? "Mostra 3 per lane" : "Mostra 6 per lane") + '</button>' + (poolRecs.length && !full ? '<div class="card prow"><div class="kv"><b class="hh">' + IC.star + ' Dal tuo pool</b><span class="k">' + poolRecs.length + ' disponibili</span></div><div class="hrow" id="poolr"></div></div>' : '') + '<div id="rec"></div>' +
+    '<div class="two"><button class="btn sm" id="add"' + (en().length >= 5 ? " disabled" : "") + '>+ Nemico</button><button class="btn sm" id="det">' + (detOpen || S.keep ? "Chiudi analisi" : "Analisi dettagliata") + '</button></div><div id="detail"></div></div></details>' +
+    '<div id="alert"></div><div class="two"><button class="btn sm" id="rp">Azzera pick</button><button class="btn sm" id="share"' + (used().length ? "" : " disabled") + '>Condividi draft</button></div>';
   slots($("ally"), S.ally, 1); slots($("enemy"), S.enemy, 0); banRows();
   LANES.forEach(function (l) {
     var row = document.createElement("div"), al = cover[l], list = (byLaneList[l] || []).slice(0, lMore ? 6 : 3);
@@ -62,9 +64,29 @@ function rDraft() {
   [[null, "No"], ["blue", "Primi noi"], ["red", "Primi loro"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.guide === o[0] ? "on" : ""; b.onclick = function () { S.guide = o[0]; save(); rDraft() }; $("gd").appendChild(b) });
   if (S.guide) [["rank", "Ranked"], ["tour", "Torneo"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = (S.gmode === "tour" ? "tour" : "rank") === o[0] ? "on" : ""; b.onclick = function () { S.gmode = o[0]; save(); rDraft() }; $("gmo").appendChild(b) });
   if (S.guide) [[10, S.gmode === "tour" ? "10" : "10 (Mitico)"], [6, "6"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.gbans === o[0] ? "on" : ""; b.onclick = function () { S.gbans = o[0]; save(); rDraft() }; $("gbn").appendChild(b) });
-  guideBind(); resultBind(); quickBind(); laneBind(v); gameMsg = ""; fxDraftDone(S.ally.every(Boolean) && S.enemy.every(Boolean));
+  guideBind(); resultBind(); quickBind(); laneBind(v); foldBind(v);
+  $("gset").ontoggle = function () { gsetOpen = this.open }; gameMsg = ""; fxDraftDone(S.ally.every(Boolean) && S.enemy.every(Boolean));
   $("lmore").onclick = function () { lMore = !lMore; rDraft() };
 }
+/* ---------- tendine del draft: si aprono da sole quelle utili nella fase attuale (ban, pick, draft completo);
+   se ne apri o chiudi una a mano, l'app lo ricorda finché non cambia fase ---------- */
+var gsetOpen = false;
+function draftPhase() {
+  if (S.ally.every(Boolean) && S.enemy.every(Boolean)) return "done";
+  var g = guideNow(); if (g && g.t) return g.t.charAt(0) === "b" ? "ban" : "pick";
+  return !S.only && !S.ally.concat(S.enemy).some(Boolean) && S.banA.concat(S.banE).filter(Boolean).length < 10 ? "ban" : "pick";
+}
+var FOLDDEF = { ban: ["bans"], pick: ["recs"], done: ["lane"] };
+function foldIsOpen(id) {
+  var ph = draftPhase(); if (!S.fold || S.fold.ph !== ph) S.fold = { ph: ph, o: {} };
+  return id in S.fold.o ? S.fold.o[id] : FOLDDEF[ph].indexOf(id) > -1;
+}
+function foldOpen(id, title, sum) { return '<details class="fold" data-f="' + id + '"' + (foldIsOpen(id) ? " open" : "") + '><summary><b>' + title + '</b><span class="fs">' + sum + '</span><i class="chev"></i></summary><div class="fb">' }
+function tend(id, title, sum, html) { return foldOpen(id, title, sum) + html + '</div></details>' }
+function foldBind(v) { [].forEach.call(v.querySelectorAll("details.fold"), function (d) { d.ontoggle = function () { if (d.open !== foldIsOpen(d.dataset.f)) { S.fold.o[d.dataset.f] = d.open; save() } } }) }
+function banSum() { var n = S.banA.concat(S.banE).filter(Boolean).length, r = n < 10 && S.banA.indexOf(null) > -1 ? banRecs()[0] : null; return S.only ? "nascosti" : n + "/10" + (r ? " · consigliato: " + esc(r.n) : "") }
+function recSum() { var m = focusRec(); return m ? "migliore: " + esc(m.n) + " (" + LS3[m.lane] + ")" : "" }
+function laneSum() { var al = laneAssign(), el = enemyLanes(), w = 0, l = 0; LANES.forEach(function (k) { var p = lanePair(k, al, el); if (p.d != null && p.a && p.e) { if (p.d >= .5) w++; else if (p.d <= -.5) l++ } }); return w + " vantaggi · " + l + " svantaggi" }
 /* ---------- draft guidato: ordine dei turni (F = chi sceglie per primo, S = l'altra squadra) ----------
    ranked: prima tutti i ban (5 o 3 a testa, in contemporanea), poi i pick 1-2-2-2-2-1
    torneo: 3 ban a testa, 6 pick, poi (con 10 ban) altri 2 ban a testa e gli ultimi 4 pick */

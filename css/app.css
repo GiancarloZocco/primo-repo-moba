@@ -3331,3 +3331,26 @@ nav button.on::after { animation: navLine .3s ease-out; }
 .thg button.on { border-color: var(--blue2); box-shadow: 0 0 0 1px var(--blue2); }
 .thg .sw { display: flex; gap: 2px; padding: 4px; border-radius: 6px; flex: none; }
 .thg .sw i { width: 7px; height: 14px; border-radius: 2px; }
+
+/* tendine del draft (si aprono da sole in base alla fase) */
+details.fold { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+details.fold > summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 12px 14px; cursor: pointer; }
+details.fold > summary::-webkit-details-marker, details.gset > summary::-webkit-details-marker, details.qopt > summary::-webkit-details-marker { display: none; }
+details.fold > summary b { font-family: var(--hd); font-size: 14px; flex: none; }
+details.fold > summary .fs { flex: 1; min-width: 0; font-size: 11px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+details.fold > summary .chev { flex: none; width: 8px; height: 8px; border-right: 2px solid var(--mute); border-bottom: 2px solid var(--mute); transform: rotate(45deg); margin: -4px 2px 0 4px; transition: transform .2s; }
+details.fold[open] > summary .chev { transform: rotate(-135deg); margin-top: 4px; }
+details.fold > .fb { display: flex; flex-direction: column; gap: 12px; padding: 0 12px 12px; }
+details.fold[open] > .fb { animation: scrIn .2s ease-out; }
+details.fold .l1 { border: 0; padding: 0; background: transparent; box-shadow: none; }
+details.fold .l1::before { display: none; }
+details.fold .l1 > .kv { display: none; }
+/* riga compatta del draft guidato */
+details.gset > summary { list-style: none; display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 2px 0; }
+details.gset > summary b { flex: 1; font-size: 12px; color: var(--blue2); }
+details.gset > summary .gear { color: var(--mute); display: grid; }
+details.gset[open] > summary .gear { color: var(--blue2); }
+/* opzioni dell'inserimento rapido */
+details.qopt { margin-top: 8px; }
+details.qopt > summary { list-style: none; font-size: 11px; color: var(--mute); cursor: pointer; }
+details.qopt > summary::before { content: "⋯ "; }
