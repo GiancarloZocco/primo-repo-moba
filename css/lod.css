@@ -1,0 +1,96 @@
+/* MLBB TOP - tema "Land of Dawn": ispirato all'interfaccia del gioco (blu notte, oro, ciano per gli alleati, rosso per i nemici).
+   Si attiva con la classe lod sul body (Impostazioni → Tema). Font: Cinzel e Rajdhani (Google Fonts, licenza OFL) in fonts/. */
+@font-face { font-family: "Cinzel"; src: url(../fonts/cinzel.woff2) format("woff2"); font-weight: 400 900; font-display: swap; }
+@font-face { font-family: "Rajdhani"; src: url(../fonts/rajdhani-600.woff2) format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Rajdhani"; src: url(../fonts/rajdhani-700.woff2) format("woff2"); font-weight: 700; font-display: swap; }
+
+body.lod {
+  --bg: #0a0f1e;
+  --panel: rgba(16, 26, 51, .88);
+  --panel2: #16244a;
+  --line: rgba(201, 162, 74, .28);
+  --line2: rgba(201, 162, 74, .55);
+  --text: #eef2ff;
+  --mute: #a9b6d6;
+  --dim: #6f7ea3;
+  --blue: #3fa9ff;
+  --blueT: #3fa9ff;
+  --blue2: #7cc4ff;
+  --red: #ff5a5a;
+  --amber: #f5c24a;
+  --gold: #e9c46a;
+  --gold2: #b8862e;
+  --hd: "Cinzel", Georgia, serif;
+  --num: "Rajdhani", "Space Grotesk", sans-serif;
+  background: #04060d;
+}
+body.lod .app {
+  background: radial-gradient(ellipse at 50% 35%, #1a2d5c 0%, #0d1631 45%, #070b17 100%);
+  background-size: auto;
+}
+/* scintille leggere sullo sfondo */
+body.lod .app::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background-image: radial-gradient(1px 1px at 12% 18%, #ffe6a8, transparent), radial-gradient(1px 1px at 78% 12%, #bfe0ff, transparent), radial-gradient(1.5px 1.5px at 40% 62%, #ffe6a8, transparent), radial-gradient(1px 1px at 88% 70%, #bfe0ff, transparent), radial-gradient(1px 1px at 25% 88%, #ffe6a8, transparent), radial-gradient(1px 1px at 60% 30%, #fff, transparent); }
+
+/* intestazione e titoli in oro */
+body.lod .top { background: linear-gradient(180deg, rgba(10, 16, 34, .96), rgba(10, 16, 34, .82)); border-bottom: 1px solid var(--line2); box-shadow: 0 1px 0 rgba(0, 0, 0, .5); }
+body.lod .brand b, body.lod .ttl h2, body.lod .hh, body.lod .box h3, body.lod .tierh b, body.lod .rec .nm, body.lod .dbox h3 {
+  font-family: var(--hd); letter-spacing: .06em;
+  background: linear-gradient(180deg, #fff3c9, #f2c55c 55%, #b8862e); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+body.lod .brand b { font-size: 22px; filter: drop-shadow(0 0 8px rgba(245, 194, 74, .35)); }
+body.lod .brand small, body.lod .k, body.lod .ttl p { color: #c8b47e; }
+
+/* pannelli: vetro blu scuro con bordo e angoli dorati */
+body.lod .card, body.lod .pcard, body.lod .team, body.lod .lrow, body.lod .tbl, body.lod .tcard, body.lod .qcard {
+  background: linear-gradient(180deg, rgba(22, 36, 74, .92), rgba(12, 20, 42, .92));
+  border: 1px solid var(--line2); border-radius: 10px; position: relative;
+  box-shadow: inset 0 1px 0 rgba(255, 230, 160, .08), 0 6px 18px rgba(0, 0, 0, .35);
+}
+body.lod .card::before, body.lod .team::before { content: ""; position: absolute; inset: -1px; border-radius: 10px; pointer-events: none;
+  background:
+    linear-gradient(var(--gold), var(--gold)) top left / 14px 2px no-repeat, linear-gradient(var(--gold), var(--gold)) top left / 2px 14px no-repeat,
+    linear-gradient(var(--gold), var(--gold)) top right / 14px 2px no-repeat, linear-gradient(var(--gold), var(--gold)) top right / 2px 14px no-repeat,
+    linear-gradient(var(--gold), var(--gold)) bottom left / 14px 2px no-repeat, linear-gradient(var(--gold), var(--gold)) bottom left / 2px 14px no-repeat,
+    linear-gradient(var(--gold), var(--gold)) bottom right / 14px 2px no-repeat, linear-gradient(var(--gold), var(--gold)) bottom right / 2px 14px no-repeat; }
+
+/* pulsanti: oro come il "Conferma" del gioco, secondari blu con bordo oro */
+body.lod .btn { border: 1px solid var(--line2); background: linear-gradient(180deg, #1b2c5a, #111c3b); color: #f3e3b3; border-radius: 8px; font-family: var(--num); font-size: 13px; letter-spacing: .08em; }
+body.lod .btn.p, body.lod .btn.am { border: 1px solid #ffe08a; color: #2a1a00; background: linear-gradient(180deg, #ffe9a8, #f5c24a 50%, #c48a2a); box-shadow: 0 0 16px rgba(245, 194, 74, .35), inset 0 1px 0 rgba(255, 255, 255, .6); position: relative; overflow: hidden; }
+body.lod .btn.p::after { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 30%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .6), transparent); transform: skewX(-20deg); animation: lodShine 4s ease-in-out infinite; }
+@keyframes lodShine { 0%, 75% { left: -40% } 100% { left: 140% } }
+body.lod .btn.rd { background: linear-gradient(180deg, #5a1620, #3a0d14); border-color: #ff6b6b; color: #ffd5d5; }
+
+/* segmenti, schede, chip */
+body.lod .seg, body.lod .subnav button, body.lod .chip { border-color: var(--line); background: rgba(8, 14, 30, .7); }
+body.lod .seg button.on, body.lod .subnav button.on, body.lod .chip.on { background: linear-gradient(180deg, #2a3f7a, #1a2a57); color: #ffe39a; border-color: var(--gold); box-shadow: inset 0 0 0 1px rgba(255, 227, 154, .25); }
+body.lod .pill { font-family: var(--num); letter-spacing: .06em; }
+
+/* numeri sportivi */
+body.lod .met b, body.lod .stats3 b, body.lod .pct, body.lod .lcand small, body.lod .tbl .tr > span:not(.who), body.lod .tb { font-family: var(--num); font-weight: 700; }
+
+/* slot: alleati ciano, nemici rossi, cornice dorata ai ritratti */
+body.lod .tile { box-shadow: 0 0 0 1.5px var(--gold), 0 2px 6px rgba(0, 0, 0, .5); }
+body.lod .team.ally h3 { color: #7cc4ff; text-shadow: 0 0 10px rgba(63, 169, 255, .6); font-family: var(--hd); }
+body.lod .team.enemy h3 { color: #ff7a7a; text-shadow: 0 0 10px rgba(255, 74, 74, .6); font-family: var(--hd); }
+body.lod .team.ally .slot.on { border-color: rgba(63, 169, 255, .7); box-shadow: inset 3px 0 0 #3fa9ff, 0 0 12px rgba(63, 169, 255, .25); }
+body.lod .team.enemy .slot.on { border-color: rgba(255, 90, 90, .7); box-shadow: inset 3px 0 0 #ff5a5a, 0 0 12px rgba(255, 74, 74, .25); }
+body.lod .slot, body.lod .bslot, body.lod .lcand { background: rgba(6, 11, 25, .75); border-color: var(--line); }
+body.lod .lcand.on, body.lod .card.hl { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 18px rgba(245, 194, 74, .35); }
+
+/* badge dei tier come gemme */
+body.lod .tb { border-radius: 4px; border: 1px solid rgba(255, 255, 255, .35); text-shadow: 0 1px 0 rgba(0, 0, 0, .4); }
+body.lod .tb.SS { background: linear-gradient(135deg, #ffdf8a, #e0552f 55%, #7a1a12); color: #fff; box-shadow: 0 0 12px rgba(255, 120, 60, .55); }
+body.lod .tb.S { background: linear-gradient(135deg, #e3c2ff, #8b4dff 55%, #3d1a8a); color: #fff; }
+body.lod .tb.A { background: linear-gradient(135deg, #bfe4ff, #3fa9ff 55%, #154a8a); color: #fff; }
+body.lod .tb.B { background: linear-gradient(135deg, #e6e9f0, #8892a8 55%, #3d4457); color: #fff; }
+
+/* barra in basso come la lobby: etichette oro, scheda attiva sollevata */
+body.lod nav { background: linear-gradient(180deg, rgba(14, 22, 46, .97), rgba(6, 10, 22, .99)); border-top: 1px solid var(--line2); }
+body.lod nav button { color: #8e9bc0; font-family: var(--num); font-size: 11.5px; letter-spacing: .06em; }
+body.lod nav button.on { color: #ffe39a; transform: translateY(-2px); filter: drop-shadow(0 0 6px rgba(245, 194, 74, .5)); }
+body.lod nav button.on::after { background: linear-gradient(90deg, transparent, #f5c24a, transparent); height: 2px; }
+
+/* divisori con diamante */
+body.lod .bh, body.lod .wbox .ph { border-color: var(--line); }
+body.lod .alert { background: rgba(245, 194, 74, .08); border-color: var(--line2); }

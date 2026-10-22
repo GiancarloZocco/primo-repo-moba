@@ -63,7 +63,7 @@ function autoLive() {
   })
 }
 function setAct() { var a = S.avatar && H[S.avatar] ? S.avatar : null; if (a) { $("act").innerHTML = tile(a, "xs"); $("act").setAttribute("aria-label", "Profilo") } }
-function applyTheme() { document.body.classList.toggle("hc", S.theme === "hc") }
+function applyTheme() { document.body.classList.toggle("hc", S.theme === "hc"); document.body.classList.toggle("lod", S.theme === "lod") }
 applyTheme(); setAct(); go(loadShared() ? "draft" : S.onb ? "home" : "start", true); setTimeout(autoLive, 1500); window.addEventListener("online", autoLive);
 if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
   window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () { }) });    }

@@ -19,6 +19,8 @@ html.replace(/<link[^>]+rel="stylesheet"[^>]*href="([^"]+)"/g, function (m, u) {
 html.replace(/<link[^>]+href="([^"]+)"[^>]*rel="stylesheet"/g, function (m, u) { if (local(u) && core.indexOf(u) < 0) core.push(u) });
 html.replace(/<script[^>]+src="([^"]+)"/g, function (m, u) { if (local(u)) core.push(u) });
 core.push("manifest.json");
+/* font dei temi: si salvano anche loro, così il tema funziona offline */
+if (fs.existsSync(path.join(ROOT, "fonts"))) fs.readdirSync(path.join(ROOT, "fonts")).filter(function (f) { return /\.woff2$/.test(f) }).sort().forEach(function (f) { core.push("fonts/" + f) });
 (manifest.icons || []).forEach(function (i) { if (core.indexOf(i.src) < 0) core.push(i.src) });
 core.forEach(function (f) { if (!fs.existsSync(path.join(ROOT, f))) { console.error("File mancante: " + f); process.exit(1) } });
 
