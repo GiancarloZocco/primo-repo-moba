@@ -3187,3 +3187,9 @@ ul.news {
 /* sottotitoli lunghi nell'intestazione: si tagliano invece di spingere fuori i pulsanti */
 .brand { min-width: 0; }
 .brand small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* selettore eroi: altezza fissa, così la ricerca resta ferma in alto e i risultati filtrati
+   compaiono subito sotto (prima la finestra si accorciava verso il basso e finiva sotto la tastiera) */
+#sheet .box { height: 78%; }
+#sheet .grid { align-content: start; }
+#sheet .box > * { flex-shrink: 0; }

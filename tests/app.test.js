@@ -381,6 +381,30 @@ async function run() {
     ok(ln.sheet && ln.closed, "toccando una lane si apre la scheda (chi è avvantaggiato, perché, statistiche, oggetto) e si chiude restando nel draft");
     ok(ln.cmp && ln.guide, "dalla scheda si apre il Confronto completo; lo stesso riquadro è nella Guida");
 
+    section("Lane dei nemici e selettore");
+    var en2 = await p.evaluate(async function () {
+      S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null];
+      ["Tigreal", "Ling", "Kagura", "Layla", "Masha"].forEach(function (h, i) { setSlot(S.ally, i, h) }); ["Estes", "Saber", "Eudora", "Moskov", "Chou"].forEach(function (h, i) { setSlot(S.enemy, i, h) });
+      go("draft"); var r = {}, btn = function (i) { return document.querySelectorAll("#enemy .srow")[i].querySelector(".lnb") };
+      r.auto = btn(4).textContent + "|" + laneOfEnemy("Chou");
+      for (var k = 0; k < 10 && laneOfEnemy("Chou") !== "r"; k++) btn(4).click();
+      r.man = S.enemyLane[4] + "|" + btn(4).classList.contains("man") + "|" + laneOfEnemy("Chou") + "|" + laneOfEnemy("Estes") + "|" + lanePair("r").e;
+      var code = draftCode(); r.code = /_m----r$/.test(code); var o = readCode(code); r.read = o.enemyLane.join(",") === ",,,,r";
+      setSlot(S.enemy, 4, "Atlas"); r.cleared = S.enemyLane[4] === null;
+      /* selettore: la ricerca resta ferma e il risultato filtrato è subito sotto */
+      openPick("Scegli l’eroe nemico", free(), function () { }, { quick: 1 }); await new Promise(function (r) { setTimeout(r, 30) });
+      var q = document.getElementById("q"), y0 = q.getBoundingClientRect().top; q.value = "aulu"; q.oninput();
+      var y1 = q.getBoundingClientRect().top, first = document.querySelector("#grid button"), fb = first.getBoundingClientRect();
+      r.pick = Math.abs(y1 - y0) < 2 && first.textContent === "Aulus" ? "ok" : y0 + "→" + y1 + " " + first.textContent; r.near = fb.top - y1 < 120;
+      document.getElementById("sheet").classList.remove("show");
+      S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.enemyLane = [null, null, null, null, null]; save();
+      return r;
+    });
+    ok(/^[A-Z]{3,4}\|[oemjr]$/.test(en2.auto), "anche i nemici hanno il pulsante della lane, automatica all'inizio (" + en2.auto + ")");
+    ok(en2.man === "r|true|r|null|Chou" || /^r\|true\|r\|[oemj]?\|Chou$/.test(en2.man), "lane nemica scelta a mano: vale per la Lane 1v1 e sposta gli altri (" + en2.man + ")");
+    ok(en2.code && en2.read && en2.cleared, "la lane dei nemici viaggia nel link condiviso e si azzera cambiando eroe");
+    ok(en2.pick === "ok" && en2.near, "selettore: cercando, la barra di ricerca resta ferma e l'eroe filtrato è subito sotto (" + en2.pick + ")");
+
     section("Quiz: sfida del giorno");
     var qa = await p.evaluate(function () { S.daily = null; QZ = null; go("quiz"); document.getElementById("dgo").click(); return JSON.stringify(QZ.r.map(function (q) { return [q.q, q.o, q.a] })) });
     var ctx4 = await browser.newContext({ locale: "en-US" }), errs4 = [], p4 = await newPage(ctx4, errs4);

@@ -1,14 +1,17 @@
 /* MLBB TOP - Lane 1v1: chi è avvantaggiato in ogni lane tra il nostro eroe e quello nemico, e perché */
-/* lane dei nemici: come per gli alleati, la combinazione che copre più lane con le build ufficiali più usate */
+/* lane dei nemici: quelle scelte a mano restano; per gli altri, come per gli alleati, la combinazione che copre più lane
+   con le build ufficiali più usate */
 function enemyLanes() {
-  var list = S.enemy.filter(Boolean), best = null;
+  var fixed = {}, list = [], best = null;
+  S.enemy.forEach(function (h, i) { var l = S.enemyLane[i]; if (h && l && !fixed[l]) fixed[l] = h; else if (h) list.push(h) });
   (function rec(k, used, cur, sc) {
     if (k === list.length) { var v = Object.keys(cur).length * 10 + sc; if (!best || v > best.v) best = { v: v, map: Object.assign({}, cur) }; return }
-    H[list[k]].l.split("").forEach(function (l) { if (!used[l]) { used[l] = 1; cur[l] = list[k]; rec(k + 1, used, cur, sc + fit(list[k], l)); delete used[l]; delete cur[l] } });
+    H[list[k]].l.split("").forEach(function (l) { if (!used[l] && !fixed[l]) { used[l] = 1; cur[l] = list[k]; rec(k + 1, used, cur, sc + fit(list[k], l)); delete used[l]; delete cur[l] } });
     rec(k + 1, used, cur, sc)
   })(0, {}, {}, 0);
-  return best ? best.map : {}
+  return Object.assign({}, best ? best.map : {}, fixed)
 }
+function laneOfEnemy(h) { var m = enemyLanes(), r = null; Object.keys(m).forEach(function (l) { if (m[l] === h) r = l }); return r }
 /* coppia di una lane: d = vantaggio in % per il nostro eroe; dato ufficiale se c'è, altrimenti stima (est) da tratti e win rate */
 function lanePair(l, al, el) {
   var a = (al || laneAssign())[l], e = (el || enemyLanes())[l], d = a && e ? h2h(a, e) : null, est = false;

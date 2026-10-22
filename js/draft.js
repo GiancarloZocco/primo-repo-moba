@@ -145,20 +145,22 @@ function banRows() {
 /* ---------- condivisione: il draft viaggia nel link (#d=...) con gli id ufficiali degli eroi ---------- */
 function draftCode() {
   var ids = function (t) { return t.map(function (h) { return h && HX[h] ? HX[h].id : 0 }).join(".") };
-  return "a" + ids(S.ally) + "_e" + ids(S.enemy) + "_x" + ids(S.banA) + "_y" + ids(S.banE) + "_l" + S.allyLane.map(function (l, i) { return S.ally[i] && l || "-" }).join("");
+  return "a" + ids(S.ally) + "_e" + ids(S.enemy) + "_x" + ids(S.banA) + "_y" + ids(S.banE) + "_l" + S.allyLane.map(function (l, i) { return S.ally[i] && l || "-" }).join("") +
+    (S.enemyLane.some(function (l, i) { return l && S.enemy[i] }) ? "_m" + S.enemyLane.map(function (l, i) { return S.enemy[i] && l || "-" }).join("") : "");
 }
 function readCode(c) {
   var o = {}, k = { a: "ally", e: "enemy", x: "banA", y: "banE" };
   String(c || "").split("_").forEach(function (part) {
     var t = part.charAt(0), v = part.slice(1);
     if (k[t]) o[k[t]] = sanitizeTeam(v.split(".").map(function (n) { return ID2[+n] || null }));
-    else if (t === "l") o.allyLane = v.slice(0, 5).split("").map(function (l) { return LN[l] ? l : null });
+    else if (t === "l" || t === "m") o[t === "l" ? "allyLane" : "enemyLane"] = v.slice(0, 5).split("").map(function (l) { return LN[l] ? l : null });
   });
   if (!o.ally && !o.enemy && !o.banA && !o.banE) return null;
   ["ally", "enemy", "banA", "banE"].forEach(function (t) { o[t] = o[t] || [null, null, null, null, null] });
   while (!o.allyLane || o.allyLane.length < 5) o.allyLane = (o.allyLane || []).concat([null]);
+  while (!o.enemyLane || o.enemyLane.length < 5) o.enemyLane = (o.enemyLane || []).concat([null]);
   var seen = {}; ["ally", "enemy", "banA", "banE"].forEach(function (t) { o[t] = o[t].map(function (h) { if (!h || seen[h]) return null; seen[h] = 1; return h }) });
-  o.allyLane = o.allyLane.map(function (l, i) { return o.ally[i] ? l : null });
+  o.allyLane = o.allyLane.map(function (l, i) { return o.ally[i] ? l : null }); o.enemyLane = o.enemyLane.map(function (l, i) { return o.enemy[i] ? l : null });
   return o;
 }
 /* ---------- storico partite: esito dei draft completati ---------- */
@@ -218,7 +220,7 @@ function loadShared() {
   history.replaceState(null, "", location.href.split("#")[0]);
   var o = readCode(decodeURIComponent(m[1]));
   if (!o) { toast("Link del draft non valido.", "err"); return false }
-  var open = function () { S.ally = o.ally; S.enemy = o.enemy; S.banA = o.banA; S.banE = o.banE; S.allyLane = o.allyLane; focus = null; save() };
+  var open = function () { S.ally = o.ally; S.enemy = o.enemy; S.banA = o.banA; S.banE = o.banE; S.allyLane = o.allyLane; S.enemyLane = o.enemyLane; focus = null; save() };
   /* con un draft già in corso si chiede prima: la risposta arriva dopo, quindi qui si risponde false e si apre il draft dopo la conferma */
   if (used().length) { ask("Aprire il draft condiviso?", { text: "Sostituisce il draft che hai in corso.", ok: "Apri" }, function () { open(); go("draft") }); return false }
   open(); return true;
@@ -233,16 +235,17 @@ function slots(el, team, side) {
     if (h && side) b.setAttribute("aria-label", "Modifica slot alleato " + (i + 1) + ": " + h);
     b.onclick = function () {
       if (h && side) openPick("Slot alleato " + (i + 1) + " · " + h, [h].concat(free()), function (n) { setSlot(team, i, n); rDraft() }, { cur: h, quick: 1, rm: function () { team[i] = null; S.allyLane[i] = null; focus = null; save(); rDraft() } });
-      else if (h) { team[i] = null; focus = null; save(); rDraft() }
+      else if (h) { team[i] = null; S.enemyLane[i] = null; focus = null; save(); rDraft() }
       else openPick("Scegli l’eroe " + (side ? "alleato" : "nemico"), free(), function (n) { setSlot(team, i, n); rDraft() }, { quick: 1 });
     };
     wrap.appendChild(b);
-    if (side && h) {
-      var man = S.allyLane[i], cur = laneOfAlly(i), lb = document.createElement("button");
+    if (h) {
+      /* lane: automatica (dalle build ufficiali) finché non la scegli; ogni tocco passa alla successiva */
+      var arr = side ? S.allyLane : S.enemyLane, man = arr[i], cur = side ? laneOfAlly(i) : laneOfEnemy(h), lb = document.createElement("button");
       lb.className = "lnb" + (man ? " man" : "") + (cur ? "" : " none"); lb.textContent = cur ? LS3[cur] : "—";
       lb.setAttribute("aria-label", "Lane di " + h + ": " + (cur ? LN[cur] : "nessuna") + (man ? " (scelta da te)" : " (automatica)") + ". Tocca per cambiare");
       lb.title = man ? "Scelta da te · tocca per cambiare" : "Automatica · tocca per sceglierla";
-      lb.onclick = function () { var ord = [null].concat(H[h].l.split(""), LANES.filter(function (l) { return H[h].l.indexOf(l) < 0 })), k = ord.indexOf(man), nx = (k + 1) % ord.length; if (man == null && ord[nx] === cur) nx = (nx + 1) % ord.length; S.allyLane[i] = ord[nx]; focus = null; save(); rDraft() };
+      lb.onclick = function () { var ord = [null].concat(H[h].l.split(""), LANES.filter(function (l) { return H[h].l.indexOf(l) < 0 })), k = ord.indexOf(man), nx = (k + 1) % ord.length; if (man == null && ord[nx] === cur) nx = (nx + 1) % ord.length; arr[i] = ord[nx]; focus = null; save(); rDraft() };
       wrap.appendChild(lb)
     }
     el.appendChild(wrap);
