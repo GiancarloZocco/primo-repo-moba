@@ -341,6 +341,15 @@ async function run() {
     ok(cleared.shown && cleared.kept, "Cancella storico apre la finestra di conferma dell'app; Annulla non cancella nulla");
     ok(cleared.n === 0 && !p.lastDialog, "confermando si svuotano le partite (nessun avviso del browser)");
 
+    var gl = await p.evaluate(function () {
+      S.games = [{ d: 1, r: 1, a: ["Layla"], e: ["Saber"] }, { d: 2, r: 0, a: ["Tigreal"], e: ["Ling"] }]; save(); go("games");
+      var r = { rows: document.querySelectorAll(".glist .gi").length, first: document.querySelector(".glist .gi .pill").textContent };
+      document.querySelector('[data-flip="1"]').click(); r.flip = S.games[1].r === 1;
+      document.querySelector('[data-del="0"]').click(); document.getElementById("dlgok").click(); r.del = S.games.length === 1 && S.games[0].a[0] === "Tigreal";
+      S.games = []; save(); return r;
+    });
+    ok(gl.rows === 2 && gl.first === "S" && gl.flip && gl.del, "storico: elenco delle partite (più recente in alto), correggi il risultato o elimina una partita");
+
     section("Confronto 1 contro 1");
     var cm = await p.evaluate(async function () {
       var wait = function () { return new Promise(function (r) { setTimeout(r, 120) }) };

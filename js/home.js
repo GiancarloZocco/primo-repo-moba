@@ -2,6 +2,17 @@
 /* novità per versione, la più recente per prima: la Home mostra un avviso finché non la apri */
 var NEWS = [
   {
+    v: "2026-10-22", t: "Draft più veloce e nuovi temi", items: [
+      "Inserimento rapido nel Draft: scrivi 2-3 lettere e premi Invio, l'eroe va nel turno giusto. Eroi probabili a un tocco e opzione «Solo pick nemici».",
+      "Draft più ordinato: Ban, Consigliati e Lane 1v1 sono tendine che si aprono da sole in base alla fase.",
+      "Lane anche per i nemici: tocca il pulsante accanto all'eroe per sceglierla.",
+      "6 nuovi temi in Impostazioni → Tema interfaccia: Land of Dawn e le fazioni Moniyan, Abyss, Eruditio, Cadia e Northern Vale.",
+      "Animazioni a tema MOBA: lock-in del pick, ban timbrato, Vittoria/Sconfitta, annunci Double Kill/Triple Kill/Maniac/Savage.",
+      "Storico partite: puoi correggere il risultato o eliminare una singola partita.",
+      "Finestre di conferma nello stile dell'app e barra in basso sempre ferma."
+    ]
+  },
+  {
     v: "2026-10-21", t: "Nuova organizzazione e tante funzioni", items: [
       "Primo avvio guidato: scegli ruolo, lane preferita e il tuo pool di eroi.",
       "Pool di eroi: bonus nei consigli del draft, riga «Dal tuo pool» e primi nel selettore (si modifica dal Profilo).",
@@ -13,7 +24,7 @@ var NEWS = [
       "Interfaccia in inglese: si sceglie in Impostazioni → Lingua dell'app.",
       "Ricerca unica: la lente in alto trova eroi, oggetti, talenti, spell e schermate.",
       "Home: riassunto di draft, sfida del giorno, eroi in crescita e ultime partite.",
-      "Barra in basso a gruppi: Gioca (Draft, Storico), Studia (Tier list, Eroi, Confronto, Quiz), Io (Profilo, Impostazioni).",
+      "Barra in basso a gruppi: Gioca (Draft, Guida, Confronto, Storico), Studia (Tier list, Eroi, Quiz), Io (Profilo, Impostazioni).",
       "Impostazioni in una schermata a parte.",
       "Draft guidato con i turni del ranked, ban consigliati e link per condividere il draft.",
       "Storico partite: segna vittoria o sconfitta e scopri con chi vinci di più.",

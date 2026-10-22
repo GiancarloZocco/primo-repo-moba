@@ -3354,3 +3354,14 @@ details.gset[open] > summary .gear { color: var(--blue2); }
 details.qopt { margin-top: 8px; }
 details.qopt > summary { list-style: none; font-size: 11px; color: var(--mute); cursor: pointer; }
 details.qopt > summary::before { content: "⋯ "; }
+
+/* storico: singole partite */
+.glist { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.gi { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); }
+.gi:first-child { border-top: 0; }
+.gi .gt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.gi .gt small { font-size: 10.5px; color: var(--mute); }
+.gi .gtm { display: flex; align-items: center; gap: 2px; overflow: hidden; }
+.gi .gtm .tile { width: 20px; height: 20px; border-radius: 5px; flex: none; }
+.gi .gtm i { font-style: normal; font-size: 9px; color: var(--mute); margin: 0 4px; }
+.gi .btn { padding: 6px 8px; min-width: 0; flex: none; }

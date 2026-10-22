@@ -231,9 +231,20 @@ function histCard() {
     (st.al.length || st.vs.length ? '' : '<p class="hint">Compagni e nemici compaiono quando un eroe ha almeno 2 partite.</p>') +
     '<div class="set"><span><b>Cancella storico</b><small>Elimina tutte le partite segnate</small></span><button class="btn rd sm" id="ghx">Cancella</button></div></div>';
 }
+var gAll = false;
 function rGames() {
   var v = $("v-games");
-  v.innerHTML = '<div class="ttl"><div><h2>Storico partite</h2><p>Le partite segnate a fine draft</p></div></div>' + histCard();
+  /* elenco delle singole partite (dalla più recente): si può correggere il risultato o eliminarne una */
+  var list = S.games.map(function (g, i) { return { g: g, i: i } }).reverse().slice(0, gAll ? 300 : 20);
+  var team = function (t) { return (t || []).filter(Boolean).map(function (h) { return tile(h, "xs") }).join("") };
+  v.innerHTML = '<div class="ttl"><div><h2>Storico partite</h2><p>Le partite segnate a fine draft</p></div></div>' + histCard() +
+    (S.games.length ? '<div class="card"><div class="kv"><b class="hh">' + IC.medal + ' Partite</b><span class="k">correggi o elimina</span></div><div class="glist">' + list.map(function (x) {
+      var g = x.g; return '<div class="gi"><span class="pill ' + (g.r ? "gr" : "rd") + '">' + (g.r ? "V" : "S") + '</span><span class="gt"><small>' + new Date(g.d).toLocaleDateString("it-IT") + (g.me ? ' · ' + esc(g.me) : '') + '</small><span class="gtm">' + team(g.a) + '<i>vs</i>' + team(g.e) + '</span></span>' +
+        '<button class="btn sm" data-flip="' + x.i + '" aria-label="Cambia in ' + (g.r ? "sconfitta" : "vittoria") + '">' + (g.r ? "→ S" : "→ V") + '</button><button class="btn sm rd" data-del="' + x.i + '" aria-label="Elimina partita">×</button></div>'
+    }).join("") + '</div>' + (S.games.length > 20 && !gAll ? '<button class="lnk" id="gall" style="margin-top:8px">Mostra tutte (' + S.games.length + ')</button>' : '') + '</div>' : '');
+  [].forEach.call(v.querySelectorAll("[data-flip]"), function (b) { b.onclick = function () { var g = S.games[+b.dataset.flip]; g.r = g.r ? 0 : 1; save(); toast("Partita segnata come " + (g.r ? "vittoria" : "sconfitta") + "."); rGames() } });
+  [].forEach.call(v.querySelectorAll("[data-del]"), function (b) { b.onclick = function () { var i = +b.dataset.del; ask("Eliminare questa partita?", { text: "Le statistiche dello storico verranno ricalcolate.", ok: "Elimina", danger: 1 }, function () { S.games.splice(i, 1); save(); rGames() }) } });
+  if ($("gall")) $("gall").onclick = function () { gAll = true; rGames() };
   if ($("ghx")) $("ghx").onclick = function () { ask("Cancellare lo storico?", { text: "Tutte le partite segnate verranno eliminate.", ok: "Cancella", danger: 1 }, function () { S.games = []; save(); rGames() }) };
 }
 function shareUrl() { return location.href.split("#")[0] + "#d=" + draftCode() }
