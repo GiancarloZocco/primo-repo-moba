@@ -64,7 +64,7 @@ function shotSet(v) { return idbDo("readwrite", function (st) { return v ? st.pu
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] }) }
 
 /* ---------- stato ---------- */
-var DEF = { allyLane: [null, null, null, null, null], recent: [], useMine: true, mph: [], banA: [null, null, null, null, null], banE: [null, null, null, null, null], ally: [null, null, null, null, null], enemy: [null, null, null, null, null], keep: false, lanefit: true, avatar: null, rk: "all", algo: "meta", theme: "dark", nick: "DraftStrategist", main: "T", picks: 0, synSum: 0, synN: 0, quiz: { xp: 0, ok: 0, tot: 0, best: 0, streak: 0, rounds: 0 }, spoken: false, autoLive: true, guide: null, gbans: 10, games: [], daily: null, dstreak: 0, dlast: null, lang: "it", newsSeen: null, pool: [], lane: null, onb: true };
+var DEF = { allyLane: [null, null, null, null, null], recent: [], useMine: true, mph: [], banA: [null, null, null, null, null], banE: [null, null, null, null, null], ally: [null, null, null, null, null], enemy: [null, null, null, null, null], keep: false, lanefit: true, avatar: null, rk: "all", algo: "meta", theme: "dark", nick: "DraftStrategist", main: "T", picks: 0, synSum: 0, synN: 0, quiz: { xp: 0, ok: 0, tot: 0, best: 0, streak: 0, rounds: 0 }, spoken: false, autoLive: true, guide: null, gbans: 10, games: [], daily: null, dstreak: 0, dlast: null, lang: "it", ui: "it", newsSeen: null, pool: [], lane: null, onb: true };
 var S; try { S = JSON.parse(localStorage.getItem(KEY.s) || "null") } catch (e) { S = null }
 var FIRST = !(S && typeof S === "object"); /* nessun dato salvato: primo avvio */
 var POOLMAX = 8; /* eroi nel pool del giocatore */

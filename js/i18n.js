@@ -131,6 +131,10 @@ var EN = {
   "Draft guidato con i turni del ranked, ban consigliati e link per condividere il draft.": "Guided draft with ranked turns, recommended bans and a link to share the draft.", "Storico partite: segna vittoria o sconfitta e scopri con chi vinci di più.": "Match history: mark victory or defeat and find out who you win most with.", "Confronto 1 contro 1 tra due eroi.": "1v1 comparison between two heroes.",
   "Tendenze del meta: frecce ▲▼ sul win rate e aggiornamento automatico delle statistiche.": "Meta trends: ▲▼ arrows on win rate and automatic stats update.", "Quiz: sfida del giorno da condividere.": "Quiz: shareable daily challenge.", "Abilità, oggetti, talenti e matchup tradotti in italiano.": "Skills, items, talents and matchups translated into Italian.", "Backup dei dati: esporta e importa un file con profilo, storico e quiz.": "Data backup: export and import a file with profile, history and quiz.", "Avvisi dentro l'app e messaggio chiaro se l'OCR viene usato senza rete.": "In-app notices and a clear message if OCR is used offline.",
   // pezzi brevi usati nelle frasi composte
+  "+ Eroe": "+ Hero", "Fonte:": "Source:", "MLBB Academy (dati ufficiali Moonton) via arena.rone.dev · Wiki MLBB Fandom": "MLBB Academy (official Moonton data) via arena.rone.dev · MLBB Wiki Fandom",
+  "). Abilità e titoli: MLBB Academy e Wiki MLBB. Il pulsante Aggiorna scarica le statistiche più recenti (serve internet). Tier e punteggi del draft sono calcolati da MLBB TOP.": "). Skills and titles: MLBB Academy and MLBB Wiki. The Update button downloads the latest stats (internet needed). Tiers and draft scores are computed by MLBB TOP.",
+  "Lo screenshot resta solo su questo dispositivo. Con \"Leggi i dati\" l'app prova a riconoscere i numeri: controlla sempre il risultato e correggi i campi qui sotto.": "The screenshot stays on this device only. With \"Read data\" the app tries to recognise the numbers: always check the result and fix the fields below.",
+  "Nessun risultato per": "No results for", "Minacce principali:": "Main threats:", "Analisi ›": "Analysis ›", "Mostra": "Show", "per lane": "per lane",
   "punti": "points", "pt": "pt", "Pick": "Pick", "Ban": "Ban", "BAN": "BAN", "Counter": "Counter", "Meta": "Meta", "Tactical Telemetry": "Tactical Telemetry", "Domanda": "Question", "di": "of", "Dal": "From", "Uso ": "Usage ", "consigli": "tips", "x": "x"
 };
 /* frasi con numeri: [espressione, risultato] (i gruppi si traducono a loro volta) */
@@ -149,7 +153,7 @@ function tr(s) {
   var t = String(s), lead = t.match(/^\s*/)[0], tail = t.match(/\s*$/)[0], core = t.trim(); if (!core) return s;
   var v = EN[core]; if (v != null) return lead + v + tail;
   for (var i = 0; i < ENR.length; i++) { var m = core.match(ENR[i][0]); if (m) return lead + (typeof ENR[i][1] === "function" ? ENR[i][1](m) : core.replace(ENR[i][0], ENR[i][1])) + tail }
-  if (!ENRX) { ENK = Object.keys(EN).filter(function (k) { return k !== EN[k] && /[a-zà-ù]/i.test(k) }).sort(function (a, b) { return b.length - a.length }); ENRX = new RegExp("(?<![\\p{L}])(" + ENK.map(function (k) { return k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") }).join("|") + ")(?![\\p{L}])", "giu") }
+  if (!ENRX) { ENK = Object.keys(EN).filter(function (k) { return k !== EN[k] && /[a-zà-ù]/i.test(k) }).sort(function (a, b) { return b.length - a.length }); ENRX = new RegExp(ENK.map(function (k) { var e = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); return (/^\p{L}/u.test(k) ? "(?<!\\p{L})" : "") + e + (/\p{L}$/u.test(k) ? "(?!\\p{L})" : "") }).join("|"), "giu") }
   return lead + core.replace(ENRX, function (k) { var r = enCase(k); return r == null ? k : r }) + tail
 }
 /* traduce i testi e gli attributi già nella pagina sotto root; ricorda cosa ha scritto per non ritradurlo */
@@ -163,6 +167,8 @@ function trNode(n) {
 function trNode1(e) { ["placeholder", "aria-label", "title"].forEach(function (a) { var v = e.getAttribute(a), k = "tr" + a.replace("-", ""); if (v && e.dataset[k] !== v) { var o = tr(v); e.setAttribute(a, o); e.dataset[k] = o } }) }
 if (S.ui === "en") {
   document.documentElement.lang = "en";
+  /* la lore breve di data.js è in italiano: in inglese si usa la frase ufficiale */
+  NAMES.forEach(function (h) { if (HX[h] && HX[h].st) H[h].lore = HX[h].st });
   trNode(document.body);
   new MutationObserver(function (ms) { ms.forEach(function (m) { if (m.type === "characterData") trNode(m.target); else m.addedNodes.forEach(trNode) }) }).observe(document.body, { childList: true, subtree: true, characterData: true });
   var conf0 = window.confirm; window.confirm = function (m) { return conf0.call(window, tr(m)) };

@@ -7,12 +7,12 @@
    - Aggiornamento dati live (arena.rone.dev): sempre dalla rete, mai in cache.
    VERSION e CORE li scrive tools/build.js (npm run build): VERSION è un'impronta dei file,
    quindi cambia da sola a ogni modifica e chi ha l'app installata riceve la versione nuova. */
-var VERSION = "dfb6f73f68";
+var VERSION = "e86a48ee42";
 var CACHE = "mlbb-top-" + VERSION;
 var EXT = "mlbb-top-ext-v1";
 var EXT_MAX = 600;
 var WAIT = 4000;
-var CORE = ["./", "./index.html", "./css/app.css", "./data.js", "./data-it.js", "./js/core.js", "./js/engine.js", "./js/ui.js", "./js/build.js", "./js/draft.js", "./js/guide.js", "./js/tier.js", "./js/heroes.js", "./js/quiz.js", "./js/profile.js", "./js/start.js", "./js/settings.js", "./js/search.js", "./js/home.js", "./js/system.js", "./manifest.json", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png"];
+var CORE = ["./", "./index.html", "./css/app.css", "./data.js", "./data-it.js", "./js/core.js", "./js/i18n.js", "./js/engine.js", "./js/ui.js", "./js/build.js", "./js/draft.js", "./js/guide.js", "./js/tier.js", "./js/heroes.js", "./js/quiz.js", "./js/profile.js", "./js/start.js", "./js/settings.js", "./js/search.js", "./js/home.js", "./js/system.js", "./manifest.json", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png"];
 
 /* scarica saltando la cache HTTP del browser, così una versione nuova non riceve file vecchi */
 function fresh(u) { return new Request(u, { cache: "reload" }) }

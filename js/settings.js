@@ -9,6 +9,7 @@ function rSettings() {
     '<div class="set"><span><b>Azzera il draft</b><small>Svuota squadre e ban</small></span><button class="btn sm" id="reset">Azzera</button></div></div>' +
     '<div class="card"><div class="ph">' + IC.monitor + ' Impostazioni app & sistema</div>' +
     '<div class="set"><span><b>Tema interfaccia</b><small>Profilo colore del display</small></span><div class="seg" id="theme" style="width:170px"></div></div>' +
+    '<div class="set"><span><b>Lingua dell\'app</b><small>Menu, pulsanti e consigli</small></span><div class="seg" id="uil" style="width:170px"></div></div>' +
     '<div class="set"><span><b>Testi di gioco</b><small>Abilità, oggetti, talenti e matchup</small></span><div class="seg" id="lang" style="width:170px"></div></div>' +
     '<div class="set" style="flex-direction:column;align-items:stretch"><div class="kv"><b style="font-family:var(--hd);font-weight:500;font-size:13px">Statistiche per rank</b><span class="a" style="font-size:10.5px;font-weight:700">' + RKN[S.rk].toUpperCase() + '</span></div><div class="seg" id="prk"></div></div>' +
     '<div class="set"><span><b>Aggiornamento automatico</b><small>Scarica le statistiche una volta al giorno quando c’è internet</small></span><button class="tg' + (S.autoLive !== false ? " on" : "") + '" id="tga" aria-label="Aggiornamento automatico"></button></div>' +
@@ -21,6 +22,8 @@ function rSettings() {
   [["meta", "Meta competitivo"], ["bal", "Bilanciata"], ["safe", "Safe pick"]].forEach(function (a) { var b = document.createElement("button"); b.textContent = a[1]; b.className = S.algo === a[0] ? "on" : ""; b.onclick = function () { S.algo = a[0]; focus = null; save(); rSettings() }; $("algo").appendChild(b) });
   [["dark", "Cyber dark"], ["hc", "Alto contrasto"]].forEach(function (a) { var b = document.createElement("button"); b.textContent = a[1]; b.className = S.theme === a[0] ? "on" : ""; b.onclick = function () { S.theme = a[0]; applyTheme(); save(); rSettings() }; $("theme").appendChild(b) });
   Object.keys(RKN).forEach(function (k) { var b = document.createElement("button"); b.textContent = RKN[k]; b.className = S.rk === k ? "on" : ""; b.onclick = function () { S.rk = k; save(); calcMeta(); rSettings() }; $("prk").appendChild(b) });
+  /* l'inglese vale anche per i testi di gioco (originali); si ricarica perché i testi sono già nella pagina */
+  [["it", "Italiano"], ["en", "English"]].forEach(function (a) { var b = document.createElement("button"); b.textContent = a[1]; b.className = (S.ui === "en" ? "en" : "it") === a[0] ? "on" : ""; b.setAttribute("data-raw", ""); b.onclick = function () { if ((S.ui === "en" ? "en" : "it") === a[0]) return; S.ui = a[0]; S.lang = a[0]; save(); location.reload() }; $("uil").appendChild(b) });
   [["it", "Italiano"], ["en", "Originale"]].forEach(function (a) { var b = document.createElement("button"); b.textContent = a[1]; b.className = (S.lang === "en" ? "en" : "it") === a[0] ? "on" : ""; b.onclick = function () { if ((S.lang === "en" ? "en" : "it") === a[0]) return; S.lang = a[0]; save(); location.reload() }; $("lang").appendChild(b) });
   $("live").onclick = function () { liveUpdate(this) };
   $("tg").onclick = function () { S.keep = !S.keep; save(); rSettings() };

@@ -189,6 +189,31 @@ async function run() {
     ok(sr.item, "un oggetto apre il database filtrato su quell'oggetto");
     ok(sr.scr === "settings" && sr.hero === "hero|Layla", "trova anche le schermate; Invio apre il primo risultato");
 
+    section("Interfaccia in inglese");
+    var ctxe = await browser.newContext({ viewport: { width: 390, height: 844 } }), pe = await newPage(ctxe, errs);
+    await ctxe.route(function (u) { return !u.href.startsWith(URL0) }, function (r) { return r.abort() });
+    await pe.goto(URL0); await pe.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
+    await pe.evaluate(function () { document.getElementById("sskip").click(); go("settings") });
+    await pe.click("#uil button:nth-child(2)"); await pe.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
+    var en = await pe.evaluate(async function () {
+      var IT = /(^|[^\p{L}])(il|della|degli|nella|alla|che|con|non|sono|nessun|nessuna|tocca|scegli|eroi|nemici|alleati|partita|squadra|consigli|ancora|già|punti|abilità|oggetti|talenti|giungla|impostazioni|storico|confronto|guida)(?![\p{L}])/iu, bad = [];
+      var scan = function (v) { var w = document.createTreeWalker(document.getElementById("v-" + v), NodeFilter.SHOW_TEXT), n; while ((n = w.nextNode())) { var t = n.nodeValue.trim(); if (t && IT.test(t) && !n.parentNode.closest("[data-raw]")) bad.push(v + ": " + t.slice(0, 60)) } };
+      var wait = function () { return new Promise(function (r) { setTimeout(r, 30) }) };
+      var r = { lang: document.documentElement.lang, ui: S.ui, game: S.lang, nav: [].map.call(document.querySelectorAll("#nav button"), function (b) { return b.textContent }).join(",") };
+      setSlot(S.ally, 0, "Tigreal"); ["Estes", "Lancelot", "Layla"].forEach(function (h, i) { setSlot(S.enemy, i, h) }); detOpen = true;
+      for (var v of ["home", "draft", "guide", "games", "tier", "heroes", "cmp", "quiz", "profile", "settings", "news"]) { go(v); await wait(); scan(v) }
+      openHero("Layla", "bd"); await wait(); scan("hero"); openHero("Layla", "lo"); await wait(); scan("hero");
+      r.draft = document.querySelector("#nav button.on") && (go("draft"), await wait(), /Recommended by lane/.test(document.getElementById("v-draft").textContent));
+      r.tr = tr("Countera Franco (+2.0% di win rate contro di lui)"); r.bad = bad;
+      return r;
+    });
+    ok(en.lang === "en" && en.ui === "en" && en.game === "en" && en.nav === "Home,Play,Study,Me", "Impostazioni → Lingua dell'app: English (barra: " + en.nav + ")");
+    ok(en.draft && en.tr === "Counters Franco (+2.0% win rate vs him)", "schermate e frasi composte in inglese (" + en.tr + ")");
+    ok(!en.bad.length, "nessun testo italiano nelle schermate in inglese" + (en.bad.length ? ": " + en.bad.slice(0, 6).join(" | ") : ""));
+    await pe.evaluate(function () { go("settings") }); await pe.click("#uil button:nth-child(1)"); await pe.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
+    ok(await pe.evaluate(function () { go("settings"); return S.ui === "it" && document.documentElement.lang === "it" && /Lingua dell'app/.test(document.getElementById("v-settings").textContent) }), "si torna all'italiano");
+    await ctxe.close();
+
     section("Build contro i nemici");
     var bv = await p.evaluate(function () {
       S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null];
