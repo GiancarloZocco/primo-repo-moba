@@ -138,6 +138,17 @@ async function run() {
       var sc = document.getElementById("v-tier"); sc.scrollTop = 99999; var nav = document.getElementById("nav").getBoundingClientRect();
       return { page: document.scrollingElement.scrollHeight <= innerHeight + 1, inner: sc.scrollTop > 0, nav: Math.abs(nav.bottom - innerHeight) < 2 };
     });
+    /* computer con finestra bassa: la cornice da telefono si accorcia e la lista del selettore resta raggiungibile */
+    await p.setViewportSize({ width: 1280, height: 700 });
+    var low = await p.evaluate(async function () {
+      go("draft"); await new Promise(function (r) { setTimeout(r, 50) }); var app = document.querySelector(".app").getBoundingClientRect();
+      openPick("Ban alleati 2", NAMES, function () { }); await new Promise(function (r) { setTimeout(r, 50) });
+      var box = document.querySelector("#sheet .box"); box.scrollTop = 99999; var last = document.getElementById("grid").lastElementChild.getBoundingClientRect(), nav = document.getElementById("nav").getBoundingClientRect();
+      document.getElementById("sheet").classList.remove("show");
+      return { fits: app.bottom <= innerHeight, last: last.bottom <= innerHeight + 1 && last.bottom > 0, nav: nav.bottom <= innerHeight };
+    });
+    await p.setViewportSize({ width: 390, height: 844 });
+    ok(low.fits && low.nav && low.last, "computer con finestra bassa: l'app sta nella finestra e si arriva in fondo alla lista degli eroi");
     var hd = await p.evaluate(async function () {
       var out = []; document.querySelector(".app").style.maxWidth = "320px";
       for (var v of ["guide", "cmp", "draft", "settings"]) { go(v); await new Promise(function (r) { setTimeout(r, 30) }); var a = document.getElementById("act").getBoundingClientRect(), t = document.querySelector(".top").getBoundingClientRect(); if (a.right > t.right + 1) out.push(v) }

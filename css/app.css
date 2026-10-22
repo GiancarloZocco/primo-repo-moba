@@ -92,8 +92,10 @@ input:focus-visible {
 }
 
 @media (min-width:430px) {
+  /* sul computer: cornice da telefono, ma mai più alta della finestra (la pagina non scorre) */
   .app {
-    height: 844px;
+    height: calc(100% - 40px);
+    max-height: 844px;
     margin: 20px 0;
     border-radius: 36px;
     border: 1px solid var(--line)
