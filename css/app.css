@@ -3114,9 +3114,9 @@ ul.news {
 /* guida rapida in partita */
 .gtips { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 1.45; }
 .gtips li::marker { color: var(--blue2); }
-.gtips li.tg::marker { color: var(--green); }
-.gtips li.ta::marker { color: var(--amber); }
-.gtips li.tr::marker { color: var(--red); }
+.gtips li.gk-g::marker { color: var(--green); }
+.gtips li.gk-a::marker { color: var(--amber); }
+.gtips li.gk-r::marker { color: var(--red); }
 
 /* ricerca unica (lente in alto) */
 .top .tr { display: flex; justify-content: flex-end; gap: 4px; }
