@@ -165,12 +165,14 @@ async function run() {
       setSlot(S.ally, 0, "Tigreal"); ["Estes", "Lancelot", "Layla"].forEach(function (h, i) { setSlot(S.enemy, i, h) }); go("guide");
       var txt = document.querySelector("#v-guide").textContent;
       document.querySelectorAll("#glane button")[3].click(); var jg = /Retribution/.test(document.querySelector("#v-guide").textContent);
+      var li = document.querySelector("#v-guide .gtips li"), cs = getComputedStyle(li), wide = li.getBoundingClientRect().width > 200 && cs.position === "static" && cs.borderRadius === "0px";
       gLane = null; S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; save();
-      return { empty: empty, plan: /Tigreal/.test(txt) && /Lancelot/.test(txt) && /Layla/.test(txt) && /anti-cure contro Estes/.test(txt), phases: /Lord/.test(txt) && /Turtle/.test(txt), jg: jg };
+      return { wide: wide, empty: empty, plan: /Tigreal/.test(txt) && /Lancelot/.test(txt) && /Layla/.test(txt) && /anti-cure contro Estes/.test(txt), phases: /Lord/.test(txt) && /Turtle/.test(txt), jg: jg };
     });
     ok(gd.empty, "guida: senza draft invita ad andare al draft, 5 lane da scegliere");
     ok(gd.plan, "guida: piano dal draft (iniziatore, bersagli, minacce, anti-cure)");
     ok(gd.phases && gd.jg, "guida: obiettivi per fase e consigli della lane scelta");
+    ok(gd.wide, "guida: le righe del piano sono testo normale (non prendono lo stile degli interruttori)");
 
     section("Ricerca unica");
     var sr = await p.evaluate(function () {
