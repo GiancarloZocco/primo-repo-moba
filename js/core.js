@@ -73,7 +73,7 @@ S = Object.assign({}, DEF, S || {}); S.quiz = Object.assign({}, DEF.quiz, S.quiz
 function sanitizeTeam(t) { t = (t || []).slice(0, 5); while (t.length < 5) t.push(null); return t.map(function (h) { return h && H[h] ? h : null }) }
 S.ally = sanitizeTeam(S.ally); S.enemy = sanitizeTeam(S.enemy); S.banA = sanitizeTeam(S.banA); S.banE = sanitizeTeam(S.banE); S.allyLane = (Array.isArray(S.allyLane) ? S.allyLane : []).slice(0, 5); while (S.allyLane.length < 5) S.allyLane.push(null); S.allyLane = S.allyLane.map(function (l) { return LN[l] ? l : null }); S.recent = (Array.isArray(S.recent) ? S.recent : []).filter(function (h) { return H[h] }).slice(0, 12); S.mph = Array.isArray(S.mph) ? S.mph : []; S.games = Array.isArray(S.games) ? S.games : []; S.pool = (Array.isArray(S.pool) ? S.pool : []).filter(function (h, i, a) { return H[h] && a.indexOf(h) === i }).slice(0, POOLMAX); if (!LN[S.lane]) S.lane = null;
 function save() { S.v = SAVE_V; try { localStorage.setItem(KEY.s, JSON.stringify(S)) } catch (e) { } }
-/* testi di gioco in italiano da data-it.js (gli originali inglesi restano in data.js; nel Profilo si può tornare all'inglese) */
+/* testi di gioco in italiano da data/data-it.js (gli originali inglesi restano in data/data.js; nel Profilo si può tornare all'inglese) */
 function applyIT() {
   if (S.lang === "en" || typeof IT === "undefined") return false;
   Object.keys(IT.it).forEach(function (id) { var x = ITEMS[id], t = IT.it[id]; if (!x) return; if (t[0]) x[2] = t[0]; if (t[1]) x[3] = t[1] });

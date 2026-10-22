@@ -167,7 +167,7 @@ function trNode(n) {
 function trNode1(e) { ["placeholder", "aria-label", "title"].forEach(function (a) { var v = e.getAttribute(a), k = "tr" + a.replace("-", ""); if (v && e.dataset[k] !== v) { var o = tr(v); e.setAttribute(a, o); e.dataset[k] = o } }) }
 if (S.ui === "en") {
   document.documentElement.lang = "en";
-  /* la lore breve di data.js è in italiano: in inglese si usa la frase ufficiale */
+  /* la lore breve di data/data.js è in italiano: in inglese si usa la frase ufficiale */
   NAMES.forEach(function (h) { if (HX[h] && HX[h].st) H[h].lore = HX[h].st });
   trNode(document.body);
   new MutationObserver(function (ms) { ms.forEach(function (m) { if (m.type === "characterData") trNode(m.target); else m.addedNodes.forEach(trNode) }) }).observe(document.body, { childList: true, subtree: true, characterData: true });
