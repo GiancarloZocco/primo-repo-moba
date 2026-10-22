@@ -36,7 +36,7 @@ function fillTier() {
     if (open && hs.length) {
       var tb = document.createElement("div"); tb.className = "tbl"; tb.innerHTML = '<div class="th"><span>Eroe & ruolo</span><span>WR</span><span>Ban</span><span>Pick</span></div>';
       hs.forEach(function (h) {
-        var m = M[h], b = document.createElement("button"); b.className = "tr";
+        var m = M[h], b = document.createElement("button"); b.className = "tr"; b.style.setProperty("--i", Math.min(tb.children.length, 14));
         b.innerHTML = '<span class="who">' + tile(h, "", rlab(h)) + '<span style="min-width:0"><b>' + h + '</b><small>' + roleLane(h) + '</small></span></span><span class="' + (m.wr >= 52 ? "g" : m.wr >= 49 ? "a" : "r") + '">' + pc(m.wr) + dTag(h) + '</span><span>' + pc(m.br) + '</span><span class="b">' + pc(m.pr) + '</span>';
         b.onclick = function () { openHero(h) }; tb.appendChild(b)
       }); sec.appendChild(tb)

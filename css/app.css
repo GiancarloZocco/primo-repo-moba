@@ -3250,3 +3250,60 @@ ul.news {
 .fx.streak small { display: block; margin-top: 2px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255, 235, 210, .9); transform: skewX(12deg); }
 @keyframes bandIn { from { transform: skewX(-12deg) translateX(-120%); opacity: 0 } to { transform: skewX(-12deg); opacity: 1 } }
 .fx.streak { --d: 1.6s; }
+
+/* ---------- animazioni, secondo giro ---------- */
+/* 3. turno attuale: lo slot pulsa e il segmento della barra dei turni si riempie come un timer */
+.slot.now, .bslot.now { animation: turnPulse 1.4s ease-in-out infinite; }
+@keyframes turnPulse { 50% { box-shadow: 0 0 0 1px var(--amber), 0 0 24px rgba(245, 158, 11, .7) } }
+.guide .steps i { position: relative; overflow: hidden; }
+.guide .steps i.cur::after { content: ""; position: absolute; inset: 0; background: rgba(255, 255, 255, .85); transform-origin: left; animation: turnTimer 2.4s linear infinite; }
+@keyframes turnTimer { from { transform: scaleX(0) } to { transform: scaleX(1); opacity: .2 } }
+
+/* 4. draft completato: le due squadre si scontrano al centro con un lampo */
+.fx.clash { background: rgba(5, 8, 14, .6); }
+.fx.clash .half { position: absolute; top: 0; bottom: 0; width: 55%; }
+.fx.clash .half.l { left: 0; background: linear-gradient(90deg, rgba(37, 99, 235, .0), rgba(63, 169, 255, .55)); clip-path: polygon(0 0, 100% 0, 82% 100%, 0 100%); animation: clashL .45s cubic-bezier(.5, 0, .2, 1) both; }
+.fx.clash .half.r { right: 0; background: linear-gradient(270deg, rgba(220, 38, 38, .0), rgba(255, 74, 74, .55)); clip-path: polygon(18% 0, 100% 0, 100% 100%, 0 100%); animation: clashR .45s cubic-bezier(.5, 0, .2, 1) both; }
+.fx.clash .flash { position: absolute; inset: 0; background: radial-gradient(circle, rgba(255, 255, 255, .9), transparent 45%); opacity: 0; animation: clashFlash .5s .4s ease-out; }
+.fx.clash b { font-size: 30px; color: #fff; text-align: center; text-shadow: 0 0 20px rgba(255, 255, 255, .6); animation: winIn .5s .42s cubic-bezier(.2, 1.5, .4, 1) both; }
+.fx.clash b small { display: block; font-size: 12px; letter-spacing: .2em; color: var(--blue2); margin-top: 6px; }
+@keyframes clashL { from { transform: translateX(-100%) } }
+@keyframes clashR { from { transform: translateX(100%) } }
+@keyframes clashFlash { 0% { opacity: 1 } 100% { opacity: 0 } }
+.fx.clash { --d: 1.9s; }
+
+/* 6. quiz: +XP che sale dalla risposta giusta, risposta sbagliata che trema, nuovo rank */
+.fxf { position: absolute; z-index: 21; transform: translate(-50%, 0); font-family: var(--hd); font-weight: 700; font-size: 20px; pointer-events: none; animation: floatUp 1.2s ease-out forwards; }
+.fxf.xp { color: #ffd76a; text-shadow: 0 0 10px rgba(245, 194, 74, .8), 0 2px 0 rgba(0, 0, 0, .5); }
+@keyframes floatUp { 0% { transform: translate(-50%, 6px) scale(.6); opacity: 0 } 20% { transform: translate(-50%, -6px) scale(1.15); opacity: 1 } 100% { transform: translate(-50%, -70px) scale(1); opacity: 0 } }
+.opt.bad { animation: banShake .4s ease-in-out; }
+.opt.good { animation: goodGlow .8s ease-out; }
+@keyframes goodGlow { 0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, .7) } 100% { box-shadow: 0 0 0 12px rgba(74, 222, 128, 0) } }
+.fx.rankup { background: radial-gradient(circle, rgba(30, 24, 60, .9), rgba(5, 8, 14, .92) 70%); --d: 2s; }
+.fx.rankup .emb { position: absolute; top: 30%; width: 92px; height: 92px; transform: rotate(45deg); border-radius: 18px; background: linear-gradient(135deg, #fff1c4, #f5c24a 45%, #a46f1c); box-shadow: 0 0 0 4px rgba(255, 215, 120, .35), 0 0 40px rgba(245, 194, 74, .8); animation: embUp .7s cubic-bezier(.2, 1.4, .4, 1) both; }
+.fx.rankup .emb i { position: absolute; inset: 22px; border-radius: 10px; background: linear-gradient(135deg, #3b2a7a, #7c4dff); box-shadow: inset 0 0 12px rgba(0, 0, 0, .5); }
+.fx.rankup b { margin-top: 140px; font-size: 30px; text-align: center; color: #ffe39a; text-shadow: 0 0 16px rgba(245, 194, 74, .7); animation: winIn .5s .35s cubic-bezier(.2, 1.5, .4, 1) both; }
+.fx.rankup b small { display: block; font-size: 11px; letter-spacing: .24em; color: #cbb8ff; margin-bottom: 4px; }
+@keyframes embUp { from { transform: translateY(60px) rotate(45deg) scale(.3); opacity: 0 } 60% { transform: translateY(-8px) rotate(45deg) scale(1.08) } to { transform: rotate(45deg) } }
+
+/* 8. cambio schermata: il contenuto entra con una breve scivolata; la linea della barra in basso si allarga */
+.scr.enter { animation: scrIn .25s ease-out; }
+@keyframes scrIn { from { opacity: 0; transform: translateY(10px) } }
+nav button.on::after { animation: navLine .3s ease-out; }
+@keyframes navLine { from { transform: scaleX(0) } }
+
+/* 9. tier list: le righe entrano a cascata, il badge SS brilla ogni tanto */
+.scr.enter .tbl .tr { animation: rowIn .35s ease-out both; animation-delay: calc(var(--i, 0) * 35ms + 80ms); }
+@keyframes rowIn { from { opacity: 0; transform: translateX(-14px) } }
+.tb.SS { position: relative; overflow: hidden; }
+.tb.SS::after { content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .7), transparent); transform: skewX(-20deg); animation: ssShine 3.5s ease-in-out infinite; }
+@keyframes ssShine { 0%, 70% { left: -60% } 100% { left: 140% } }
+
+/* 10. Lane 1v1: le barre del vantaggio si riempiono dal centro */
+.l1 .vb i { animation: vbGrow .7s .1s cubic-bezier(.2, .9, .3, 1) both; transform-origin: left; }
+.l1 .vb i[style*="right:50%"] { transform-origin: right; }
+@keyframes vbGrow { from { transform: scaleX(0) } }
+
+@media (prefers-reduced-motion: reduce) {
+  .slot.now, .bslot.now, .guide .steps i.cur::after, .opt.bad, .opt.good, .scr.enter, .scr.enter .tbl .tr, nav button.on::after, .tb.SS::after, .l1 .vb i { animation: none !important; }
+}

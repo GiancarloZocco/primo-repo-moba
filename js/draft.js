@@ -61,7 +61,7 @@ function rDraft() {
   [[null, "No"], ["blue", "Primi noi"], ["red", "Primi loro"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.guide === o[0] ? "on" : ""; b.onclick = function () { S.guide = o[0]; save(); rDraft() }; $("gd").appendChild(b) });
   if (S.guide) [["rank", "Ranked"], ["tour", "Torneo"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = (S.gmode === "tour" ? "tour" : "rank") === o[0] ? "on" : ""; b.onclick = function () { S.gmode = o[0]; save(); rDraft() }; $("gmo").appendChild(b) });
   if (S.guide) [[10, S.gmode === "tour" ? "10" : "10 (Mitico)"], [6, "6"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.gbans === o[0] ? "on" : ""; b.onclick = function () { S.gbans = o[0]; save(); rDraft() }; $("gbn").appendChild(b) });
-  guideBind(); resultBind(); laneBind(v); gameMsg = "";
+  guideBind(); resultBind(); laneBind(v); gameMsg = ""; fxDraftDone(S.ally.every(Boolean) && S.enemy.every(Boolean));
   $("lmore").onclick = function () { lMore = !lMore; rDraft() };
 }
 /* ---------- draft guidato: ordine dei turni (F = chi sceglie per primo, S = l'altra squadra) ----------

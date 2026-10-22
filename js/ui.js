@@ -72,7 +72,7 @@ function go(v, noPush) {
   $("sub").textContent = v === "hero" ? "• Scheda eroe: " + hero : SCR[v].sub || "";
   $("back").classList.toggle("hide", !hist.length);
   rerender();
-  $("v-" + v).scrollTop = 0
+  $("v-" + v).scrollTop = 0; if (typeof fxEnter === "function") fxEnter($("v-" + v))
 }
 $("back").onclick = function () { if (hist.length) go(hist.pop(), true) };
 /* con l'avatar scelto il pulsante porta al profilo, altrimenti (icona impostazioni) alle impostazioni */
