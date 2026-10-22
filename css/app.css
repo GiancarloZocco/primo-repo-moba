@@ -3211,3 +3211,116 @@ ul.news {
 .qts button { font-size: 10px; padding: 6px 4px; }
 .qlike { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 6px; }
 .qlike .lcand b { font-size: 11px; }
+/* ---------- animazioni a tema MOBA (js/fx.js) ---------- */
+/* 1. lock-in: lo slot si accende col colore della squadra, il ritratto entra con uno zoom e passa un riflesso */
+.slot.lock { position: relative; overflow: hidden; animation: lockGlow .9s ease-out; }
+.slot.lock.la { --lk: 63, 169, 255; }
+.slot.lock.le { --lk: 255, 74, 74; }
+.slot.lock .tile { animation: lockIn .45s cubic-bezier(.2, 1.4, .4, 1); }
+.slot.lock::after { content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 45%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent); transform: skewX(-20deg); animation: lockShine .7s .15s ease-out forwards; pointer-events: none; }
+@keyframes lockGlow { 0% { box-shadow: 0 0 0 0 rgba(var(--lk), .0); border-color: rgba(var(--lk), 1) } 25% { box-shadow: 0 0 0 3px rgba(var(--lk), .55), 0 0 22px rgba(var(--lk), .6) } 100% { box-shadow: 0 0 0 0 rgba(var(--lk), 0) } }
+@keyframes lockIn { from { transform: scale(1.6); opacity: 0 } to { transform: none; opacity: 1 } }
+@keyframes lockShine { to { left: 130% } }
+
+/* 2. ban: il ritratto si spegne in grigio e una X rossa si "timbra" sopra, con un piccolo tremolio */
+.bslot.stamp { position: relative; animation: banShake .35s .25s ease-in-out; }
+.bslot.stamp .tile { animation: banGrey .5s ease-out both; }
+.bslot.stamp::after { content: ""; position: absolute; inset: 18% 22%; background:
+    linear-gradient(45deg, transparent 44%, #ff4a4a 44%, #ff4a4a 56%, transparent 56%),
+    linear-gradient(-45deg, transparent 44%, #ff4a4a 44%, #ff4a4a 56%, transparent 56%);
+  filter: drop-shadow(0 0 6px rgba(255, 74, 74, .8)); animation: banStamp .45s cubic-bezier(.3, 1.6, .5, 1) both, banFade .5s 1.1s ease-in forwards; pointer-events: none; }
+@keyframes banGrey { from { filter: none } to { filter: grayscale(1) brightness(.75) } }
+@keyframes banStamp { from { transform: scale(2.4) rotate(-12deg); opacity: 0 } to { transform: none; opacity: 1 } }
+@keyframes banFade { to { opacity: 0 } }
+@keyframes banShake { 0%, 100% { transform: none } 25% { transform: translateX(-3px) } 50% { transform: translateX(3px) } 75% { transform: translateX(-2px) } }
+
+/* scritte a tutto schermo (5 e 7) */
+.fx { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; overflow: hidden; cursor: pointer; animation: fxOut .35s ease-in forwards; animation-delay: calc(var(--d, 1.7s) - .35s); }
+@keyframes fxOut { to { opacity: 0 } }
+.fx b { position: relative; font-family: var(--hd); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+
+/* 5. Vittoria: scritta dorata con raggi di luce che girano */
+.fx.win { background: radial-gradient(circle, rgba(40, 30, 5, .82), rgba(5, 8, 14, .9) 70%); }
+.fx.win .rays { position: absolute; width: 160vmax; height: 160vmax; background: repeating-conic-gradient(from 0deg, rgba(255, 210, 110, .22) 0 6deg, transparent 6deg 18deg); -webkit-mask: radial-gradient(circle, #000 0, transparent 45%); mask: radial-gradient(circle, #000 0, transparent 45%); animation: raysSpin 6s linear infinite, raysIn .5s ease-out; }
+.fx.win b { font-size: 46px; color: #ffe39a; background: linear-gradient(180deg, #fff6d6, #f5c24a 55%, #b8862e); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 18px rgba(245, 194, 74, .7)); animation: winIn .6s cubic-bezier(.2, 1.5, .4, 1); }
+@keyframes raysSpin { to { transform: rotate(360deg) } }
+@keyframes raysIn { from { opacity: 0; transform: scale(.4) } }
+@keyframes winIn { from { transform: scale(2.2); opacity: 0; letter-spacing: .5em } to { transform: none; opacity: 1 } }
+
+/* 5. Sconfitta: scritta rossa che cade e si incrina */
+.fx.lose { background: radial-gradient(circle, rgba(40, 6, 6, .85), rgba(5, 8, 14, .92) 70%); }
+.fx.lose b { font-size: 44px; color: #ff6b6b; text-shadow: 0 0 18px rgba(255, 60, 60, .6); animation: loseIn .7s cubic-bezier(.5, 0, .7, 1.4) both; }
+.fx.lose .crack { position: absolute; width: 260px; height: 120px; background:
+    linear-gradient(72deg, transparent 49.2%, rgba(255, 255, 255, .55) 49.5%, transparent 50%),
+    linear-gradient(-38deg, transparent 49.4%, rgba(255, 255, 255, .4) 49.6%, transparent 50%),
+    linear-gradient(15deg, transparent 49.5%, rgba(255, 255, 255, .35) 49.7%, transparent 50%);
+  clip-path: inset(0 100% 0 0); animation: crackIn .35s .55s ease-out forwards; z-index: 1; }
+@keyframes loseIn { 0% { transform: translateY(-60px); opacity: 0 } 70% { transform: translateY(6px); opacity: 1 } 85% { transform: translateY(0) rotate(-1.5deg) } 100% { transform: rotate(-1.5deg) } }
+@keyframes crackIn { to { clip-path: inset(0 0 0 0) } }
+
+/* 7. annuncio delle serie: banda obliqua che entra di lato, come gli annunci di uccisione nel gioco */
+.fx.streak { place-items: start center; padding-top: 38%; background: transparent; pointer-events: auto; }
+.fx.streak .band { position: relative; padding: 10px 46px 12px; text-align: center; background: linear-gradient(90deg, transparent, rgba(120, 20, 20, .92) 18%, rgba(190, 40, 30, .95) 50%, rgba(120, 20, 20, .92) 82%, transparent); transform: skewX(-12deg); animation: bandIn .45s cubic-bezier(.2, 1.4, .4, 1); }
+.fx.streak.big .band { background: linear-gradient(90deg, transparent, rgba(110, 70, 10, .95) 18%, rgba(200, 140, 30, .97) 50%, rgba(110, 70, 10, .95) 82%, transparent); }
+.fx.streak .band::after { content: ""; position: absolute; top: 0; bottom: 0; left: -30%; width: 25%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .55), transparent); animation: lockShine .8s .35s ease-out forwards; }
+.fx.streak b { display: block; font-size: 30px; font-style: italic; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .5), 0 0 16px rgba(255, 200, 120, .6); transform: skewX(12deg); }
+.fx.streak small { display: block; margin-top: 2px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255, 235, 210, .9); transform: skewX(12deg); }
+@keyframes bandIn { from { transform: skewX(-12deg) translateX(-120%); opacity: 0 } to { transform: skewX(-12deg); opacity: 1 } }
+.fx.streak { --d: 1.6s; }
+
+/* ---------- animazioni, secondo giro ---------- */
+/* 3. turno attuale: lo slot pulsa e il segmento della barra dei turni si riempie come un timer */
+.slot.now, .bslot.now { animation: turnPulse 1.4s ease-in-out infinite; }
+@keyframes turnPulse { 50% { box-shadow: 0 0 0 1px var(--amber), 0 0 24px rgba(245, 158, 11, .7) } }
+.guide .steps i { position: relative; overflow: hidden; }
+.guide .steps i.cur::after { content: ""; position: absolute; inset: 0; background: rgba(255, 255, 255, .85); transform-origin: left; animation: turnTimer 2.4s linear infinite; }
+@keyframes turnTimer { from { transform: scaleX(0) } to { transform: scaleX(1); opacity: .2 } }
+
+/* 4. draft completato: le due squadre si scontrano al centro con un lampo */
+.fx.clash { background: rgba(5, 8, 14, .6); }
+.fx.clash .half { position: absolute; top: 0; bottom: 0; width: 55%; }
+.fx.clash .half.l { left: 0; background: linear-gradient(90deg, rgba(37, 99, 235, .0), rgba(63, 169, 255, .55)); clip-path: polygon(0 0, 100% 0, 82% 100%, 0 100%); animation: clashL .45s cubic-bezier(.5, 0, .2, 1) both; }
+.fx.clash .half.r { right: 0; background: linear-gradient(270deg, rgba(220, 38, 38, .0), rgba(255, 74, 74, .55)); clip-path: polygon(18% 0, 100% 0, 100% 100%, 0 100%); animation: clashR .45s cubic-bezier(.5, 0, .2, 1) both; }
+.fx.clash .flash { position: absolute; inset: 0; background: radial-gradient(circle, rgba(255, 255, 255, .9), transparent 45%); opacity: 0; animation: clashFlash .5s .4s ease-out; }
+.fx.clash b { font-size: 30px; color: #fff; text-align: center; text-shadow: 0 0 20px rgba(255, 255, 255, .6); animation: winIn .5s .42s cubic-bezier(.2, 1.5, .4, 1) both; }
+.fx.clash b small { display: block; font-size: 12px; letter-spacing: .2em; color: var(--blue2); margin-top: 6px; }
+@keyframes clashL { from { transform: translateX(-100%) } }
+@keyframes clashR { from { transform: translateX(100%) } }
+@keyframes clashFlash { 0% { opacity: 1 } 100% { opacity: 0 } }
+.fx.clash { --d: 1.9s; }
+
+/* 6. quiz: +XP che sale dalla risposta giusta, risposta sbagliata che trema, nuovo rank */
+.fxf { position: absolute; z-index: 21; transform: translate(-50%, 0); font-family: var(--hd); font-weight: 700; font-size: 20px; pointer-events: none; animation: floatUp 1.2s ease-out forwards; }
+.fxf.xp { color: #ffd76a; text-shadow: 0 0 10px rgba(245, 194, 74, .8), 0 2px 0 rgba(0, 0, 0, .5); }
+@keyframes floatUp { 0% { transform: translate(-50%, 6px) scale(.6); opacity: 0 } 20% { transform: translate(-50%, -6px) scale(1.15); opacity: 1 } 100% { transform: translate(-50%, -70px) scale(1); opacity: 0 } }
+.opt.bad { animation: banShake .4s ease-in-out; }
+.opt.good { animation: goodGlow .8s ease-out; }
+@keyframes goodGlow { 0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, .7) } 100% { box-shadow: 0 0 0 12px rgba(74, 222, 128, 0) } }
+.fx.rankup { background: radial-gradient(circle, rgba(30, 24, 60, .9), rgba(5, 8, 14, .92) 70%); --d: 2s; }
+.fx.rankup .emb { position: absolute; top: 30%; width: 92px; height: 92px; transform: rotate(45deg); border-radius: 18px; background: linear-gradient(135deg, #fff1c4, #f5c24a 45%, #a46f1c); box-shadow: 0 0 0 4px rgba(255, 215, 120, .35), 0 0 40px rgba(245, 194, 74, .8); animation: embUp .7s cubic-bezier(.2, 1.4, .4, 1) both; }
+.fx.rankup .emb i { position: absolute; inset: 22px; border-radius: 10px; background: linear-gradient(135deg, #3b2a7a, #7c4dff); box-shadow: inset 0 0 12px rgba(0, 0, 0, .5); }
+.fx.rankup b { margin-top: 140px; font-size: 30px; text-align: center; color: #ffe39a; text-shadow: 0 0 16px rgba(245, 194, 74, .7); animation: winIn .5s .35s cubic-bezier(.2, 1.5, .4, 1) both; }
+.fx.rankup b small { display: block; font-size: 11px; letter-spacing: .24em; color: #cbb8ff; margin-bottom: 4px; }
+@keyframes embUp { from { transform: translateY(60px) rotate(45deg) scale(.3); opacity: 0 } 60% { transform: translateY(-8px) rotate(45deg) scale(1.08) } to { transform: rotate(45deg) } }
+
+/* 8. cambio schermata: il contenuto entra con una breve scivolata; la linea della barra in basso si allarga */
+.scr.enter { animation: scrIn .25s ease-out; }
+@keyframes scrIn { from { opacity: 0; transform: translateY(10px) } }
+nav button.on::after { animation: navLine .3s ease-out; }
+@keyframes navLine { from { transform: scaleX(0) } }
+
+/* 9. tier list: le righe entrano a cascata, il badge SS brilla ogni tanto */
+.scr.enter .tbl .tr { animation: rowIn .35s ease-out both; animation-delay: calc(var(--i, 0) * 35ms + 80ms); }
+@keyframes rowIn { from { opacity: 0; transform: translateX(-14px) } }
+.tb.SS { position: relative; overflow: hidden; }
+.tb.SS::after { content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .7), transparent); transform: skewX(-20deg); animation: ssShine 3.5s ease-in-out infinite; }
+@keyframes ssShine { 0%, 70% { left: -60% } 100% { left: 140% } }
+
+/* 10. Lane 1v1: le barre del vantaggio si riempiono dal centro */
+.l1 .vb i { animation: vbGrow .7s .1s cubic-bezier(.2, .9, .3, 1) both; transform-origin: left; }
+.l1 .vb i[style*="right:50%"] { transform-origin: right; }
+@keyframes vbGrow { from { transform: scaleX(0) } }
+
+@media (prefers-reduced-motion: reduce) {
+  .slot.now, .bslot.now, .guide .steps i.cur::after, .opt.bad, .opt.good, .scr.enter, .scr.enter .tbl .tr, nav button.on::after, .tb.SS::after, .l1 .vb i { animation: none !important; }
+}

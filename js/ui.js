@@ -72,7 +72,7 @@ function go(v, noPush) {
   $("sub").textContent = v === "hero" ? "• Scheda eroe: " + hero : SCR[v].sub || "";
   $("back").classList.toggle("hide", !hist.length);
   rerender();
-  $("v-" + v).scrollTop = 0
+  $("v-" + v).scrollTop = 0; if (typeof fxEnter === "function") fxEnter($("v-" + v))
 }
 $("back").onclick = function () { if (hist.length) go(hist.pop(), true) };
 /* con l'avatar scelto il pulsante porta al profilo, altrimenti (icona impostazioni) alle impostazioni */
@@ -108,4 +108,4 @@ $("sheet").onclick = function (e) { if (e.target === this) this.classList.remove
 function free_() { return free() }
 function free() { return NAMES.filter(function (n) { return used().indexOf(n) < 0 }) }
 function pushRecent(h) { if (!h) return; S.recent = [h].concat((S.recent || []).filter(function (x) { return x !== h })).slice(0, 12) }
-function setSlot(team, i, h) { var was = team[i]; team[i] = h; focus = null; if (team === S.ally) S.allyLane[i] = null; if (team === S.enemy) S.enemyLane[i] = null; pushRecent(h); if (h && !was) S.picks++; if (team === S.ally && h) { S.synSum += synergy(); S.synN++ } save() }
+function setSlot(team, i, h) { var was = team[i]; team[i] = h; focus = null; if (team === S.ally) S.allyLane[i] = null; if (team === S.enemy) S.enemyLane[i] = null; if (h && typeof FX !== "undefined") FX.slot = (team === S.ally ? "a" : "e") + i; pushRecent(h); if (h && !was) S.picks++; if (team === S.ally && h) { S.synSum += synergy(); S.synN++ } save() }
