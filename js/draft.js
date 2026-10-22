@@ -95,7 +95,7 @@ function guideBox() {
 function guideBind() {
   var g = guideNow(); if (!g || !g.t) return;
   var team = guideTeam(g.t), i = team.indexOf(null), ban = g.t.charAt(0) === "b";
-  var put = function (n) { if (i < 0) return; if (ban) { team[i] = n; pushRecent(n); focus = null; save() } else setSlot(team, i, n); rDraft() };
+  var put = function (n) { if (i < 0) return; if (ban) { team[i] = n; FX.ban = (team === S.banA ? "a" : "e") + i; pushRecent(n); focus = null; save() } else setSlot(team, i, n); rDraft() };
   if ($("gsug")) $("gsug").onclick = function () { var m = ban ? banRecs()[0] : focusRec(); if (!m) return; put(m.n); if (!ban && !cover[m.lane]) { S.allyLane[i] = m.lane; save(); rDraft() } };
   $("gpick").onclick = function () { openPick(GT[g.t], free(), put, { quick: 1 }) };
 }
@@ -118,9 +118,9 @@ function banRows() {
     var row = document.createElement("div"); row.className = "brow"; el.appendChild(row);
     for (var i = 0; i < 5; i++)(function (i) {
       var h = g[1][i], b = document.createElement("button"), t = "Ban " + g[0].toLowerCase() + " " + (i + 1);
-      var gn = guideNow(); b.className = "bslot" + (h ? " on" : "") + (gn && gn.t === (g[1] === S.banA ? "bA" : "bE") && g[1].indexOf(null) === i ? " now" : ""); b.innerHTML = h ? tile(h, "sm") + "<span>" + esc(h) + "</span>" : "+";
+      var gn = guideNow(); b.className = "bslot" + (h ? " on" : "") + (gn && gn.t === (g[1] === S.banA ? "bA" : "bE") && g[1].indexOf(null) === i ? " now" : "") + (h && fxTake("ban", (g[1] === S.banA ? "a" : "e") + i) ? " stamp" : ""); b.innerHTML = h ? tile(h, "sm") + "<span>" + esc(h) + "</span>" : "+";
       b.setAttribute("aria-label", t + (h ? ": " + h : ": libero"));
-      var set = function (n) { g[1][i] = n; pushRecent(n); focus = null; save(); rDraft() };
+      var set = function (n) { g[1][i] = n; if (n) FX.ban = (g[1] === S.banA ? "a" : "e") + i; pushRecent(n); focus = null; save(); rDraft() };
       b.onclick = function () { if (h) openPick(t + " · " + h, [h].concat(free_()), set, { cur: h, quick: 1, rm: function () { set(null) } }); else openPick(t, free_(), set, { quick: 1 }) };
       row.appendChild(b)
     })(i)
@@ -134,7 +134,7 @@ function banRows() {
       var c = document.createElement("button"); c.className = "lcand";
       c.innerHTML = tile(r.n, "sm") + '<b>' + esc(r.n) + '</b><small class="r">' + r.s + ' pt</small>';
       c.title = r.parts.map(function (x) { return x.t }).join(" · "); c.setAttribute("aria-label", "Banna " + r.n + ": " + c.title);
-      c.onclick = function () { var i = S.banA.indexOf(null); if (i < 0) return; S.banA[i] = r.n; pushRecent(r.n); focus = null; save(); rDraft() };
+      c.onclick = function () { var i = S.banA.indexOf(null); if (i < 0) return; S.banA[i] = r.n; FX.ban = "a" + i; pushRecent(r.n); focus = null; save(); rDraft() };
       row.lastChild.appendChild(c)
     });
     el.appendChild(row);
@@ -178,6 +178,7 @@ function resultBind() {
     S.games = S.games.concat([{ d: Date.now(), r: w ? 1 : 0, a: S.ally.slice(), e: S.enemy.slice(), me: gameMe }]).slice(-300);
     S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; S.allyLane = [null, null, null, null, null];
     gameMsg = "Partita salvata: " + (w ? "vittoria" : "sconfitta") + (gameMe ? " con " + gameMe : "") + ". Draft pronto per la prossima."; gameMe = null; focus = null; save(); rDraft(); $("v-draft").scrollTop = 0;
+    fxResult(w); var run = winRun(); if (w && run >= 2) setTimeout(function () { fxStreak(run, "vittorie") }, 1500);
   };
   $("gwin").onclick = function () { rec(true) }; $("glose").onclick = function () { rec(false) };
 }
@@ -230,7 +231,7 @@ function slots(el, team, side) {
   for (var i = 0; i < 5; i++)(function (i) {
     var wrap = document.createElement("div"), b = document.createElement("button"), h = team[i];
     wrap.className = "srow"; wrap.style.marginTop = i ? "6px" : "0";
-    var gn = guideNow(); b.className = "slot" + (h ? " on" : "") + (gn && gn.t === (side ? "pA" : "pE") && team.indexOf(null) === i ? " now" : "");
+    var gn = guideNow(); b.className = "slot" + (h ? " on" : "") + (gn && gn.t === (side ? "pA" : "pE") && team.indexOf(null) === i ? " now" : "") + (h && fxTake("slot", (side ? "a" : "e") + i) ? " lock " + (side ? "la" : "le") : "");
     b.innerHTML = h ? tile(h, "sm") + '<span class="nm">' + h + '</span>' + (side ? '<span class="ed" aria-hidden="true">' + IC.pen + '</span>' : "") : "Slot libero";
     if (h && side) b.setAttribute("aria-label", "Modifica slot alleato " + (i + 1) + ": " + h);
     b.onclick = function () {

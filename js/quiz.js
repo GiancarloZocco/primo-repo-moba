@@ -69,5 +69,5 @@ function rQuiz() {
   if (QZ.i >= QZ.r.length) { $("qnew").onclick = function () { S.quiz.rounds++; save(); newRound(); rQuiz() }; return }
   var q2 = QZ.r[QZ.i];
   q2.o.forEach(function (o, i) { var b = document.createElement("button"); b.className = "opt" + (QZ.done ? (i === q2.a ? " good" : i === QZ.sel ? " bad" : "") : (QZ.sel === i ? " sel" : "")); b.innerHTML = '<span class="L">' + "ABCD"[i] + '</span><span>' + o + '</span><span class="rad"></span>'; b.disabled = QZ.done; b.onclick = function () { QZ.sel = i; rQuiz() }; $("opts").appendChild(b) });
-  $("qgo").onclick = function () { if (!QZ.done) { QZ.done = true; z.tot++; if (QZ.sel === q2.a) { z.ok++; z.xp += q2.xp; z.streak++; z.best = Math.max(z.best, z.streak); QZ.ok++ } else z.streak = 0; if (QZ.res) QZ.res.push(QZ.sel === q2.a ? 1 : 0); save() } else { QZ.i++; QZ.sel = null; QZ.done = false } rQuiz() };
+  $("qgo").onclick = function () { if (!QZ.done) { QZ.done = true; z.tot++; if (QZ.sel === q2.a) { z.ok++; z.xp += q2.xp; z.streak++; z.best = Math.max(z.best, z.streak); QZ.ok++; if (z.streak >= 2) setTimeout(function () { fxStreak(z.streak, "risposte giuste") }, 150) } else z.streak = 0; if (QZ.res) QZ.res.push(QZ.sel === q2.a ? 1 : 0); save() } else { QZ.i++; QZ.sel = null; QZ.done = false } rQuiz() };
 }
