@@ -3365,3 +3365,25 @@ details.qopt > summary::before { content: "⋯ "; }
 .gi .gtm .tile { width: 20px; height: 20px; border-radius: 5px; flex: none; }
 .gi .gtm i { font-style: normal; font-size: 9px; color: var(--mute); margin: 0 4px; }
 .gi .btn { padding: 6px 8px; min-width: 0; flex: none; }
+
+/* pulsante Annulla nel draft */
+.pill.undo { cursor: pointer; border: 1px solid var(--line2); background: var(--panel2); color: var(--text); font: inherit; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; }
+.pill.undo:active { transform: scale(.96); }
+
+/* storico: statistiche per eroe */
+.myst { display: flex; flex-direction: column; margin-top: 6px; }
+details.mys { border-top: 1px solid var(--line); }
+details.mys:first-child { border-top: 0; }
+details.mys > summary { list-style: none; display: grid; grid-template-columns: auto 1fr 70px 44px; align-items: center; gap: 10px; padding: 8px 0; cursor: pointer; }
+details.mys > summary::-webkit-details-marker { display: none; }
+.mys .mn { min-width: 0; display: flex; flex-direction: column; }
+.mys .mn b { font-size: 13px; }
+.mys .mn small { font-size: 10.5px; color: var(--mute); }
+.mys .mw { text-align: right; font-size: 14px; }
+.myd { padding: 0 0 10px; display: flex; flex-direction: column; gap: 6px; }
+.mchs { display: flex; flex-wrap: wrap; gap: 6px; }
+.mch { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 999px; border: 1px solid var(--line); font-size: 11.5px; }
+.mch .tile { width: 22px; height: 22px; border-radius: 50%; }
+.mch.r { border-color: rgba(248, 113, 113, .45); }
+.mch.g { border-color: rgba(74, 222, 128, .45); }
+.mch b { font-size: 10.5px; }

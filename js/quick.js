@@ -35,11 +35,7 @@ function qPlace(t, h) {
   if (t.charAt(0) === "p") setSlot(team, i, h); else { team[i] = h; pushRecent(h); focus = null; if (typeof FX !== "undefined") FX.ban = (t === "bA" ? "a" : "e") + i; save() }
   QE.hist.push({ t: t, i: i, h: h }); return true;
 }
-function qUndo() {
-  var x = QE.hist.pop(); if (!x) return false; var team = qTeam(x.t);
-  if (team[x.i] === x.h) { team[x.i] = null; if (x.t === "pA") S.allyLane[x.i] = null; if (x.t === "pE") S.enemyLane[x.i] = null; focus = null; save(); toast("Tolto " + x.h + ".") }
-  return true;
-}
+function qUndo() { return draftUndo() }
 /* testo scritto → { t: destinazione, q: nome } con i prefissi */
 function qParse(v) {
   var m = /^\s*(bn|ba|n|a)\s+(.*)$/i.exec(v), P = { n: "pE", a: "pA", bn: "bE", ba: "bA" };

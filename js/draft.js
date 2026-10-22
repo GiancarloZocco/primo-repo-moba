@@ -1,9 +1,18 @@
 /* MLBB TOP - Schermata Draft: consigli, ban, turni, condivisione, storico partite */
 /* ---------- DRAFT ---------- */
+/* annulla: a ogni modifica del draft (pick, ban, lane) si ricorda lo stato precedente, fino a 40 passi */
+var UNDO = [], lastSt = null, undoing = false;
+function draftState() { return JSON.stringify([S.ally, S.enemy, S.banA, S.banE, S.allyLane, S.enemyLane]) }
+function draftUndo() {
+  if (!UNDO.length) return false; var o = JSON.parse(UNDO.pop());
+  S.ally = o[0]; S.enemy = o[1]; S.banA = o[2]; S.banE = o[3]; S.allyLane = o[4]; S.enemyLane = o[5];
+  undoing = true; focus = null; save(); toast("Annullato."); return true;
+}
 function rDraft() {
+  var st = draftState(); if (lastSt !== null && st !== lastSt && !undoing) { UNDO.push(lastSt); if (UNDO.length > 40) UNDO.shift() } lastSt = st; undoing = false;
   if (!used().length) { S.gskip = []; QE.hist = [] }
   compute(); var v = $("v-draft"), full = S.ally.indexOf(null) < 0, algo = { meta: "Meta", bal: "Bilanciata", safe: "Safe pick" }[S.algo], free = LANES.filter(function (l) { return !cover[l] });
-  v.innerHTML = '<div class="ttl"><div><h2>Draft Live<i></i></h2><p>5v5 · ' + algo + ' · ' + RKN[S.rk] + '</p></div><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><span class="pill am" title="Sinergia della squadra alleata">Sinergia ' + synergy() + '%</span><span class="pill bl">' + en().length + '/5 Nemici</span></span></div>' +
+  v.innerHTML = '<div class="ttl"><div><h2>Draft Live<i></i></h2><p>5v5 · ' + algo + ' · ' + RKN[S.rk] + '</p></div><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><span class="pill am" title="Sinergia della squadra alleata">Sinergia ' + synergy() + '%</span><span class="pill bl">' + en().length + '/5 Nemici</span>' + (UNDO.length ? '<button class="pill undo" id="undo" aria-label="Annulla l\'ultima modifica">↶ Annulla</button>' : '') + '</span></div>' +
     '<details class="gset" id="gset"' + (gsetOpen ? " open" : "") + '><summary><span class="k">Draft guidato</span><b>' + (S.guide ? (S.gmode === "tour" ? "Torneo" : "Ranked") + ' · ' + (S.guide === "blue" ? "Primi noi" : "Primi loro") + ' · ' + S.gbans + ' ban' : "No") + '</b><span class="gear">' + IC.sliders + '</span></summary>' +
     '<div class="srt" style="margin-top:8px"><span class="k">Guidato:</span><div class="seg" id="gd"></div></div>' + (S.guide ? '<div class="srt" style="margin-top:0"><span class="k">Modalità:</span><div class="seg" id="gmo"></div></div><div class="srt" style="margin-top:0"><span class="k">Ban:</span><div class="seg" id="gbn"></div></div>' : '') + '</details>' + guideBox() + resultBox() + quickBox() +
     (used().length || S.guide || gameMsg ? '' : '<div class="alert"><span class="a">' + IC.bulb + '</span><span>Inizia dai ban, poi aggiungi gli eroi nemici man mano che li scelgono: i consigli per ogni lane si aggiornano a ogni pick.</span></div>') +
@@ -65,6 +74,7 @@ function rDraft() {
   if (S.guide) [["rank", "Ranked"], ["tour", "Torneo"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = (S.gmode === "tour" ? "tour" : "rank") === o[0] ? "on" : ""; b.onclick = function () { S.gmode = o[0]; gsetOpen = false; save(); rDraft() }; $("gmo").appendChild(b) });
   if (S.guide) [[10, S.gmode === "tour" ? "10" : "10 (Mitico)"], [6, "6"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.gbans === o[0] ? "on" : ""; b.onclick = function () { S.gbans = o[0]; gsetOpen = false; save(); rDraft() }; $("gbn").appendChild(b) });
   guideBind(); resultBind(); quickBind(); laneBind(v); foldBind(v);
+  if ($("undo")) $("undo").onclick = function () { if (draftUndo()) rDraft() };
   $("gset").ontoggle = function () { gsetOpen = this.open }; gameMsg = ""; fxDraftDone(S.ally.every(Boolean) && S.enemy.every(Boolean));
   $("lmore").onclick = function () { lMore = !lMore; rDraft() };
 }
@@ -203,6 +213,7 @@ function resultBind() {
   if (!$("gwin")) return;
   S.ally.forEach(function (h) { var b = document.createElement("button"); b.className = "chip" + (gameMe === h ? " on" : ""); b.textContent = h; b.onclick = function () { gameMe = gameMe === h ? null : h; rDraft() }; $("gme").appendChild(b) });
   var rec = function (w) {
+    UNDO = []; lastSt = null; /* la partita è salvata: niente da annullare nel nuovo draft */
     S.games = S.games.concat([{ d: Date.now(), r: w ? 1 : 0, a: S.ally.slice(), e: S.enemy.slice(), me: gameMe }]).slice(-300);
     S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; S.allyLane = [null, null, null, null, null];
     gameMsg = "Partita salvata: " + (w ? "vittoria" : "sconfitta") + (gameMe ? " con " + gameMe : "") + ". Draft pronto per la prossima."; gameMe = null; focus = null; save(); rDraft(); $("v-draft").scrollTop = 0;
@@ -216,6 +227,23 @@ function gameStats() {
   G.forEach(function (x) { add(me, x.me, x.r); (x.a || []).forEach(function (h) { add(al, h, x.r) }); (x.e || []).forEach(function (h) { add(vs, h, x.r) }) });
   var list = function (o, min) { return Object.keys(o).filter(function (h) { return H[h] && o[h].g >= min }).map(function (h) { return { n: h, g: o[h].g, w: Math.round(100 * o[h].w / o[h].g) } }) };
   return { n: G.length, w: G.filter(function (x) { return x.r }).length, me: list(me, 1).sort(function (a, b) { return b.g - a.g || b.w - a.w }), al: list(al, 2).filter(function (x) { return x.w > 50 }).sort(function (a, b) { return b.w - a.w || b.g - a.g }), vs: list(vs, 2).filter(function (x) { return x.w < 50 }).sort(function (a, b) { return a.w - b.w || b.g - a.g }) };
+}
+/* statistiche per ogni eroe che hai giocato (il "tuo eroe" segnato a fine partita): win rate, contro chi perdi, con chi vinci */
+function myHeroStats() {
+  var o = {}, add = function (m, h, r) { m[h] = m[h] || { g: 0, w: 0 }; m[h].g++; m[h].w += r };
+  S.games.forEach(function (x) { if (!x.me || !H[x.me]) return; var s = o[x.me] = o[x.me] || { g: 0, w: 0, vs: {}, al: {} }; s.g++; s.w += x.r; (x.e || []).forEach(function (e) { if (e) add(s.vs, e, x.r) }); (x.a || []).forEach(function (a) { if (a && a !== x.me) add(s.al, a, x.r) }) });
+  var pick = function (m, worst) { return Object.keys(m).filter(function (h) { return H[h] && (worst ? m[h].g - m[h].w : m[h].w) > 0 }).sort(function (a, b) { return worst ? (m[b].g - m[b].w) - (m[a].g - m[a].w) || m[a].w / m[a].g - m[b].w / m[b].g : m[b].w - m[a].w || m[b].w / m[b].g - m[a].w / m[a].g }).slice(0, 3).map(function (h) { return { n: h, g: m[h].g, w: m[h].w } }) };
+  return Object.keys(o).map(function (h) { var s = o[h]; return { n: h, g: s.g, w: Math.round(100 * s.w / s.g), bad: pick(s.vs, 1), good: pick(s.al, 0) } }).sort(function (a, b) { return b.g - a.g || b.w - a.w });
+}
+function myStatsCard() {
+  var L = myHeroStats();
+  if (!L.length) return S.games.length ? '<div class="card"><div class="kv"><b class="hh">' + IC.trend + ' Le tue statistiche per eroe</b></div><p class="hint" style="margin:6px 0 0">Quando segni una partita, scegli anche «Il tuo eroe»: qui vedrai win rate e avversari più difficili per ogni eroe che giochi.</p></div>' : '';
+  var chips = function (a, cls, lost) { return a.map(function (x) { return '<span class="mch ' + cls + '">' + tile(x.n, "xs") + esc(x.n) + ' <b>' + (lost ? (x.g - x.w) + ' sc.' : x.w + ' v.') + '</b></span>' }).join("") };
+  return '<div class="card"><div class="kv"><b class="hh">' + IC.trend + ' Le tue statistiche per eroe</b><span class="k">' + L.length + ' eroi</span></div><div class="myst">' + L.map(function (x) {
+    return '<details class="mys"><summary>' + tile(x.n, "sm") + '<span class="mn"><b>' + esc(x.n) + '</b><small>' + x.g + ' partite</small></span>' + bar(x.w, x.w >= 55 ? "var(--green)" : x.w >= 45 ? "var(--amber)" : "var(--red)") + '<b class="mw ' + (x.w >= 55 ? "g" : x.w >= 45 ? "a" : "r") + '">' + x.w + '%</b></summary>' +
+      '<div class="myd">' + (x.bad.length ? '<div class="k">Perdi di più contro</div><div class="mchs">' + chips(x.bad, "r", 1) + '</div>' : '<p class="hint">Nessuna sconfitta con questo eroe.</p>') +
+      (x.good.length ? '<div class="k">Vinci di più con</div><div class="mchs">' + chips(x.good, "g") + '</div>' : '') + '</div></details>'
+  }).join("") + '</div></div>';
 }
 function histCard() {
   var st = gameStats();
@@ -237,7 +265,7 @@ function rGames() {
   /* elenco delle singole partite (dalla più recente): si può correggere il risultato o eliminarne una */
   var list = S.games.map(function (g, i) { return { g: g, i: i } }).reverse().slice(0, gAll ? 300 : 20);
   var team = function (t) { return (t || []).filter(Boolean).map(function (h) { return tile(h, "xs") }).join("") };
-  v.innerHTML = '<div class="ttl"><div><h2>Storico partite</h2><p>Le partite segnate a fine draft</p></div></div>' + histCard() +
+  v.innerHTML = '<div class="ttl"><div><h2>Storico partite</h2><p>Le partite segnate a fine draft</p></div></div>' + histCard() + myStatsCard() +
     (S.games.length ? '<div class="card"><div class="kv"><b class="hh">' + IC.medal + ' Partite</b><span class="k">correggi o elimina</span></div><div class="glist">' + list.map(function (x) {
       var g = x.g; return '<div class="gi"><span class="pill ' + (g.r ? "gr" : "rd") + '">' + (g.r ? "V" : "S") + '</span><span class="gt"><small>' + new Date(g.d).toLocaleDateString("it-IT") + (g.me ? ' · ' + esc(g.me) : '') + '</small><span class="gtm">' + team(g.a) + '<i>vs</i>' + team(g.e) + '</span></span>' +
         '<button class="btn sm" data-flip="' + x.i + '" aria-label="Cambia in ' + (g.r ? "sconfitta" : "vittoria") + '">' + (g.r ? "→ S" : "→ V") + '</button><button class="btn sm rd" data-del="' + x.i + '" aria-label="Elimina partita">×</button></div>'

@@ -39,7 +39,18 @@ var LW = {}; Object.keys(H).forEach(function (h) {
 });
 function fit(h, l) { return (LW[h] || {})[l] || 0 }
 var ID2 = {}; Object.keys(HX).forEach(function (h) { ID2[HX[h].id] = h });
-function applyLive(LV) { Object.keys(LV.rk).forEach(function (h) { if (HX[h]) HX[h].rk = LV.rk[h] }); META.date = LV.date; META.live = 1 }
+/* eroi nuovi: se l'aggiornamento online trova un eroe che data.js non conosce ancora, lo aggiunge con i soli dati
+   del meta (win, pick e ban rate), così si può inserire nel draft e bannare. Abilità, build e matchup arrivano
+   quando si aggiorna data.js. info = { n: nome, img: ritratto } dalla risposta online */
+function addNewHero(id, info) {
+  if (ID2[id]) return ID2[id];
+  var n = (info && info.n) || "Eroe " + id; if (H[n]) n += " #" + id;
+  H[n] = { r: "F", g: "", t: "", l: "", lore: "", nw: 1 }; HX[n] = { id: +id, nw: 1, img: (info && info.img) || "" };
+  ID2[id] = n; NAMES.push(n); NAMES.sort(function (a, b) { return a.localeCompare(b) });
+  if (typeof M !== "undefined") M[n] = { c: 0, r: 0, v: 0, ci: 0, sf: 50, vr: 0, score: 30, rank: NAMES.length };
+  return n;
+}
+function applyLive(LV) { if (LV.nw) Object.keys(LV.nw).forEach(function (id) { addNewHero(id, LV.nw[id]) }); Object.keys(LV.rk).forEach(function (h) { if (HX[h]) HX[h].rk = LV.rk[h] }); META.date = LV.date; META.live = 1 }
 try { var LV0 = JSON.parse(localStorage.getItem(KEY.live) || "null"); if (LV0 && LV0.rk) applyLive(LV0) } catch (e) { }
 var NAMES = Object.keys(H).sort(function (a, b) { return a.localeCompare(b) });
 var $ = function (i) { return document.getElementById(i) };

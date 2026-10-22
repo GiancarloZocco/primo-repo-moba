@@ -28,12 +28,14 @@ function importBackup(file) {
 }
 /* scarica le 3 classifiche (tutti, mitico, gloria); cb(LV o null, classifiche fallite) */
 function fetchLive(cb) {
-  var ks = [["all", "all"], ["myth", "mythic"], ["glory", "glory"]], out = {}, n = 0, fail = 0;
+  var ks = [["all", "all"], ["myth", "mythic"], ["glory", "glory"]], out = {}, n = 0, fail = 0, nw = {};
   ks.forEach(function (k) {
-    fetch("https://arena.rone.dev/api/heroes/rank?days=7&rank=" + k[1] + "&size=200").then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json() }).then(function (d) { if (!d || !d.data || !Array.isArray(d.data.records)) throw new Error("risposta non valida"); d.data.records.forEach(function (r) { var x = r.data, h = ID2[x.main_heroid]; if (!h) return; (out[h] = out[h] || {})[k[0]] = [+(x.main_hero_win_rate * 100).toFixed(2), +(x.main_hero_appearance_rate * 100).toFixed(2), +(x.main_hero_ban_rate * 100).toFixed(2)] }) }).catch(function () { fail++ }).then(function () {
+    fetch("https://arena.rone.dev/api/heroes/rank?days=7&rank=" + k[1] + "&size=200").then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json() }).then(function (d) { if (!d || !d.data || !Array.isArray(d.data.records)) throw new Error("risposta non valida"); d.data.records.forEach(function (r) { var x = r.data, h = ID2[x.main_heroid];
+      if (!h && x.main_heroid) { var md = (x.main_hero && x.main_hero.data) || {}; nw[x.main_heroid] = { n: typeof md.name === "string" && md.name.trim() ? md.name.trim() : null, img: typeof md.head === "string" ? md.head : "" }; h = addNewHero(x.main_heroid, nw[x.main_heroid]) }
+      if (!h) return; (out[h] = out[h] || {})[k[0]] = [+(x.main_hero_win_rate * 100).toFixed(2), +(x.main_hero_appearance_rate * 100).toFixed(2), +(x.main_hero_ban_rate * 100).toFixed(2)] }) }).catch(function () { fail++ }).then(function () {
       if (++n < 3) return;
       if (!Object.keys(out).length) { cb(null, fail); return }
-      var LV = { rk: out, date: today(), t: Date.now() };
+      var LV = { rk: out, date: today(), t: Date.now(), nw: nw };
       /* la classifica in uso diventa quella "precedente" per le tendenze, ma solo se è di un altro giorno */
       if (META.date !== LV.date) { var old = {}; NAMES.forEach(function (h) { if (HX[h] && HX[h].rk) old[h] = HX[h].rk }); PREV = { rk: old, date: META.date }; try { localStorage.setItem(KEY.prev, JSON.stringify(PREV)) } catch (e) { } }
       try { localStorage.setItem(KEY.live, JSON.stringify(LV)) } catch (e) { }

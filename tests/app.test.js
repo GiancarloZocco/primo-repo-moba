@@ -441,6 +441,34 @@ async function run() {
     ok(on.t === "pE" && on.g === "pE" && on.bans && on.to === "Pick nemico", "«Solo pick nemici»: ban nascosti e si inseriscono solo i pick nemici");
     await p.evaluate(function () { qClean() });
 
+    section("Annulla, eroi nuovi, statistiche per eroe");
+    var un = await p.evaluate(function () {
+      qClean(); setSlot(S.enemy, 0, "Ling"); rDraft(); S.banA[0] = "Masha"; rDraft(); setSlot(S.ally, 0, "Layla"); rDraft();
+      var r = { btn: !!document.getElementById("undo") };
+      document.getElementById("undo").click(); r.u1 = S.ally[0] === null && S.banA[0] === "Masha";
+      document.getElementById("undo").click(); r.u2 = S.banA[0] === null && S.enemy[0] === "Ling";
+      document.getElementById("undo").click(); r.u3 = S.enemy[0] === null;
+      qClean(); return r;
+    });
+    ok(un.btn && un.u1 && un.u2 && un.u3, "pulsante Annulla: toglie una alla volta le ultime modifiche (pick, ban)");
+    var nh = await p.evaluate(function () {
+      var errs0 = 0, n = addNewHero(99999, { n: "Zyrothan", img: "" }); calcMeta(); HX[n].rk = { all: [53.2, 1.5, 4.1] }; calcMeta();
+      var r = { n: n, list: NAMES.indexOf("Zyrothan") > -1 && free().indexOf("Zyrothan") > -1, find: qFind("zyro")[0], tier: M.Zyrothan.tier };
+      try { openHero("Zyrothan"); r.sheet = /Eroe nuovo/.test(document.getElementById("v-hero").textContent); go("tier"); go("draft"); setSlot(S.enemy, 0, "Zyrothan"); rDraft(); r.draft = S.enemy[0] === "Zyrothan" } catch (e) { r.err = e.message }
+      r.again = addNewHero(99999, { n: "Zyrothan" }) === "Zyrothan" && NAMES.filter(function (h) { return h === "Zyrothan" }).length === 1;
+      /* via l'eroe di prova: la sfida del giorno dipende dall'elenco degli eroi */
+      delete H.Zyrothan; delete HX.Zyrothan; delete ID2[99999]; delete M.Zyrothan; NAMES.splice(NAMES.indexOf("Zyrothan"), 1); calcMeta();
+      qClean(); return r;
+    });
+    ok(nh.list && nh.find === "Zyrothan" && nh.tier && nh.sheet && nh.draft && nh.again && !nh.err, "eroe nuovo dai dati online: compare in elenco, ricerca, tier list, draft e scheda con avviso" + (nh.err ? ": " + nh.err : ""));
+    var ms = await p.evaluate(function () {
+      S.games = [{ d: 1, r: 0, me: "Ling", a: ["Ling", "Tigreal"], e: ["Saber", "Atlas"] }, { d: 2, r: 0, me: "Ling", a: ["Ling"], e: ["Saber"] }, { d: 3, r: 1, me: "Ling", a: ["Ling", "Tigreal"], e: ["Eudora"] }, { d: 4, r: 1, me: "Layla", a: ["Layla"], e: ["Saber"] }];
+      go("games"); var L = myHeroStats(), ling = L[0];
+      var r = { first: ling.n + ":" + ling.g + ":" + ling.w, bad: ling.bad[0].n + ":" + (ling.bad[0].g - ling.bad[0].w), good: ling.good[0] && ling.good[0].n, rows: document.querySelectorAll(".myst .mys").length };
+      S.games = []; save(); return r;
+    });
+    ok(ms.first === "Ling:3:33" && ms.bad === "Saber:2" && ms.good === "Tigreal" && ms.rows === 2, "statistiche per eroe: win rate, contro chi perdi (Saber 2 sconfitte) e con chi vinci");
+
     section("Quiz: sfida del giorno");
     var qa = await p.evaluate(function () { S.daily = null; QZ = null; go("quiz"); document.getElementById("dgo").click(); return JSON.stringify(QZ.r.map(function (q) { return [q.q, q.o, q.a] })) });
     var ctx4 = await browser.newContext({ locale: "en-US" }), errs4 = [], p4 = await newPage(ctx4, errs4);
