@@ -255,10 +255,10 @@ async function run() {
     ok(bn.full === 0 && !bn.hint, "con i 5 ban alleati pieni i consigli spariscono");
 
     section("Draft guidato");
-    for (var mode of [["blue", 10], ["red", 10], ["blue", 6]]) {
+    for (var mode of [["blue", 10, "rank"], ["red", 10, "rank"], ["blue", 6, "rank"], ["blue", 10, "tour"], ["red", 10, "tour"], ["blue", 6, "tour"]]) {
       var gr = await p.evaluate(function (mo) {
         S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null];
-        S.guide = mo[0]; S.gbans = mo[1]; go("draft");
+        S.guide = mo[0]; S.gbans = mo[1]; S.gmode = mo[2]; go("draft");
         var seq = [], lit = 0;
         for (var n = 0; n < 25; n++) {
           var g = guideNow(); if (!g.t) break;
@@ -268,11 +268,18 @@ async function run() {
         }
         return { seq: seq.join(" "), lit: lit, done: /Draft completato/.test(document.querySelector("#v-draft").textContent), cnt: [S.ally, S.enemy, S.banA, S.banE].map(function (t) { return t.filter(Boolean).length }).join("/"), dup: used().length !== new Set(used()).size };
       }, mode);
-      var exp = { "blue10": "bA bE bA bE bA bE pA pE pE pA pA pE bE bA bE bA pE pA pA pE", "red10": "bE bA bE bA bE bA pE pA pA pE pE pA bA bE bA bE pA pE pE pA", "blue6": "bA bE bA bE bA bE pA pE pE pA pA pE pE pA pA pE" }[mode.join("")];
+      var exp = { "blue10tour": "bA bE bA bE bA bE pA pE pE pA pA pE bE bA bE bA pE pA pA pE", "red10tour": "bE bA bE bA bE bA pE pA pA pE pE pA bA bE bA bE pA pE pE pA", "blue6tour": "bA bE bA bE bA bE pA pE pE pA pA pE pE pA pA pE",
+        "blue10rank": "bA bE bA bE bA bE bA bE bA bE pA pE pE pA pA pE pE pA pA pE", "red10rank": "bE bA bE bA bE bA bE bA bE bA pE pA pA pE pE pA pA pE pE pA", "blue6rank": "bA bE bA bE bA bE pA pE pE pA pA pE pE pA pA pE" }[mode.join("")];
       var nSteps = exp.split(" ").length;
-      ok(gr.seq === exp, (mode[0] === "blue" ? "primi noi" : "primi loro") + ", " + mode[1] + " ban: ordine dei turni corretto");
+      ok(gr.seq === exp, (mode[2] === "rank" ? "ranked" : "torneo") + ", " + (mode[0] === "blue" ? "primi noi" : "primi loro") + ", " + mode[1] + " ban: ordine dei turni corretto");
       ok(gr.lit === nSteps && gr.done && !gr.dup, "  a ogni turno uno slot evidenziato, alla fine Draft completato (" + gr.cnt + "), nessun eroe doppio");
     }
+    var gm = await p.evaluate(function () {
+      S.guide = "blue"; S.gbans = 10; S.gmode = "tour"; S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; go("draft");
+      var r = { btn: [].map.call(document.querySelectorAll("#gmo button"), function (b) { return b.textContent + (b.className === "on" ? "*" : "") }).join(",") };
+      document.querySelector("#gmo button").click(); r.after = S.gmode + "|" + guideSteps().slice(0, 10).every(function (t) { return t.charAt(0) === "b" }); return r;
+    });
+    ok(gm.btn === "Ranked,Torneo*" && gm.after === "rank|true", "selettore Modalità: Ranked mette tutti i 10 ban prima dei pick (" + gm.btn + ")");
     await p.evaluate(function () { S.guide = null; save(); go("draft") });
     ok(await p.evaluate(function () { return !document.querySelector(".guide") && !document.querySelector("#v-draft .now") }), "modalità spenta: niente turni né evidenziazioni");
 

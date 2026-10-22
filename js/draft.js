@@ -3,7 +3,7 @@
 function rDraft() {
   compute(); var v = $("v-draft"), full = S.ally.indexOf(null) < 0, algo = { meta: "Meta", bal: "Bilanciata", safe: "Safe pick" }[S.algo], free = LANES.filter(function (l) { return !cover[l] });
   v.innerHTML = '<div class="ttl"><div><h2>Draft Live<i></i></h2><p>5v5 · ' + algo + ' · ' + RKN[S.rk] + '</p></div><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><span class="pill am" title="Sinergia della squadra alleata">Sinergia ' + synergy() + '%</span><span class="pill bl">' + en().length + '/5 Nemici</span></span></div>' +
-    '<div class="srt" style="margin-top:0"><span class="k">Guidato:</span><div class="seg" id="gd"></div></div>' + (S.guide ? '<div class="srt" style="margin-top:0"><span class="k">Ban:</span><div class="seg" id="gbn"></div></div>' : '') + guideBox() + resultBox() +
+    '<div class="srt" style="margin-top:0"><span class="k">Guidato:</span><div class="seg" id="gd"></div></div>' + (S.guide ? '<div class="srt" style="margin-top:0"><span class="k">Modalità:</span><div class="seg" id="gmo"></div></div><div class="srt" style="margin-top:0"><span class="k">Ban:</span><div class="seg" id="gbn"></div></div>' : '') + guideBox() + resultBox() +
     (used().length || S.guide || gameMsg ? '' : '<div class="alert"><span class="a">' + IC.bulb + '</span><span>Inizia dai ban, poi aggiungi gli eroi nemici man mano che li scelgono: i consigli per ogni lane si aggiornano a ogni pick.</span></div>') +
     '<div class="teams"><div class="team ally"><h3>Alleati</h3><div id="ally"></div></div><div class="team enemy"><h3>Nemici</h3><div id="enemy"></div></div></div><div class="bans" id="bans"></div>' +
     '<div class="kv" style="align-items:center"><span class="k">Consigliati per lane</span><button class="lnk" id="lf">' + (S.lanefit ? "Solo lane libere ✓" : "Tutte le lane") + '</button></div><div class="lrows" id="lanes"></div><button class="lnk" id="lmore" style="align-self:center">' + (lMore ? "Mostra 3 per lane" : "Mostra 6 per lane") + '</button>' + (poolRecs.length && !full ? '<div class="card prow"><div class="kv"><b class="hh">' + IC.star + ' Dal tuo pool</b><span class="k">' + poolRecs.length + ' disponibili</span></div><div class="hrow" id="poolr"></div></div>' : '') + '<div id="rec"></div>' +
@@ -59,16 +59,21 @@ function rDraft() {
   $("lf").onclick = function () { S.lanefit = !S.lanefit; focus = null; save(); rDraft() };
   $("share").onclick = function () { shareDraft(this) };
   [[null, "No"], ["blue", "Primi noi"], ["red", "Primi loro"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.guide === o[0] ? "on" : ""; b.onclick = function () { S.guide = o[0]; save(); rDraft() }; $("gd").appendChild(b) });
-  if (S.guide) [[10, "10 (Mitico)"], [6, "6"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.gbans === o[0] ? "on" : ""; b.onclick = function () { S.gbans = o[0]; save(); rDraft() }; $("gbn").appendChild(b) });
+  if (S.guide) [["rank", "Ranked"], ["tour", "Torneo"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = (S.gmode === "tour" ? "tour" : "rank") === o[0] ? "on" : ""; b.onclick = function () { S.gmode = o[0]; save(); rDraft() }; $("gmo").appendChild(b) });
+  if (S.guide) [[10, S.gmode === "tour" ? "10" : "10 (Mitico)"], [6, "6"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.gbans === o[0] ? "on" : ""; b.onclick = function () { S.gbans = o[0]; save(); rDraft() }; $("gbn").appendChild(b) });
   guideBind(); resultBind(); gameMsg = "";
   $("lmore").onclick = function () { lMore = !lMore; rDraft() };
 }
-/* ---------- draft guidato: ordine dei turni ranked (F = chi sceglie per primo, S = l'altra squadra) ---------- */
+/* ---------- draft guidato: ordine dei turni (F = chi sceglie per primo, S = l'altra squadra) ----------
+   ranked: prima tutti i ban (5 o 3 a testa, in contemporanea), poi i pick 1-2-2-2-2-1
+   torneo: 3 ban a testa, 6 pick, poi (con 10 ban) altri 2 ban a testa e gli ultimi 4 pick */
+var RANKED = { 10: ["bF", "bS", "bF", "bS", "bF", "bS", "bF", "bS", "bF", "bS"], 6: ["bF", "bS", "bF", "bS", "bF", "bS"] }, PICKS = ["pF", "pS", "pS", "pF", "pF", "pS", "pS", "pF", "pF", "pS"];
 var ORDER = { 10: ["bF", "bS", "bF", "bS", "bF", "bS", "pF", "pS", "pS", "pF", "pF", "pS", "bS", "bF", "bS", "bF", "pS", "pF", "pF", "pS"], 6: ["bF", "bS", "bF", "bS", "bF", "bS", "pF", "pS", "pS", "pF", "pF", "pS", "pS", "pF", "pF", "pS"] };
 var GT = { bA: "Ban alleato", bE: "Ban nemico", pA: "Pick alleato", pE: "Pick nemico" };
 function guideSteps() {
   var first = S.guide === "red" ? "E" : "A", other = first === "A" ? "E" : "A";
-  return (ORDER[S.gbans] || ORDER[10]).map(function (o) { return o.charAt(0) + (o.charAt(1) === "F" ? first : other) });
+  var o = S.gmode === "tour" ? ORDER[S.gbans] || ORDER[10] : (RANKED[S.gbans] || RANKED[10]).concat(PICKS);
+  return o.map(function (o) { return o.charAt(0) + (o.charAt(1) === "F" ? first : other) });
 }
 /* turno attuale: il primo passo per cui la squadra non ha ancora abbastanza ban o pick */
 function guideNow() {
