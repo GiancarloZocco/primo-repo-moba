@@ -1,0 +1,468 @@
+/* MLBB TOP - test automatici nel browser (Chromium via Playwright)
+   Uso:  npm install && npx playwright install chromium && npm test
+   Serve la cartella del progetto su una porta locale, blocca la rete esterna
+   (le chiamate ad arena.rone.dev sono simulate) e controlla che l'app funzioni. */
+var http = require("http"), fs = require("fs"), path = require("path");
+var chromium = require("playwright").chromium;
+
+var ROOT = path.join(__dirname, ".."), PORT = +process.env.PORT || 8790, URL0 = "http://127.0.0.1:" + PORT + "/";
+var TYPES = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json", ".png": "image/png", ".webp": "image/webp" };
+
+var fails = 0, passes = 0;
+function ok(cond, msg) { if (cond) { passes++; console.log("  ✓ " + msg) } else { fails++; console.log("  ✗ " + msg) } }
+function section(t) { console.log("\n" + t) }
+
+function serve() {
+  return new Promise(function (done) {
+    var srv = http.createServer(function (req, res) {
+      var p = decodeURIComponent(req.url.split("?")[0]); if (p.endsWith("/")) p += "index.html";
+      var f = path.join(ROOT, path.normalize(p));
+      if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); res.end(); return }
+      res.writeHead(200, { "Content-Type": TYPES[path.extname(f)] || "application/octet-stream", "Cache-Control": "no-cache" });
+      fs.createReadStream(f).pipe(res);
+    });
+    srv.listen(PORT, "127.0.0.1", function () { done(srv) });
+  });
+}
+
+/* risposta finta di arena.rone.dev: ogni eroe con win/pick/ban rate fissi */
+function arenaBody(ids) {
+  return JSON.stringify({ data: { records: ids.map(function (id, i) { return { data: { main_heroid: id, main_hero_win_rate: .45 + (i % 10) / 100, main_hero_appearance_rate: .01 + (i % 7) / 100, main_hero_ban_rate: (i % 5) / 10 } } }) } });
+}
+
+async function newPage(ctx, errs) {
+  var p = await ctx.newPage();
+  p.on("pageerror", function (e) { errs.push(e.message) });
+  p.on("dialog", function (d) { p.lastDialog = d.message(); d.accept() });
+  return p;
+}
+
+async function run() {
+  var srv = await serve();
+  var browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
+  try {
+    var ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    var arena = { mode: "ok" };
+    /* niente rete esterna: arena.rone.dev simulato, tutto il resto bloccato */
+    await ctx.route(function (u) { return !u.href.startsWith(URL0) }, async function (route) {
+      var u = route.request().url();
+      if (u.indexOf("https://arena.rone.dev/") === 0) {
+        if (arena.mode === "fail") return route.fulfill({ status: 500, body: "" });
+        return route.fulfill({ status: 200, contentType: "application/json", body: arenaBody(arena.ids || []) });
+      }
+      return route.abort();
+    });
+    var errs = [], p = await newPage(ctx, errs);
+    await p.goto(URL0);
+    await p.waitForFunction(function () { return window.NAMES && document.querySelector("#v-start.on") });
+    arena.ids = await p.evaluate(function () { return Object.keys(HX).map(function (h) { return HX[h].id }) });
+
+    section("File generati");
+    var built = true; try { require("child_process").execFileSync("node", [path.join(ROOT, "tools/build.js"), "--check"], { stdio: "pipe" }) } catch (e) { built = false }
+    ok(built, "img/list.json e sw.js aggiornati (altrimenti lancia npm run build)");
+
+    section("Salvataggi");
+    var ctxm = await browser.newContext(), pm = await newPage(ctxm, errs);
+    await ctxm.route(function (u) { return !u.href.startsWith(URL0) }, function (r) { return r.abort() });
+    await ctxm.addInitScript(function () { if (!sessionStorage.getItem("seed")) { sessionStorage.setItem("seed", 1); localStorage.setItem("draftsync", JSON.stringify({ nick: "Vecchio", ally: ["Layla", null, null, null, null], quiz: { xp: 120 } })); localStorage.setItem("draftsync_prev", JSON.stringify({ rk: {}, date: "01/01/2026" })) } });
+    await pm.goto(URL0); await pm.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
+    var mg = await pm.evaluate(function () { save(); return { old: localStorage.getItem("draftsync") || localStorage.getItem("draftsync_prev"), s: JSON.parse(localStorage.getItem("mlbb-top")), prev: !!localStorage.getItem("mlbb-top-prev") } });
+    ok(!mg.old && mg.s.nick === "Vecchio" && mg.s.ally[0] === "Layla" && mg.s.quiz.xp === 120 && mg.prev, "i dati salvati coi vecchi nomi (draftsync) passano ai nuovi senza perdite");
+    ok(mg.s.v === 2, "i salvataggi hanno il numero di versione dello schema (" + mg.s.v + ")");
+    ok(await pm.evaluate(function () { return cur === "home" && S.onb === true }), "chi aggiorna l'app non rivede la configurazione iniziale");
+    await ctxm.close();
+
+    section("Avvio");
+    var info = await p.evaluate(function () { return { heroes: NAMES.length, items: Object.keys(ITEMS).length } });
+    ok(info.heroes > 100, "dati caricati: " + info.heroes + " eroi, " + info.items + " oggetti");
+    ok(await p.evaluate(function () { return getComputedStyle(document.querySelector(".app")).display === "flex" && getComputedStyle(document.body).backgroundColor === "rgb(6, 8, 12)" }), "foglio di stile caricato (css/app.css)");
+    ok(errs.length === 0, "nessun errore JavaScript all'avvio" + (errs.length ? ": " + errs.join(" | ") : ""));
+    var ob = await p.evaluate(function () {
+      var r = { start: cur === "start" && !!document.getElementById("spool") };
+      [].filter.call(document.querySelectorAll("#srole button"), function (b) { return b.textContent === "Tiratore" })[0].click();
+      [].filter.call(document.querySelectorAll("#slane button"), function (b) { return b.textContent === "Gold Lane" })[0].click();
+      r.sugg = [].map.call(document.querySelectorAll("#spools button"), function (b) { return b.textContent.replace("+", "") });
+      document.querySelector("#spools button").click(); document.querySelector("#spool .pch.add").click();
+      r.sheet = document.getElementById("sheet").classList.contains("show"); document.querySelector("#grid button").click();
+      r.pool = S.pool.slice(); document.getElementById("snick").value = "Tester"; document.getElementById("sgo").click();
+      r.after = cur + "|" + S.onb + "|" + S.main + "|" + S.lane + "|" + S.nick + "|" + JSON.parse(localStorage.getItem("mlbb-top")).pool.length;
+      return r;
+    });
+    ok(ob.start, "primo avvio: si apre la configurazione iniziale");
+    ok(ob.sugg.length && ob.pool.length === 2 && ob.pool[0] === ob.sugg[0].trim(), "pool: eroi suggeriti per la lane e aggiunta dal selettore (" + ob.pool.join(", ") + ")");
+    ok(ob.after === "home|true|X|o|Tester|2" && ob.sheet, "a fine configurazione si va alla Home con ruolo, lane, nickname e pool salvati (" + ob.after + ")");
+    var first = await p.evaluate(function () { S.pool = []; save(); var home = cur === "home"; go("draft"); return { home: home, picks: used().length, hint: /Inizia dai ban/.test(document.querySelector("#v-draft").textContent) } });
+    ok(first.home, "dopo la configurazione l'app è sulla Home");
+    ok(first.picks === 0 && first.hint, "prima apertura: draft vuoto con il suggerimento iniziale");
+
+    section("Schermate");
+    for (var v of ["draft", "tier", "heroes", "quiz", "profile"]) {
+      var n = await p.evaluate(function (v) { go(v); return document.querySelector("#v-" + v).innerHTML.length }, v);
+      ok(n > 200, "schermata " + v + " disegnata");
+    }
+    for (var sub of ["her", "itm", "emb", "spl"]) {
+      var c = await p.evaluate(function (s) { go("heroes"); hsub = s; rHeroes(); return document.querySelectorAll("#hlist .hg").length || document.querySelectorAll("#hlist > *").length }, sub);
+      ok(c > 0, "database, sezione " + sub + ": " + c + " elementi");
+    }
+    var heroes = await p.evaluate(function () { return NAMES.filter(function (h, i) { return i % 9 === 0 }) });
+    var bad = [];
+    for (var h of heroes) for (var t of ["ab", "bd", "mu", "lo"]) {
+      var len = await p.evaluate(function (a) { openHero(a[0], a[1]); return document.querySelector("#hbody").innerHTML.length }, [h, t]);
+      if (len < 50) bad.push(h + "/" + t);
+    }
+    ok(!bad.length, "schede eroe (" + heroes.length + " eroi × 4 schede)" + (bad.length ? ": vuote " + bad.join(", ") : ""));
+    ok(errs.length === 0, "nessun errore JavaScript nelle schermate" + (errs.length ? ": " + errs.join(" | ") : ""));
+
+    section("Home e navigazione");
+    var nv = await p.evaluate(function () {
+      go("home");
+      var groups = [].map.call(document.querySelectorAll("#nav button"), function (b) { return b.textContent }).join(","), r = { groups: groups };
+      document.querySelector('#nav button[data-g="study"]').click(); r.study = cur + "|" + [].map.call(document.querySelectorAll("#subnav button"), function (b) { return b.textContent }).join(",");
+      document.querySelector('#nav button[data-g="play"]').click(); r.play = cur + "|" + [].map.call(document.querySelectorAll("#subnav button"), function (b) { return b.textContent }).join(",");
+      document.querySelector('#nav button[data-g="me"]').click(); [].filter.call(document.querySelectorAll("#subnav button"), function (b) { return b.textContent === "Impostazioni" })[0].click(); r.set = cur === "settings" && !!document.getElementById("bkx") && !document.querySelector("#v-profile #bkx");
+      go("heroes"); openHero("Layla"); r.heroNav = document.querySelector("#nav button.on").dataset.g + "|" + document.querySelector("#subnav button.on").textContent;
+      go("home"); document.getElementById("hdraft").click(); r.draft = cur;
+      S.newsSeen = "vecchia"; go("home"); r.news1 = !!document.getElementById("hnews"); document.getElementById("hnews").click(); r.newsPage = cur === "news" && document.querySelectorAll("#v-news li").length > 5; go("home"); r.news2 = !!document.getElementById("hnews");
+      return r;
+    });
+    ok(nv.groups === "Home,Gioca,Studia,Io", "barra in basso a gruppi: " + nv.groups);
+    ok(/^(tier|heroes|cmp|quiz)\|Tier list,Eroi,Confronto,Quiz$/.test(nv.study) && /^(draft|guide|games)\|Draft,Guida,Storico$/.test(nv.play), "barra del gruppo: Studia e Gioca con le loro schermate (" + nv.study + " · " + nv.play + ")");
+    ok(nv.set, "Impostazioni in una schermata a parte (non più nel Profilo)");
+    ok(nv.heroNav === "study|Eroi", "la scheda eroe resta sotto Studia → Eroi");
+    ok(nv.draft === "draft", "dalla Home si va al draft");
+    ok(nv.news1 && nv.newsPage && !nv.news2, "avviso Novità in Home finché non apri la pagina, poi sparisce");
+
+    section("Draft");
+    var d = await p.evaluate(function () {
+      S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; go("draft");
+      var r0 = recs.length;
+      setSlot(S.enemy, 0, NAMES[3]); setSlot(S.enemy, 1, NAMES[40]); setSlot(S.ally, 0, NAMES[10]); rDraft();
+      var r = focusRec();
+      return { r0: r0, rec: r && r.n, used: used().indexOf(r && r.n) > -1, lanes: document.querySelectorAll("#lanes .lrow").length };
+    });
+    ok(d.r0 > 0 && d.rec, "consigli presenti (consigliato: " + d.rec + ")");
+    ok(!d.used, "il consigliato non è già in campo");
+    ok(d.lanes === 5, "5 righe di lane");
+    var pl = await p.evaluate(function () {
+      var c = H[NAMES[50]].l.charAt(0), h = NAMES.filter(function (x) { return used().indexOf(x) < 0 && H[x].l.indexOf(c) > -1 })[5];
+      S.pool = []; compute(); var a = poolRecs.length;
+      S.pool = [h]; S.lane = c; go("draft"); var r = poolRecs[0], row = document.querySelectorAll("#poolr .lcand").length;
+      var bonus = r && r.parts.some(function (x) { return /pool/.test(x.t) && x.v === 2 });
+      openPick("x", free(), function () { }, { quick: 1 }); var g = document.querySelector("#grid .ghd").textContent, g1 = document.querySelector("#grid .ghd + button").textContent; document.getElementById("sheet").classList.remove("show");
+      S.useMine = false; compute(); var off = poolRecs.length; S.useMine = true;
+      S.pool = []; S.lane = null; save(); go("draft");
+      return { a: a, h: h, r: r && r.n, lane: r && r.lane === c, row: row, bonus: bonus, g: g, g1: g1, off: off };
+    });
+    ok(pl.a === 0 && pl.r === pl.h && pl.lane && pl.row === 1, "pool: riga «Dal tuo pool» nel draft con " + pl.h);
+    ok(pl.bonus, "pool: bonus nei consigli, più alto nella lane preferita");
+    ok(pl.g === "Il tuo pool" && pl.g1 === pl.h, "pool: primo gruppo nel selettore degli eroi");
+    ok(pl.off === 0, "pool: si disattiva con «Usa i miei eroi nei consigli»");
+
+    section("Guida in partita");
+    var gd = await p.evaluate(function () {
+      S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null];
+      go("guide"); var empty = !!document.getElementById("gdr") && document.querySelectorAll("#glane button").length === 5;
+      setSlot(S.ally, 0, "Tigreal"); ["Estes", "Lancelot", "Layla"].forEach(function (h, i) { setSlot(S.enemy, i, h) }); go("guide");
+      var txt = document.querySelector("#v-guide").textContent;
+      document.querySelectorAll("#glane button")[3].click(); var jg = /Retribution/.test(document.querySelector("#v-guide").textContent);
+      gLane = null; S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; save();
+      return { empty: empty, plan: /Tigreal/.test(txt) && /Lancelot/.test(txt) && /Layla/.test(txt) && /anti-cure contro Estes/.test(txt), phases: /Lord/.test(txt) && /Turtle/.test(txt), jg: jg };
+    });
+    ok(gd.empty, "guida: senza draft invita ad andare al draft, 5 lane da scegliere");
+    ok(gd.plan, "guida: piano dal draft (iniziatore, bersagli, minacce, anti-cure)");
+    ok(gd.phases && gd.jg, "guida: obiettivi per fase e consigli della lane scelta");
+
+    section("Ricerca unica");
+    var sr = await p.evaluate(function () {
+      var r = {}; document.getElementById("srch").click(); r.open = document.getElementById("ssheet").classList.contains("show");
+      var q = function (t) { var x = document.getElementById("sq"); x.value = t; x.oninput(); return [].map.call(document.querySelectorAll("#sres .ghd"), function (h) { return h.textContent }).join(",") };
+      r.lay = q("lay"); r.first = document.querySelector("#sres button b").textContent;
+      r.acc = q("ÀTHENA"); r.none = q("zzzz") === "" && /Nessun risultato/.test(document.getElementById("sres").textContent);
+      q("athena"); document.querySelector("#sres button").click();
+      r.item = cur === "heroes" && hsub === "itm" && document.querySelectorAll("#hlist details").length === 1 && !document.getElementById("ssheet").classList.contains("show");
+      document.getElementById("srch").click(); q("impost"); document.querySelector("#sres button").click(); r.scr = cur;
+      document.getElementById("srch").click(); q("layla"); var e = new KeyboardEvent("keydown", { key: "Enter" }); document.getElementById("sq").onkeydown(e); r.hero = cur + "|" + hero;
+      hsub = "her"; hq = ""; return r;
+    });
+    ok(sr.open && /^Eroi/.test(sr.lay) && sr.first === "Layla", "la lente apre la ricerca; «lay» trova per prima Layla (" + sr.lay + ")");
+    ok(sr.acc === "Oggetti" && sr.none, "ricerca senza accenti e maiuscole, messaggio se non trova nulla");
+    ok(sr.item, "un oggetto apre il database filtrato su quell'oggetto");
+    ok(sr.scr === "settings" && sr.hero === "hero|Layla", "trova anche le schermate; Invio apre il primo risultato");
+
+    section("Interfaccia in inglese");
+    var ctxe = await browser.newContext({ viewport: { width: 390, height: 844 } }), pe = await newPage(ctxe, errs);
+    await ctxe.route(function (u) { return !u.href.startsWith(URL0) }, function (r) { return r.abort() });
+    await pe.goto(URL0); await pe.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
+    await pe.evaluate(function () { document.getElementById("sskip").click(); go("settings") });
+    await pe.click("#uil button:nth-child(2)"); await pe.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
+    var en = await pe.evaluate(async function () {
+      var IT = /(^|[^\p{L}])(il|della|degli|nella|alla|che|con|non|sono|nessun|nessuna|tocca|scegli|eroi|nemici|alleati|partita|squadra|consigli|ancora|già|punti|abilità|oggetti|talenti|giungla|impostazioni|storico|confronto|guida)(?![\p{L}])/iu, bad = [];
+      var scan = function (v) { var w = document.createTreeWalker(document.getElementById("v-" + v), NodeFilter.SHOW_TEXT), n; while ((n = w.nextNode())) { var t = n.nodeValue.trim(); if (t && IT.test(t) && !n.parentNode.closest("[data-raw]")) bad.push(v + ": " + t.slice(0, 60)) } };
+      var wait = function () { return new Promise(function (r) { setTimeout(r, 30) }) };
+      var r = { lang: document.documentElement.lang, ui: S.ui, game: S.lang, nav: [].map.call(document.querySelectorAll("#nav button"), function (b) { return b.textContent }).join(",") };
+      setSlot(S.ally, 0, "Tigreal"); ["Estes", "Lancelot", "Layla"].forEach(function (h, i) { setSlot(S.enemy, i, h) }); detOpen = true;
+      for (var v of ["home", "draft", "guide", "games", "tier", "heroes", "cmp", "quiz", "profile", "settings", "news"]) { go(v); await wait(); scan(v) }
+      openHero("Layla", "bd"); await wait(); scan("hero"); openHero("Layla", "lo"); await wait(); scan("hero");
+      r.draft = document.querySelector("#nav button.on") && (go("draft"), await wait(), /Recommended by lane/.test(document.getElementById("v-draft").textContent));
+      r.tr = tr("Countera Franco (+2.0% di win rate contro di lui)"); r.bad = bad;
+      return r;
+    });
+    ok(en.lang === "en" && en.ui === "en" && en.game === "en" && en.nav === "Home,Play,Study,Me", "Impostazioni → Lingua dell'app: English (barra: " + en.nav + ")");
+    ok(en.draft && en.tr === "Counters Franco (+2.0% win rate vs him)", "schermate e frasi composte in inglese (" + en.tr + ")");
+    ok(!en.bad.length, "nessun testo italiano nelle schermate in inglese" + (en.bad.length ? ": " + en.bad.slice(0, 6).join(" | ") : ""));
+    await pe.evaluate(function () { go("settings") }); await pe.click("#uil button:nth-child(1)"); await pe.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
+    ok(await pe.evaluate(function () { go("settings"); return S.ui === "it" && document.documentElement.lang === "it" && /Lingua dell'app/.test(document.getElementById("v-settings").textContent) }), "si torna all'italiano");
+    await ctxe.close();
+
+    section("Build contro i nemici");
+    var bv = await p.evaluate(function () {
+      S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null];
+      var none = situItems("Layla", "o", []).items.length;
+      ["Estes", "Kagura", "Eudora", "Layla", "Tigreal"].forEach(function (h, i) { setSlot(S.enemy, i, h) });
+      var mm = situItems("Moskov", "o", en()), mg = situItems("Kagura", "m", en()), tk = situItems("Tigreal", "r", en());
+      var ids = function (r) { return r.items.map(function (o) { return o.id }) };
+      detOpen = true; go("draft"); var m = focusRec(), box = document.querySelector("#detail .bvs"), line = document.querySelector("#rec .spl1");
+      openHero(m.n, "bd"); var hb = !!document.querySelector("#hbody .bvs"); detOpen = false;
+      var cc = spellFor("Layla", "o", ["Tigreal", "Atlas", "Franco", "Khufra"].filter(function (h) { return H[h] }));
+      return { none: none, mm: mm.type + ":" + ids(mm), mg: mg.type + ":" + ids(mg), tk: tk.type + ":" + ids(tk), box: !!box && box.querySelectorAll(".sit li").length, line: line && line.textContent, hb: hb, jg: spellFor(NAMES.filter(function (h) { return H[h].l.charAt(0) === "j" })[0], "j", []).sp, cc: cc.alt && cc.alt.id };
+    });
+    ok(bv.none === 0, "senza nemici nessun oggetto situazionale");
+    ok(/^atk:/.test(bv.mm) && bv.mm.indexOf("3013") > -1 && bv.mm.indexOf("3205") > -1, "tiratore contro Estes e maghi: Sea Halberd e Athena's Shield (" + bv.mm + ")");
+    ok(/^mag:/.test(bv.mg) && bv.mg.indexOf("3105") > -1, "mago contro Estes: Glowing Wand (" + bv.mg + ")");
+    ok(/^tank:/.test(bv.tk) && bv.tk.indexOf("3206") > -1, "tank contro Estes: Dominance Ice (" + bv.tk + ")");
+    ok(bv.box > 0 && bv.hb, "riquadro build nell'analisi dettagliata e nella scheda eroe (" + bv.box + " oggetti)");
+    ok(/Spell: .+Emblema: /.test(bv.line || ""), "spell ed emblema nel consigliato: " + bv.line);
+    ok(bv.jg === 20020 && bv.cc === 20080, "giungla: Retribution; contro tanti controlli si suggerisce Purify");
+    var picked = await p.evaluate(function () { var n = focusRec().n; document.getElementById("pk").click(); return S.ally.indexOf(n) > -1 });
+    ok(picked, "il pulsante Scegli mette il consigliato negli alleati");
+
+    section("Ban consigliati");
+    var bn = await p.evaluate(function () {
+      S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; go("draft");
+      var empty = document.querySelectorAll("#bans .lcand").length, top = banRecs()[0];
+      S.ally[0] = "Layla"; S.enemy[0] = "Fanny"; rDraft();
+      var withPick = banRecs(), cnt = withPick.slice(0, 10).filter(function (r) { return r.parts.some(function (x) { return /Countera Layla/.test(x.t) }) }).length;
+      var first = document.querySelector("#bans .lcand b").textContent; document.querySelector("#bans .lcand").click();
+      var banned = S.banA[0] === first, again = banRecs().some(function (r) { return r.n === first });
+      S.banA = NAMES.filter(function (h) { return used().indexOf(h) < 0 }).slice(0, 5); rDraft();
+      return { empty: empty, top: top && top.n, cnt: cnt, banned: banned, again: again, full: document.querySelectorAll("#bans .lcand").length, hint: /Perché bannare/.test(document.querySelector("#bans").textContent) };
+    });
+    ok(bn.empty === 3, "draft vuoto: 3 ban consigliati (primo: " + bn.top + ")");
+    ok(bn.cnt > 0, "con Layla in squadra, tra i primi 10 ban ci sono suoi counter (" + bn.cnt + ")");
+    ok(bn.banned && !bn.again, "toccando un consiglio l'eroe finisce nei ban alleati e sparisce dai consigli");
+    ok(bn.full === 0 && !bn.hint, "con i 5 ban alleati pieni i consigli spariscono");
+
+    section("Draft guidato");
+    for (var mode of [["blue", 10], ["red", 10], ["blue", 6]]) {
+      var gr = await p.evaluate(function (mo) {
+        S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null];
+        S.guide = mo[0]; S.gbans = mo[1]; go("draft");
+        var seq = [], lit = 0;
+        for (var n = 0; n < 25; n++) {
+          var g = guideNow(); if (!g.t) break;
+          seq.push(g.t); if (document.querySelectorAll("#v-draft .now").length === 1) lit++;
+          var b = document.getElementById("gsug");
+          if (b && n % 2 === 0) b.click(); else { document.getElementById("gpick").click(); document.querySelector("#grid button").click() }
+        }
+        return { seq: seq.join(" "), lit: lit, done: /Draft completato/.test(document.querySelector("#v-draft").textContent), cnt: [S.ally, S.enemy, S.banA, S.banE].map(function (t) { return t.filter(Boolean).length }).join("/"), dup: used().length !== new Set(used()).size };
+      }, mode);
+      var exp = { "blue10": "bA bE bA bE bA bE pA pE pE pA pA pE bE bA bE bA pE pA pA pE", "red10": "bE bA bE bA bE bA pE pA pA pE pE pA bA bE bA bE pA pE pE pA", "blue6": "bA bE bA bE bA bE pA pE pE pA pA pE pE pA pA pE" }[mode.join("")];
+      var nSteps = exp.split(" ").length;
+      ok(gr.seq === exp, (mode[0] === "blue" ? "primi noi" : "primi loro") + ", " + mode[1] + " ban: ordine dei turni corretto");
+      ok(gr.lit === nSteps && gr.done && !gr.dup, "  a ogni turno uno slot evidenziato, alla fine Draft completato (" + gr.cnt + "), nessun eroe doppio");
+    }
+    await p.evaluate(function () { S.guide = null; save(); go("draft") });
+    ok(await p.evaluate(function () { return !document.querySelector(".guide") && !document.querySelector("#v-draft .now") }), "modalità spenta: niente turni né evidenziazioni");
+
+    section("Storico partite");
+    var hs = await p.evaluate(function () {
+      S.games = []; var five = NAMES.slice(0, 5), foes = NAMES.slice(5, 10);
+      S.ally = [null, null, null, null, null]; S.enemy = foes.slice(); S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; go("draft");
+      var before = !!document.getElementById("gwin");
+      S.ally = five.slice(); rDraft();
+      var shown = !!document.getElementById("gwin");
+      [].filter.call(document.querySelectorAll("#gme .chip"), function (b) { return b.textContent === five[2] })[0].click();
+      document.getElementById("gwin").click();
+      var after = { games: S.games.length, me: S.games[0].me, r: S.games[0].r, empty: used().length === 0, msg: /Partita salvata: vittoria con/.test(document.querySelector("#v-draft").textContent) };
+      S.ally = five.slice(); S.enemy = foes.slice(); rDraft(); document.getElementById("glose").click();
+      S.ally = five.slice(); S.enemy = foes.slice(); rDraft(); document.getElementById("gwin").click();
+      go("games"); var t = document.querySelector("#v-games").textContent;
+      return { before: before, shown: shown, after: after, n: S.games.length, prof: /Partite segnate3/.test(t) && /Vittorie2 \(67%\)/.test(t), mine: /I tuoi eroi/.test(t), team: /Con questi in squadra vinci di più/.test(t), dots: document.querySelectorAll(".gdots i").length };
+    });
+    ok(!hs.before && hs.shown, "Vittoria/Sconfitta compaiono solo con 5 alleati");
+    ok(hs.after.games === 1 && hs.after.r === 1 && hs.after.me && hs.after.empty && hs.after.msg, "Vittoria salva la partita col tuo eroe e svuota il draft");
+    ok(hs.n === 3 && hs.prof && hs.mine && hs.team && hs.dots === 3, "nel Profilo: 3 partite, 67% vittorie, i tuoi eroi, compagni migliori, ultime partite");
+    var cleared = await p.evaluate(function () { document.getElementById("ghx").click(); return S.games.length });
+    ok(cleared === 0, "Cancella storico (con conferma) svuota le partite");
+
+    section("Confronto 1 contro 1");
+    var cm = await p.evaluate(async function () {
+      var wait = function () { return new Promise(function (r) { setTimeout(r, 120) }) };
+      openHero("Layla"); document.getElementById("cmpb").click(); await wait();
+      [].filter.call(document.querySelectorAll("#grid button"), function (b) { return b.textContent === "Diggie" })[0].click(); await wait();
+      var t = document.querySelector("#v-cmp").textContent, r = { cur: cur, a: cmpA, b: cmpB, rows: document.querySelectorAll(".cmpt .cr").length, duel: /Diggie è favorito: Layla ha -2\.4%/.test(t), nav: document.querySelector('#nav button.on').dataset.g };
+      document.getElementById("csw").click(); r.sw = cmpA === "Diggie" && cmpB === "Layla" && /Diggie è favorito: Diggie ha \+2\.4%/.test(document.querySelector("#v-cmp").textContent);
+      r.h2h = [h2h("Diggie", "Layla"), h2h("Layla", "Diggie")];
+      hsub = "her"; go("heroes"); document.getElementById("cmpo").click(); await wait(); document.querySelectorAll("#grid button")[0].click(); await wait(); document.querySelectorAll("#grid button")[0].click(); await wait();
+      r.db = cur === "cmp" && cmpA && cmpB && cmpA !== cmpB;
+      return r;
+    });
+    ok(cm.cur === "cmp" && cm.a === "Layla" && cm.b === "Diggie" && cm.rows >= 8, "dalla scheda di Layla: confronto con Diggie (" + cm.rows + " righe)");
+    ok(cm.duel && cm.sw, "scontro diretto dai dati ufficiali, anche dopo lo scambio (Diggie +2.4% contro Layla)");
+    ok(cm.h2h[0] === 2.44 && cm.h2h[1] === -2.44, "il calcolo dello scontro è simmetrico");
+    ok(cm.nav === "study", "nella barra resta evidenziato Studia");
+    ok(cm.db, "dal Database: scegli due eroi e si apre il confronto");
+
+    section("Quiz: sfida del giorno");
+    var qa = await p.evaluate(function () { S.daily = null; QZ = null; go("quiz"); document.getElementById("dgo").click(); return JSON.stringify(QZ.r.map(function (q) { return [q.q, q.o, q.a] })) });
+    var ctx4 = await browser.newContext({ locale: "en-US" }), errs4 = [], p4 = await newPage(ctx4, errs4);
+    await ctx4.route(function (u) { return !u.href.startsWith(URL0) }, function (r) { return r.abort() });
+    await p4.goto(URL0); await p4.waitForFunction(function () { return window.NAMES });
+    var qb = await p4.evaluate(function () { newRound(true); return JSON.stringify(QZ.r.map(function (q) { return [q.q, q.o, q.a] })) });
+    ok(qa === qb && JSON.parse(qa).length === 5, "stesse 5 domande e risposte su un altro dispositivo (anche in inglese)");
+    ok(errs4.length === 0, "nessun errore JavaScript sul secondo dispositivo"); await ctx4.close();
+    var dq = await p.evaluate(function () {
+      for (var i = 0; i < 5; i++) { document.querySelectorAll("#opts .opt")[i % 2 ? 0 : QZ.r[QZ.i].a].click(); document.getElementById("qgo").click(); document.getElementById("qgo").click() }
+      var t = document.querySelector("#v-quiz").textContent, d = S.daily;
+      return { d: d && d.d === today() && d.res.length === 5, txt: d && dailyText(), noReplay: !document.getElementById("dgo"), share: !!document.getElementById("dsh"), streak: S.dstreak, wrQ: JSON.stringify(QZ.r).indexOf("win rate più alto") < 0 };
+    });
+    ok(dq.d && dq.noReplay && dq.share, "a fine sfida il risultato resta salvato e non si può rigiocare oggi");
+    ok(/^MLBB TOP · Sfida del giorno \d\d\/\d\d\/\d{4}: \d\/5 [🟩🟥]{5}$/u.test(dq.txt || ""), "testo da condividere: " + dq.txt);
+    ok(dq.streak === 1 && dq.wrQ, "giorni di fila = 1, nessuna domanda sul win rate nella sfida");
+    var rnd2 = await p.evaluate(function () { newRound(); var a = JSON.stringify(QZ.r.map(function (q) { return q.q })); newRound(); return a !== JSON.stringify(QZ.r.map(function (q) { return q.q })) });
+    ok(rnd2, "i round normali restano casuali");
+
+    section("Testi in italiano");
+    var tx = await p.evaluate(function () {
+      openHero("Layla", "ab"); var ab = document.querySelector("#hbody").textContent;
+      openHero("Layla", "mu"); var mu = document.querySelector("#hbody").textContent;
+      openHero("Layla", "bd"); var bd = document.querySelector("#hbody").textContent;
+      hsub = "itm"; go("heroes"); var itm = document.querySelector("#hlist").textContent;
+      return { on: ITON, ab: /danni fisici/.test(ab) && !/Physical Damage/.test(ab), mu: /tank lenti/.test(mu), bd: /Attacco adattivo|Penetrazione adattiva|Velocità di movimento/.test(bd), itm: /Velocità di movimento|Potere magico/.test(itm) && !/Movement Speed/.test(itm), hint: /tradott/.test(itm) };
+    });
+    ok(tx.on && tx.ab, "abilità in italiano (scheda di Layla)");
+    ok(tx.mu && tx.bd, "matchup ed emblemi della build in italiano");
+    ok(tx.itm && tx.hint, "oggetti del database in italiano, con la nota sulla traduzione");
+    await p.evaluate(function () { go("settings") });
+    await p.click("#lang button:nth-child(2)"); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
+    var en = await p.evaluate(function () { openHero("Layla", "ab"); return { on: ITON, ab: /Physical Damage/.test(document.querySelector("#hbody").textContent) } });
+    ok(!en.on && en.ab, "Profilo → Testi di gioco: Originale riporta i testi in inglese");
+    await p.evaluate(function () { S.lang = "it"; save() }); await p.reload(); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
+    ok(await p.evaluate(function () { return ITON }), "e si torna all'italiano");
+
+    section("Condividi draft");
+    var shared = await p.evaluate(function () {
+      S.banA = [NAMES[20], null, null, null, null]; S.banE = [null, NAMES[21], null, null, null]; S.allyLane[0] = "j"; save(); go("draft");
+      return { url: shareUrl(), st: JSON.stringify([S.ally, S.enemy, S.banA, S.banE, S.allyLane.map(function (l, i) { return S.ally[i] ? l : null })]) };
+    });
+    ok(/#d=a[\d.]+_e[\d.]+_x[\d.]+_y[\d.]+_l[a-z-]{5}$/.test(shared.url), "link generato: " + shared.url.split("#")[1]);
+    await ctx.grantPermissions(["clipboard-read", "clipboard-write"], { origin: URL0 });
+    await p.click("#share"); await p.waitForTimeout(300);
+    var clip = await p.evaluate(async function () { return { txt: await navigator.clipboard.readText(), btn: document.getElementById("share").textContent } });
+    ok(clip.txt === shared.url && /copiato/.test(clip.btn), "il pulsante Condividi copia il link e lo conferma");
+    var ctx2 = await browser.newContext(), errs2 = [], p2 = await newPage(ctx2, errs2);
+    await ctx2.route(function (u) { return !u.href.startsWith(URL0) }, function (r) { return r.abort() });
+    await p2.goto(shared.url); await p2.waitForFunction(function () { return window.NAMES && document.querySelector("#v-draft.on") });
+    var got = await p2.evaluate(function () { return { st: JSON.stringify([S.ally, S.enemy, S.banA, S.banE, S.allyLane]), hash: location.hash } });
+    ok(got.st === shared.st, "chi apre il link vede lo stesso draft (pick, ban e lane)" + (got.st === shared.st ? "" : ": " + shared.st + " ≠ " + got.st));
+    ok(got.hash === "", "il codice viene tolto dalla barra degli indirizzi dopo l'apertura");
+    await p2.evaluate(function () { location.hash = "d=zzz" }); await p2.waitForTimeout(300);
+    ok(await p2.evaluate(function () { return /non valido/.test(document.getElementById("toasts").textContent) }), "link rovinato: avviso dentro l'app, draft invariato");
+    var still = await p2.evaluate(function () { return JSON.stringify([S.ally, S.enemy, S.banA, S.banE, S.allyLane]) });
+    ok(still === shared.st, "il draft resta quello di prima dopo un link rovinato");
+    ok(errs2.length === 0, "nessun errore JavaScript aprendo il link" + (errs2.length ? ": " + errs2.join(" | ") : ""));
+    await ctx2.close();
+
+    section("Screenshot, backup, OCR offline, manifest");
+    var PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+    await p.evaluate(function (png) { localStorage.setItem("draftsync_shot", png) }, PNG);
+    await p.reload(); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") }); await p.waitForTimeout(300);
+    var mig = await p.evaluate(async function () { return { ls: localStorage.getItem("draftsync_shot") || localStorage.getItem(KEY.shot), idb: await shotGet(), mem: SHOT.length } });
+    ok(!mig.ls && mig.idb && mig.mem > 0, "lo screenshot salvato in localStorage passa in IndexedDB al primo avvio");
+    await p.reload(); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") }); await p.waitForTimeout(300);
+    ok(await p.evaluate(function () { go("profile"); return !!document.getElementById("mshot") }), "dopo il riavvio lo screenshot compare nel Profilo");
+    await ctx.setOffline(true);
+    var ocr = await p.evaluate(function () { delete window.Tesseract; document.getElementById("mocr").click(); return document.getElementById("mst").textContent });
+    await ctx.setOffline(false);
+    ok(/Sei offline/.test(ocr), "OCR senza rete: messaggio chiaro invece di bloccarsi");
+    await p.evaluate(function () { S.games = [{ d: 1, r: 1, a: NAMES.slice(0, 5), e: NAMES.slice(5, 10), me: NAMES[0] }]; S.nick = "Backup1"; save(); go("settings") });
+    var dl = await Promise.all([p.waitForEvent("download"), p.click("#bkx")]);
+    var bpath = await dl[0].path(), bk = JSON.parse(fs.readFileSync(bpath, "utf8"));
+    ok(bk.app === "mlbb-top" && bk.S.nick === "Backup1" && bk.S.games.length === 1 && bk.shot === PNG, "Esporta: file con profilo, storico partite e screenshot (" + dl[0].suggestedFilename() + ")");
+    await p.evaluate(async function () { S.nick = "Altro"; S.games = []; save(); await shotSet(null); SHOT = ""; go("settings") });
+    await p.setInputFiles("#bkf", bpath); await p.waitForTimeout(800); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
+    var rs = await p.evaluate(async function () { return { nick: S.nick, games: S.games.length, shot: (await shotGet()) || "" } });
+    ok(rs.nick === "Backup1" && rs.games === 1 && rs.shot === PNG, "Importa: dopo la conferma tornano profilo, storico e screenshot");
+    await p.evaluate(function () { go("settings") });
+    var bad = path.join(require("os").tmpdir(), "non-backup.json"); fs.writeFileSync(bad, '{"x":1}');
+    await p.setInputFiles("#bkf", bad); await p.waitForTimeout(300);
+    ok(await p.evaluate(function () { return /non è un backup/.test(document.getElementById("toasts").textContent) && S.nick === "Backup1" }), "un file sbagliato viene rifiutato senza toccare i dati");
+    var mf = await p.evaluate(async function () { return (await fetch("manifest.json")).json() });
+    var mk = (mf.icons || []).filter(function (i) { return i.purpose === "maskable" })[0];
+    ok(mf.lang === "it" && mf.description && mk && (await p.evaluate(async function (u) { return (await fetch(u)).ok }, mk.src)), "manifest con lingua, descrizione e icona maskable");
+
+    section("Immagini locali");
+    var im = await p.evaluate(async function () {
+      var ls = await (await fetch("img/list.json")).json(), miss = [];
+      for (var u of ls) { var r = await fetch(u); if (!r.ok) miss.push(u) }
+      go("heroes"); hsub = "her"; rHeroes();
+      return { n: ls.length, miss: miss };
+    });
+    ok(im.n > 0 && !im.miss.length, im.n + " immagini in img/list.json, tutte presenti" + (im.miss.length ? " (mancano " + im.miss.length + ")" : ""));
+    var refs = await p.evaluate(function () { var s = JSON.stringify([HX, ITEMS, TAL, SPL]), m = s.match(/img\/[0-9a-f]+\.webp/g) || []; return m.filter(function (u, i) { return m.indexOf(u) === i }) });
+    var listed = await p.evaluate(async function () { return (await fetch("img/list.json")).json() });
+    var unl = refs.filter(function (u) { return listed.indexOf(u) < 0 });
+    ok(!unl.length, "ogni immagine usata nei dati è nell'elenco" + (unl.length ? ": " + unl.slice(0, 3).join(", ") : ""));
+
+    section("Aggiornamento live (simulato)");
+    p.lastDialog = null; arena.mode = "fail";
+    await p.evaluate(function () { localStorage.removeItem("mlbb-top-live"); go("settings") });
+    await p.click("#live"); await p.waitForTimeout(500);
+    ok(await p.evaluate(function () { return /non riuscito/.test(document.getElementById("toasts").textContent) && !localStorage.getItem("mlbb-top-live") }), "server in errore: avviso dentro l'app, niente salvato");
+    arena.mode = "ok"; p.lastDialog = null;
+    await p.evaluate(function () { go("settings") });
+    await p.click("#live"); await p.waitForFunction(function () { return !!localStorage.getItem("mlbb-top-live") }, null, { timeout: 5000 }).catch(function () { });
+    var lv = await p.evaluate(function () { var x = JSON.parse(localStorage.getItem("mlbb-top-live") || "null"); return x && Object.keys(x.rk).length });
+    ok(lv > 100, "server ok: statistiche salvate per " + lv + " eroi");
+
+    section("Tendenze e aggiornamento automatico");
+    var prev = await p.evaluate(function () { return JSON.parse(localStorage.getItem("mlbb-top-prev") || "null") });
+    ok(prev && prev.date === "20/10/2026" && Object.keys(prev.rk).length > 100, "la classifica precedente (snapshot del " + (prev && prev.date) + ") è salvata per le tendenze");
+    var tr = await p.evaluate(function () { tf = "all"; tq = ""; tOpen = { SS: 1, S: 1, A: 1, B: 1 }; go("tier"); var r = document.querySelector(".radar").textContent; return { arrows: document.querySelectorAll("#tlist .dl").length, radar: /Dal 20\/10\/2026: in crescita/.test(r), hero: (openHero(NAMES[0]), document.querySelectorAll("#v-hero .dl").length) } });
+    ok(tr.arrows > 20, "frecce di tendenza nella Tier list: " + tr.arrows);
+    ok(tr.radar, "il riquadro Radar elenca chi sale e chi scende");
+    ok(tr.hero <= 1, "la scheda eroe mostra la variazione del win rate se c'è");
+    await p.evaluate(function () { go("settings") }); await p.click("#live"); await p.waitForTimeout(500);
+    var prev2 = await p.evaluate(function () { return JSON.parse(localStorage.getItem("mlbb-top-prev") || "null").date });
+    ok(prev2 === "20/10/2026", "un secondo aggiornamento nello stesso giorno non cancella il confronto");
+    var ctx3 = await browser.newContext(), errs3 = [], p3 = await newPage(ctx3, errs3), calls = { n: 0 };
+    await ctx3.route(function (u) { return !u.href.startsWith(URL0) }, function (r) { if (r.request().url().indexOf("arena.rone.dev") > -1) { calls.n++; return r.fulfill({ status: 200, contentType: "application/json", body: arenaBody(arena.ids) }) } return r.abort() });
+    await p3.goto(URL0); await p3.waitForTimeout(2500);
+    var auto = await p3.evaluate(function () { return { live: META.live, saved: !!localStorage.getItem("mlbb-top-live") } });
+    ok(auto.live && auto.saved && calls.n === 3, "all'apertura le statistiche si aggiornano da sole (" + calls.n + " richieste)");
+    await p3.reload(); await p3.waitForTimeout(2500);
+    ok(calls.n === 3, "riaprendo nello stesso giorno non riscarica");
+    await p3.evaluate(function () { localStorage.clear(); S.autoLive = false; save() }); await p3.reload(); await p3.waitForTimeout(2500);
+    ok(calls.n === 3, "con l'opzione spenta non scarica niente");
+    ok(errs3.length === 0, "nessun errore JavaScript" + (errs3.length ? ": " + errs3.join(" | ") : ""));
+    await ctx3.close();
+
+    section("Offline (service worker)");
+    await p.evaluate(function () { return navigator.serviceWorker.ready });
+    await p.reload(); await p.waitForFunction(function () { return navigator.serviceWorker.controller });
+    var cached = await p.evaluate(async function () { var n = 0; for (var k of await caches.keys()) n += (await (await caches.open(k)).keys()).length; return n });
+    ok(cached > listed.length, "file salvati in cache: " + cached);
+    await ctx.setOffline(true);
+    await p.reload(); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
+    var off = await p.evaluate(async function () { go("heroes"); var r = await fetch("img/list.json"), l = await r.json(), ok2 = 0; for (var u of l) if ((await fetch(u)).ok) ok2++; return { heroes: NAMES.length, img: ok2, tot: l.length } });
+    ok(off.heroes > 100 && off.img === off.tot, "offline: " + off.heroes + " eroi e " + off.img + "/" + off.tot + " immagini");
+    await ctx.setOffline(false);
+
+    ok(errs.length === 0, "nessun errore JavaScript in tutto il test" + (errs.length ? ": " + errs.join(" | ") : ""));
+  } finally {
+    await browser.close(); srv.close();
+  }
+  console.log("\n" + passes + " controlli superati, " + fails + " falliti");
+  process.exit(fails ? 1 : 0);
+}
+run().catch(function (e) { console.error(e); process.exit(1) });
