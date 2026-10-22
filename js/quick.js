@@ -46,7 +46,7 @@ function qParse(v) {
   return m ? { t: P[m[1].toLowerCase()], q: m[2] } : { t: qTarget(), q: v };
 }
 function quickBox() {
-  var t = qTarget(), g = guideNow(); if (g && !g.t) g = null;
+  var t = qTarget(), g = guideNow(); if (g && !g.t) g = null; if (g && !g.t) g = null;
   return '<div class="card qe" id="qebox"><div class="kv"><b class="hh">' + IC.search + ' Inserimento rapido</b><label class="qonly"><input type="checkbox" id="qonly"' + (S.only ? " checked" : "") + '> Solo pick nemici</label></div>' +
     '<div class="qrow"><span class="qto ' + t.charAt(1) + '" id="qto">' + QT[t] + '</span><input id="qin" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Scrivi 2-3 lettere e Invio" aria-label="Eroe da inserire" value="' + esc(QE.q) + '"></div>' +
     '<div class="qsug" id="qsug"></div>' +
@@ -55,7 +55,7 @@ function quickBox() {
     '<p class="hint" style="margin:6px 0 0">Invio = primo risultato · Backspace a casella vuota = annulla · ' + (g && !S.only ? "Tab = salta turno · " : "") + 'prefissi: n, a, bn, ba</p></div>';
 }
 function quickBind() {
-  var inp = $("qin"); if (!inp) return; var t = qTarget(), g = guideNow(); if (g && !g.t) g = null;
+  var inp = $("qin"); if (!inp) return; var t = qTarget(), g = guideNow(); if (g && !g.t) g = null; if (g && !g.t) g = null;
   /* ridisegnare toglie la casella (e il focus): la si rimette subito pronta */
   var done = function () { QE.q = ""; rDraft(); if ($("qin")) $("qin").focus() };
   var sug = function () {
