@@ -63,7 +63,13 @@ function autoLive() {
   })
 }
 function setAct() { var a = S.avatar && H[S.avatar] ? S.avatar : null; if (a) { $("act").innerHTML = tile(a, "xs"); $("act").setAttribute("aria-label", "Profilo") } }
-function applyTheme() { document.body.classList.toggle("hc", S.theme === "hc"); document.body.classList.toggle("lod", S.theme === "lod") }
+/* temi: "lod" e le fazioni usano la stessa base (classe lod) più i propri colori (th-...) */
+var FACTIONS = ["moniyan", "abyss", "eruditio", "cadia", "vale"];
+function applyTheme() {
+  var b = document.body.classList, fac = FACTIONS.indexOf(S.theme) > -1;
+  b.toggle("hc", S.theme === "hc"); b.toggle("lod", S.theme === "lod" || fac);
+  FACTIONS.forEach(function (f) { b.toggle("th-" + f, S.theme === f) })
+}
 applyTheme(); setAct(); go(loadShared() ? "draft" : S.onb ? "home" : "start", true); setTimeout(autoLive, 1500); window.addEventListener("online", autoLive);
 if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
   window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () { }) });    }

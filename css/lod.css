@@ -22,28 +22,36 @@ body.lod {
   --gold2: #b8862e;
   --hd: "Cinzel", Georgia, serif;
   --num: "Rajdhani", "Space Grotesk", sans-serif;
+  /* colori che cambiano tra le fazioni */
+  --appbg: radial-gradient(ellipse at 50% 35%, #1a2d5c 0%, #0d1631 45%, #070b17 100%);
+  --t1: #fff3c9; --t2: #f2c55c; --t3: #b8862e; --sub: #c8b47e;
+  --pa: rgba(22, 36, 74, .92); --pb: rgba(12, 20, 42, .92);
+  --b1: #ffe9a8; --b2: #f5c24a; --b3: #c48a2a; --btx: #2a1a00; --glow: 245, 194, 74;
+  --s1: #1b2c5a; --s2: #111c3b; --stx: #f3e3b3; --on1: #2a3f7a; --on2: #1a2a57; --ontx: #ffe39a;
+  --al: 63, 169, 255; --en: 255, 90, 90; --altx: #7cc4ff; --entx: #ff7a7a;
+  --navA: rgba(14, 22, 46, .97); --navB: rgba(6, 10, 22, .99); --spark1: #ffe6a8; --spark2: #bfe0ff;
   background: #04060d;
 }
 body.lod .app {
-  background: radial-gradient(ellipse at 50% 35%, #1a2d5c 0%, #0d1631 45%, #070b17 100%);
+  background: var(--appbg);
   background-size: auto;
 }
 /* scintille leggere sullo sfondo */
 body.lod .app::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
-  background-image: radial-gradient(1px 1px at 12% 18%, #ffe6a8, transparent), radial-gradient(1px 1px at 78% 12%, #bfe0ff, transparent), radial-gradient(1.5px 1.5px at 40% 62%, #ffe6a8, transparent), radial-gradient(1px 1px at 88% 70%, #bfe0ff, transparent), radial-gradient(1px 1px at 25% 88%, #ffe6a8, transparent), radial-gradient(1px 1px at 60% 30%, #fff, transparent); }
+  background-image: radial-gradient(1px 1px at 12% 18%, var(--spark1), transparent), radial-gradient(1px 1px at 78% 12%, var(--spark2), transparent), radial-gradient(1.5px 1.5px at 40% 62%, var(--spark1), transparent), radial-gradient(1px 1px at 88% 70%, var(--spark2), transparent), radial-gradient(1px 1px at 25% 88%, var(--spark1), transparent), radial-gradient(1px 1px at 60% 30%, #fff, transparent); }
 
 /* intestazione e titoli in oro */
 body.lod .top { background: linear-gradient(180deg, rgba(10, 16, 34, .96), rgba(10, 16, 34, .82)); border-bottom: 1px solid var(--line2); box-shadow: 0 1px 0 rgba(0, 0, 0, .5); }
 body.lod .brand b, body.lod .ttl h2, body.lod .hh, body.lod .box h3, body.lod .tierh b, body.lod .rec .nm, body.lod .dbox h3 {
   font-family: var(--hd); letter-spacing: .06em;
-  background: linear-gradient(180deg, #fff3c9, #f2c55c 55%, #b8862e); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  background: linear-gradient(180deg, var(--t1), var(--t2) 55%, var(--t3)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }
-body.lod .brand b { font-size: 22px; filter: drop-shadow(0 0 8px rgba(245, 194, 74, .35)); }
-body.lod .brand small, body.lod .k, body.lod .ttl p { color: #c8b47e; }
+body.lod .brand b { font-size: 22px; filter: drop-shadow(0 0 8px rgba(var(--glow), .35)); }
+body.lod .brand small, body.lod .k, body.lod .ttl p { color: var(--sub); }
 
 /* pannelli: vetro blu scuro con bordo e angoli dorati */
 body.lod .card, body.lod .pcard, body.lod .team, body.lod .lrow, body.lod .tbl, body.lod .tcard, body.lod .qcard {
-  background: linear-gradient(180deg, rgba(22, 36, 74, .92), rgba(12, 20, 42, .92));
+  background: linear-gradient(180deg, var(--pa), var(--pb));
   border: 1px solid var(--line2); border-radius: 10px; position: relative;
   box-shadow: inset 0 1px 0 rgba(255, 230, 160, .08), 0 6px 18px rgba(0, 0, 0, .35);
 }
@@ -55,15 +63,15 @@ body.lod .card::before, body.lod .team::before { content: ""; position: absolute
     linear-gradient(var(--gold), var(--gold)) bottom right / 14px 2px no-repeat, linear-gradient(var(--gold), var(--gold)) bottom right / 2px 14px no-repeat; }
 
 /* pulsanti: oro come il "Conferma" del gioco, secondari blu con bordo oro */
-body.lod .btn { border: 1px solid var(--line2); background: linear-gradient(180deg, #1b2c5a, #111c3b); color: #f3e3b3; border-radius: 8px; font-family: var(--num); font-size: 13px; letter-spacing: .08em; }
-body.lod .btn.p, body.lod .btn.am { border: 1px solid #ffe08a; color: #2a1a00; background: linear-gradient(180deg, #ffe9a8, #f5c24a 50%, #c48a2a); box-shadow: 0 0 16px rgba(245, 194, 74, .35), inset 0 1px 0 rgba(255, 255, 255, .6); position: relative; overflow: hidden; }
+body.lod .btn { border: 1px solid var(--line2); background: linear-gradient(180deg, var(--s1), var(--s2)); color: var(--stx); border-radius: 8px; font-family: var(--num); font-size: 13px; letter-spacing: .08em; }
+body.lod .btn.p, body.lod .btn.am { border: 1px solid var(--b1); color: var(--btx); background: linear-gradient(180deg, var(--b1), var(--b2) 50%, var(--b3)); box-shadow: 0 0 16px rgba(var(--glow), .35), inset 0 1px 0 rgba(255, 255, 255, .6); position: relative; overflow: hidden; }
 body.lod .btn.p::after { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 30%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .6), transparent); transform: skewX(-20deg); animation: lodShine 4s ease-in-out infinite; }
 @keyframes lodShine { 0%, 75% { left: -40% } 100% { left: 140% } }
 body.lod .btn.rd { background: linear-gradient(180deg, #5a1620, #3a0d14); border-color: #ff6b6b; color: #ffd5d5; }
 
 /* segmenti, schede, chip */
 body.lod .seg, body.lod .subnav button, body.lod .chip { border-color: var(--line); background: rgba(8, 14, 30, .7); }
-body.lod .seg button.on, body.lod .subnav button.on, body.lod .chip.on { background: linear-gradient(180deg, #2a3f7a, #1a2a57); color: #ffe39a; border-color: var(--gold); box-shadow: inset 0 0 0 1px rgba(255, 227, 154, .25); }
+body.lod .seg button.on, body.lod .subnav button.on, body.lod .chip.on { background: linear-gradient(180deg, var(--on1), var(--on2)); color: var(--ontx); border-color: var(--gold); box-shadow: inset 0 0 0 1px rgba(255, 227, 154, .25); }
 body.lod .pill { font-family: var(--num); letter-spacing: .06em; }
 
 /* numeri sportivi */
@@ -71,12 +79,12 @@ body.lod .met b, body.lod .stats3 b, body.lod .pct, body.lod .lcand small, body.
 
 /* slot: alleati ciano, nemici rossi, cornice dorata ai ritratti */
 body.lod .tile { box-shadow: 0 0 0 1.5px var(--gold), 0 2px 6px rgba(0, 0, 0, .5); }
-body.lod .team.ally h3 { color: #7cc4ff; text-shadow: 0 0 10px rgba(63, 169, 255, .6); font-family: var(--hd); }
-body.lod .team.enemy h3 { color: #ff7a7a; text-shadow: 0 0 10px rgba(255, 74, 74, .6); font-family: var(--hd); }
-body.lod .team.ally .slot.on { border-color: rgba(63, 169, 255, .7); box-shadow: inset 3px 0 0 #3fa9ff, 0 0 12px rgba(63, 169, 255, .25); }
-body.lod .team.enemy .slot.on { border-color: rgba(255, 90, 90, .7); box-shadow: inset 3px 0 0 #ff5a5a, 0 0 12px rgba(255, 74, 74, .25); }
+body.lod .team.ally h3 { color: var(--altx); text-shadow: 0 0 10px rgba(var(--al), .6); font-family: var(--hd); }
+body.lod .team.enemy h3 { color: var(--entx); text-shadow: 0 0 10px rgba(var(--en), .6); font-family: var(--hd); }
+body.lod .team.ally .slot.on { border-color: rgba(var(--al), .7); box-shadow: inset 3px 0 0 rgb(var(--al)), 0 0 12px rgba(var(--al), .25); }
+body.lod .team.enemy .slot.on { border-color: rgba(var(--en), .7); box-shadow: inset 3px 0 0 rgb(var(--en)), 0 0 12px rgba(var(--en), .25); }
 body.lod .slot, body.lod .bslot, body.lod .lcand { background: rgba(6, 11, 25, .75); border-color: var(--line); }
-body.lod .lcand.on, body.lod .card.hl { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 18px rgba(245, 194, 74, .35); }
+body.lod .lcand.on, body.lod .card.hl { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 18px rgba(var(--glow), .35); }
 
 /* badge dei tier come gemme */
 body.lod .tb { border-radius: 4px; border: 1px solid rgba(255, 255, 255, .35); text-shadow: 0 1px 0 rgba(0, 0, 0, .4); }
@@ -86,11 +94,36 @@ body.lod .tb.A { background: linear-gradient(135deg, #bfe4ff, #3fa9ff 55%, #154a
 body.lod .tb.B { background: linear-gradient(135deg, #e6e9f0, #8892a8 55%, #3d4457); color: #fff; }
 
 /* barra in basso come la lobby: etichette oro, scheda attiva sollevata */
-body.lod nav { background: linear-gradient(180deg, rgba(14, 22, 46, .97), rgba(6, 10, 22, .99)); border-top: 1px solid var(--line2); }
+body.lod nav { background: linear-gradient(180deg, var(--navA), var(--navB)); border-top: 1px solid var(--line2); }
 body.lod nav button { color: #8e9bc0; font-family: var(--num); font-size: 11.5px; letter-spacing: .06em; }
-body.lod nav button.on { color: #ffe39a; transform: translateY(-2px); filter: drop-shadow(0 0 6px rgba(245, 194, 74, .5)); }
-body.lod nav button.on::after { background: linear-gradient(90deg, transparent, #f5c24a, transparent); height: 2px; }
+body.lod nav button.on { color: var(--ontx); transform: translateY(-2px); filter: drop-shadow(0 0 6px rgba(var(--glow), .5)); }
+body.lod nav button.on::after { background: linear-gradient(90deg, transparent, var(--b2), transparent); height: 2px; }
 
 /* divisori con diamante */
 body.lod .bh, body.lod .wbox .ph { border-color: var(--line); }
-body.lod .alert { background: rgba(245, 194, 74, .08); border-color: var(--line2); }
+body.lod .alert { background: rgba(var(--glow), .08); border-color: var(--line2); }
+
+/* ---------- fazioni: stessa struttura di Land of Dawn, colori diversi (classe lod + th-...) ---------- */
+/* Moniyan Empire: luce sacra, argento e oro su blu reale */
+body.lod.th-moniyan { --appbg: radial-gradient(ellipse at 50% 20%, #3b4f86 0%, #1c2a52 45%, #0b1226 100%); --gold: #f1d27a; --line: rgba(241, 210, 122, .3); --line2: rgba(241, 210, 122, .6);
+  --t1: #ffffff; --t2: #f6e3a6; --t3: #d1a64a; --sub: #d9cfae; --pa: rgba(40, 56, 102, .9); --pb: rgba(22, 32, 64, .92); --spark1: #fff; --spark2: #ffeeb8; --altx: #a9d6ff; --al: 140, 200, 255; }
+/* Abyss: nero e rosso sangue, rune incandescenti */
+body.lod.th-abyss { --appbg: radial-gradient(ellipse at 50% 70%, #4a0b10 0%, #1c0507 45%, #070203 100%); --gold: #ff4b3a; --line: rgba(255, 75, 58, .28); --line2: rgba(255, 75, 58, .6);
+  --t1: #ffd3c4; --t2: #ff5a3a; --t3: #8a1408; --sub: #c98a7e; --pa: rgba(40, 10, 12, .92); --pb: rgba(16, 4, 6, .94); --glow: 255, 70, 40;
+  --b1: #ff9a7a; --b2: #e2341c; --b3: #7a0c06; --btx: #fff; --s1: #2a0b0e; --s2: #140507; --stx: #ffc9bd; --on1: #5a1418; --on2: #2c080b; --ontx: #ffb39f;
+  --navA: rgba(30, 6, 8, .97); --navB: rgba(10, 2, 3, .99); --spark1: #ff6a3a; --spark2: #ff2a1a; --al: 120, 170, 255; --altx: #9fc4ff; --blue2: #ff9a7a; }
+/* Eruditio: città della scienza, ciano olografico */
+body.lod.th-eruditio { --appbg: radial-gradient(ellipse at 50% 30%, #0f4a55 0%, #0a2a33 45%, #04121a 100%); --gold: #4ff0ff; --line: rgba(79, 240, 255, .25); --line2: rgba(79, 240, 255, .55);
+  --t1: #ffffff; --t2: #8ff6ff; --t3: #19a7c2; --sub: #8fc9d3; --pa: rgba(10, 52, 64, .85); --pb: rgba(4, 26, 34, .9); --glow: 79, 240, 255;
+  --b1: #c9fbff; --b2: #4ff0ff; --b3: #1693b0; --btx: #032a33; --s1: #0d3d4a; --s2: #072530; --stx: #c9fbff; --on1: #12596b; --on2: #0b3a47; --ontx: #c9fbff;
+  --navA: rgba(6, 34, 42, .97); --navB: rgba(2, 16, 22, .99); --spark1: #8ff6ff; --spark2: #ffffff; --blue2: #8ff6ff; --hd: "Rajdhani", sans-serif; }
+/* Cadia Riverlands: lacca rossa, giada e oro */
+body.lod.th-cadia { --appbg: radial-gradient(ellipse at 50% 30%, #5a1a16 0%, #2c0d0b 50%, #120504 100%); --gold: #e8c26a; --line: rgba(232, 194, 106, .3); --line2: rgba(232, 194, 106, .6);
+  --t1: #fff1d0; --t2: #e8c26a; --t3: #a2702a; --sub: #d6b98a; --pa: rgba(70, 20, 18, .9); --pb: rgba(36, 10, 9, .92); --glow: 232, 194, 106;
+  --s1: #3a1210; --s2: #22090a; --on1: #1f5a46; --on2: #123c2e; --ontx: #c9f3dd; --navA: rgba(42, 12, 10, .97); --navB: rgba(18, 5, 4, .99);
+  --spark1: #ffd27a; --spark2: #7fe0b8; --blue2: #7fe0b8; --al: 90, 210, 160; --altx: #8ff0c4; }
+/* Northern Vale: ghiaccio e argento */
+body.lod.th-vale { --appbg: radial-gradient(ellipse at 50% 20%, #45627e 0%, #1f3249 45%, #0b1522 100%); --gold: #d8ecff; --line: rgba(216, 236, 255, .28); --line2: rgba(216, 236, 255, .6);
+  --t1: #ffffff; --t2: #cfe6ff; --t3: #7fa6cc; --sub: #b4c9de; --pa: rgba(38, 60, 86, .88); --pb: rgba(18, 32, 50, .92); --glow: 190, 225, 255;
+  --b1: #ffffff; --b2: #bfe0ff; --b3: #6f9ccc; --btx: #0d2036; --s1: #24405e; --s2: #142a42; --stx: #e6f3ff; --on1: #3a6590; --on2: #24476b; --ontx: #ffffff;
+  --navA: rgba(20, 36, 56, .97); --navB: rgba(8, 16, 26, .99); --spark1: #ffffff; --spark2: #cfe6ff; --blue2: #cfe6ff; }

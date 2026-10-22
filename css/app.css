@@ -3324,3 +3324,10 @@ nav button.on::after { animation: navLine .3s ease-out; }
 @media (prefers-reduced-motion: reduce) {
   .slot.now, .bslot.now, .guide .steps i.cur::after, .opt.bad, .opt.good, .scr.enter, .scr.enter .tbl .tr, nav button.on::after, .tb.SS::after, .l1 .vb i { animation: none !important; }
 }
+
+/* scelta del tema: griglia con anteprima dei colori */
+.thg { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 10px; }
+.thg button { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); font: inherit; font-size: 11.5px; text-align: left; cursor: pointer; }
+.thg button.on { border-color: var(--blue2); box-shadow: 0 0 0 1px var(--blue2); }
+.thg .sw { display: flex; gap: 2px; padding: 4px; border-radius: 6px; flex: none; }
+.thg .sw i { width: 7px; height: 14px; border-radius: 2px; }
