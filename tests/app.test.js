@@ -405,6 +405,8 @@ async function run() {
     ok(en2.code && en2.read && en2.cleared, "la lane dei nemici viaggia nel link condiviso e si azzera cambiando eroe");
     ok(en2.pick === "ok" && en2.near, "selettore: cercando, la barra di ricerca resta ferma e l'eroe filtrato è subito sotto (" + en2.pick + ")");
 
+    ok(await p.evaluate(function () { go("draft"); document.querySelector("#gset summary").click(); var o = document.getElementById("gset").open; document.querySelector("#gd button:nth-child(2)").click(); var r = o && !document.getElementById("gset").open && S.guide === "blue"; S.guide = null; save(); go("draft"); return r }), "la riga del draft guidato si apre e si richiude da sola dopo la scelta");
+
     section("Inserimento rapido");
     await p.evaluate(function () { window.qClean = function () { S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; S.guide = null; S.only = false; S.qt = "pE"; S.gskip = []; QE.hist = []; QE.q = ""; QE.focus = false; save(); go("draft") }; qClean() });
     await p.click("#qin"); await p.keyboard.type("lng"); await p.keyboard.press("Enter");

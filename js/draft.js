@@ -61,16 +61,16 @@ function rDraft() {
   $("rp").onclick = function () { if (!S.ally.concat(S.enemy).some(Boolean)) return; ask("Azzerare i pick?", { text: "Si svuotano gli eroi di entrambe le squadre. I ban restano.", ok: "Azzera pick", danger: 1 }, function () { S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.allyLane = [null, null, null, null, null]; focus = null; save(); rDraft() }) };
   $("lf").onclick = function () { S.lanefit = !S.lanefit; focus = null; save(); rDraft() };
   $("share").onclick = function () { shareDraft(this) };
-  [[null, "No"], ["blue", "Primi noi"], ["red", "Primi loro"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.guide === o[0] ? "on" : ""; b.onclick = function () { S.guide = o[0]; save(); rDraft() }; $("gd").appendChild(b) });
-  if (S.guide) [["rank", "Ranked"], ["tour", "Torneo"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = (S.gmode === "tour" ? "tour" : "rank") === o[0] ? "on" : ""; b.onclick = function () { S.gmode = o[0]; save(); rDraft() }; $("gmo").appendChild(b) });
-  if (S.guide) [[10, S.gmode === "tour" ? "10" : "10 (Mitico)"], [6, "6"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.gbans === o[0] ? "on" : ""; b.onclick = function () { S.gbans = o[0]; save(); rDraft() }; $("gbn").appendChild(b) });
+  [[null, "No"], ["blue", "Primi noi"], ["red", "Primi loro"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.guide === o[0] ? "on" : ""; b.onclick = function () { S.guide = o[0]; gsetOpen = false; save(); rDraft() }; $("gd").appendChild(b) });
+  if (S.guide) [["rank", "Ranked"], ["tour", "Torneo"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = (S.gmode === "tour" ? "tour" : "rank") === o[0] ? "on" : ""; b.onclick = function () { S.gmode = o[0]; gsetOpen = false; save(); rDraft() }; $("gmo").appendChild(b) });
+  if (S.guide) [[10, S.gmode === "tour" ? "10" : "10 (Mitico)"], [6, "6"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.gbans === o[0] ? "on" : ""; b.onclick = function () { S.gbans = o[0]; gsetOpen = false; save(); rDraft() }; $("gbn").appendChild(b) });
   guideBind(); resultBind(); quickBind(); laneBind(v); foldBind(v);
   $("gset").ontoggle = function () { gsetOpen = this.open }; gameMsg = ""; fxDraftDone(S.ally.every(Boolean) && S.enemy.every(Boolean));
   $("lmore").onclick = function () { lMore = !lMore; rDraft() };
 }
 /* ---------- tendine del draft: si aprono da sole quelle utili nella fase attuale (ban, pick, draft completo);
    se ne apri o chiudi una a mano, l'app lo ricorda finché non cambia fase ---------- */
-var gsetOpen = false;
+var gsetOpen = false; /* la riga del draft guidato si richiude da sola dopo ogni scelta */
 function draftPhase() {
   if (S.ally.every(Boolean) && S.enemy.every(Boolean)) return "done";
   var g = guideNow(); if (g && g.t) return g.t.charAt(0) === "b" ? "ban" : "pick";
