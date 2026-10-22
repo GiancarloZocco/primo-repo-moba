@@ -3193,3 +3193,21 @@ ul.news {
 #sheet .box { height: 78%; }
 #sheet .grid { align-content: start; }
 #sheet .box > * { flex-shrink: 0; }
+
+/* inserimento rapido nel draft (js/quick.js) */
+.qe .qonly { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--mute); cursor: pointer; }
+.qe .qonly input { accent-color: var(--blue); width: 16px; height: 16px; margin: 0; }
+.qrow { display: flex; align-items: center; gap: 8px; margin-top: 10px; background: var(--bg); border: 1px solid var(--line2); border-radius: 10px; padding: 0 6px 0 6px; height: 46px; }
+.qrow:focus-within { border-color: var(--blueT); box-shadow: 0 0 0 3px rgba(91, 140, 255, .18); }
+.qrow input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--text); font: inherit; font-size: 15px; }
+.qto { flex: none; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 5px 8px; border-radius: 7px; white-space: nowrap; }
+.qto.A { background: rgba(91, 140, 255, .16); color: var(--blue2); }
+.qto.E { background: rgba(248, 113, 113, .15); color: var(--red); }
+.qsug { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 0; }
+.qsug .qs { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
+.qsug .qs.on { border-color: var(--amber); }
+.qsug .qs .tile { width: 24px; height: 24px; border-radius: 50%; font-size: 9px; }
+.qts { margin-top: 8px; }
+.qts button { font-size: 10px; padding: 6px 4px; }
+.qlike { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 6px; }
+.qlike .lcand b { font-size: 11px; }

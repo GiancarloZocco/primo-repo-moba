@@ -405,6 +405,31 @@ async function run() {
     ok(en2.code && en2.read && en2.cleared, "la lane dei nemici viaggia nel link condiviso e si azzera cambiando eroe");
     ok(en2.pick === "ok" && en2.near, "selettore: cercando, la barra di ricerca resta ferma e l'eroe filtrato è subito sotto (" + en2.pick + ")");
 
+    section("Inserimento rapido");
+    await p.evaluate(function () { window.qClean = function () { S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; S.guide = null; S.only = false; S.qt = "pE"; S.gskip = []; QE.hist = []; QE.q = ""; QE.focus = false; save(); go("draft") }; qClean() });
+    await p.click("#qin"); await p.keyboard.type("lng"); await p.keyboard.press("Enter");
+    await p.keyboard.type("a lay"); await p.keyboard.press("Enter");
+    await p.keyboard.type("bn sab"); await p.keyboard.press("Enter");
+    var q1 = await p.evaluate(function () { return { e: S.enemy[0], a: S.ally[0], b: S.banE[0], foc: document.activeElement && document.activeElement.id } });
+    ok(q1.e === "Ling" && q1.foc === "qin", "scrivi e Invio: «lng» mette Ling nei nemici e la casella resta pronta per il prossimo");
+    ok(q1.a === "Layla" && q1.b === "Saber", "prefissi: «a lay» pick alleato, «bn sab» ban nemico");
+    await p.keyboard.press("Backspace");
+    ok(await p.evaluate(function () { return S.banE[0] === null && S.ally[0] === "Layla" }), "Backspace a casella vuota annulla l'ultimo inserito");
+    await p.evaluate(function () { document.querySelector("#qlike .lcand").click() });
+    ok(await p.evaluate(function () { return S.enemy.filter(Boolean).length === 2 && document.querySelectorAll("#qlike .lcand").length === 8 }), "eroi probabili a un tocco (8 proposte)");
+    /* draft guidato ranked: la destinazione segue il turno, Tab salta un turno */
+    await p.evaluate(function () { qClean(); S.guide = "blue"; S.gmode = "rank"; S.gbans = 10; save(); go("draft") });
+    await p.click("#qin"); await p.keyboard.type("mas"); await p.keyboard.press("Enter");
+    var g1 = await p.evaluate(function () { return S.banA[0] + "|" + document.getElementById("qto").textContent });
+    await p.keyboard.press("Tab");
+    var g2 = await p.evaluate(function () { return guideNow().k + "|" + document.getElementById("qto").textContent });
+    ok(g1 === "Masha|Ban nemico" && g2 === "2|Ban alleato", "draft guidato: va nel turno giusto (" + g1 + "), Tab salta il turno (" + g2 + ")");
+    /* solo pick nemici: niente ban, il turno è sempre un pick nemico */
+    await p.evaluate(function () { qClean(); S.guide = "blue"; save(); go("draft"); document.getElementById("qonly").click() });
+    var on = await p.evaluate(function () { return { t: qTarget(), g: guideNow().t, bans: !document.querySelector("#bans .bslot"), to: document.getElementById("qto").textContent } });
+    ok(on.t === "pE" && on.g === "pE" && on.bans && on.to === "Pick nemico", "«Solo pick nemici»: ban nascosti e si inseriscono solo i pick nemici");
+    await p.evaluate(function () { qClean() });
+
     section("Quiz: sfida del giorno");
     var qa = await p.evaluate(function () { S.daily = null; QZ = null; go("quiz"); document.getElementById("dgo").click(); return JSON.stringify(QZ.r.map(function (q) { return [q.q, q.o, q.a] })) });
     var ctx4 = await browser.newContext({ locale: "en-US" }), errs4 = [], p4 = await newPage(ctx4, errs4);
