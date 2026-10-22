@@ -8,6 +8,7 @@ var NEWS = [
       "Build contro i nemici: oggetti situazionali (anti-cure, difese, penetrazione, stivali) in base al draft, nell'analisi dettagliata e nella scheda eroe.",
       "Spell ed emblema consigliati per il pick suggerito, con Purify come alternativa contro molti controlli.",
       "Guida rapida in partita (Gioca → Guida): piano dal draft, consigli per la tua lane e obiettivi per fase.",
+      "Lane 1v1 nel Draft e nella Guida: chi è avvantaggiato in ogni lane e perché. Il Confronto tra due eroi ora è in Gioca.",
       "Draft guidato: scegli la modalità. Ranked: prima tutti i ban, poi i pick. Torneo: ban e pick alternati.",
       "Interfaccia in inglese: si sceglie in Impostazioni → Lingua dell'app.",
       "Ricerca unica: la lente in alto trova eroi, oggetti, talenti, spell e schermate.",

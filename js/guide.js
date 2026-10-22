@@ -33,8 +33,10 @@ function rGuide() {
     '<div class="card"><div class="kv"><b class="hh">' + IC.pad + ' Piano dal draft</b><span class="k">' + S.ally.filter(Boolean).length + ' alleati · ' + en().length + ' nemici</span></div>' +
     (plan.length ? '<ul class="gtips">' + plan.map(function (p) { return '<li class="gk-' + p[0] + '">' + esc(p[1]) + '</li>' }).join("") + '</ul>' : '<p class="hint" style="margin:6px 0 8px">Inserisci alleati e nemici nel Draft: qui comparirà il piano per la partita.</p><button class="btn sm" id="gdr" style="width:100%">Vai al draft</button>') + '</div>' +
     '<div class="card"><div class="kv"><b class="hh">' + IC.star + ' La tua lane</b></div><div class="seg" id="glane" style="margin:8px 0"></div><ul class="gtips">' + LTIP[l].map(function (t) { return '<li>' + esc(t) + '</li>' }).join("") + '</ul></div>' +
+    (S.ally.some(Boolean) && en().length ? laneCard() : '') +
     PHASES.map(function (p) { return '<div class="card"><b class="hh">' + esc(p[0]) + '</b><ul class="gtips">' + p[1].map(function (t) { return '<li>' + esc(t) + '</li>' }).join("") + '</ul></div>' }).join("") +
     '<p class="hint">I tempi di Turtle e Lord cambiano con le patch: controlla sempre il timer degli obiettivi in partita.</p>';
   LANES.forEach(function (k) { var b = document.createElement("button"); b.textContent = LS3[k]; b.className = k === l ? "on" : ""; b.onclick = function () { gLane = k; rGuide() }; $("glane").appendChild(b) });
   if ($("gdr")) $("gdr").onclick = function () { go("draft") };
+  laneBind(v);
 }

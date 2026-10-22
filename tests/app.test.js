@@ -126,7 +126,7 @@ async function run() {
       return r;
     });
     ok(nv.groups === "Home,Gioca,Studia,Io", "barra in basso a gruppi: " + nv.groups);
-    ok(/^(tier|heroes|cmp|quiz)\|Tier list,Eroi,Confronto,Quiz$/.test(nv.study) && /^(draft|guide|games)\|Draft,Guida,Storico$/.test(nv.play), "barra del gruppo: Studia e Gioca con le loro schermate (" + nv.study + " · " + nv.play + ")");
+    ok(/^(tier|heroes|quiz)\|Tier list,Eroi,Quiz$/.test(nv.study) && /^(draft|guide|cmp|games)\|Draft,Guida,Confronto,Storico$/.test(nv.play), "barra del gruppo: Studia e Gioca con le loro schermate (" + nv.study + " · " + nv.play + ")");
     ok(nv.set, "Impostazioni in una schermata a parte (non più nel Profilo)");
     ok(nv.heroNav === "study|Eroi", "la scheda eroe resta sotto Studia → Eroi");
     ok(nv.draft === "draft", "dalla Home si va al draft");
@@ -138,6 +138,12 @@ async function run() {
       var sc = document.getElementById("v-tier"); sc.scrollTop = 99999; var nav = document.getElementById("nav").getBoundingClientRect();
       return { page: document.scrollingElement.scrollHeight <= innerHeight + 1, inner: sc.scrollTop > 0, nav: Math.abs(nav.bottom - innerHeight) < 2 };
     });
+    var hd = await p.evaluate(async function () {
+      var out = []; document.querySelector(".app").style.maxWidth = "320px";
+      for (var v of ["guide", "cmp", "draft", "settings"]) { go(v); await new Promise(function (r) { setTimeout(r, 30) }); var a = document.getElementById("act").getBoundingClientRect(), t = document.querySelector(".top").getBoundingClientRect(); if (a.right > t.right + 1) out.push(v) }
+      document.querySelector(".app").style.maxWidth = ""; return out;
+    });
+    ok(!hd.length, "telefono stretto (320px): i pulsanti dell'intestazione restano nello schermo anche con sottotitoli lunghi" + (hd.length ? ": fuori in " + hd.join(", ") : ""));
     ok(fx.page && fx.inner && fx.nav, "Tier list lunga: scorre la schermata, la pagina no e la barra in basso resta ferma");
 
     section("Draft");
@@ -339,8 +345,30 @@ async function run() {
     ok(cm.cur === "cmp" && cm.a === "Layla" && cm.b === "Diggie" && cm.rows >= 8, "dalla scheda di Layla: confronto con Diggie (" + cm.rows + " righe)");
     ok(cm.duel && cm.sw, "scontro diretto dai dati ufficiali, anche dopo lo scambio (Diggie +2.4% contro Layla)");
     ok(cm.h2h[0] === 2.44 && cm.h2h[1] === -2.44, "il calcolo dello scontro è simmetrico");
-    ok(cm.nav === "study", "nella barra resta evidenziato Studia");
+    ok(cm.nav === "play", "il Confronto ora sta in Gioca");
     ok(cm.db, "dal Database: scegli due eroi e si apre il confronto");
+
+    section("Lane 1v1");
+    var ln = await p.evaluate(function () {
+      S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; S.allyLane = [null, null, null, null, null];
+      go("draft"); var r = { none: !document.querySelector("#v-draft .l1") };
+      ["Tigreal", "Ling", "Kagura", "Layla", "Masha"].forEach(function (h, i) { setSlot(S.ally, i, h) }); ["Estes", "Saber", "Eudora", "Moskov", "Chou"].forEach(function (h, i) { setSlot(S.enemy, i, h) });
+      go("draft"); var el = enemyLanes(); r.el = LANES.map(function (l) { return el[l] }).join(",");
+      r.rows = document.querySelectorAll("#v-draft .l1 .lr:not([disabled])").length;
+      var jg = lanePair("j"); r.jg = jg.a + ">" + jg.e + ":" + jg.d + ":" + jg.est; var ex = lanePair("e"); r.est = ex.est && /\*/.test(document.querySelector('#v-draft .lr[data-l="e"]').textContent);
+      document.querySelector('#v-draft .lr[data-l="j"]').click(); var sh = document.getElementById("lane1"), t = sh && sh.textContent;
+      r.sheet = !!sh && /Ling è avvantaggiato/.test(t) && /dati ufficiali/.test(t) && sh.querySelectorAll(".sb").length === 3 && /Oggetto utile/.test(t);
+      document.getElementById("l1x").click(); r.closed = !document.getElementById("lane1") && cur === "draft";
+      document.querySelector('#v-draft .lr[data-l="r"]').click(); document.getElementById("l1c").click(); r.cmp = cur === "cmp" && cmpA === "Tigreal" && cmpB === "Estes";
+      go("guide"); r.guide = document.querySelectorAll("#v-guide .l1 .lr").length === 5;
+      S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; save();
+      return r;
+    });
+    ok(ln.none, "senza alleati e nemici il riquadro Lane 1v1 non compare");
+    ok(ln.el === "Moskov,Chou,Eudora,Saber,Estes" && ln.rows === 5, "nemici messi nella loro lane (" + ln.el + "), 5 scontri");
+    ok(ln.jg === "Ling>Saber:4.22:false" && ln.est, "dato ufficiale quando c'è (Ling contro Saber +4.2%), altrimenti stima segnata con *");
+    ok(ln.sheet && ln.closed, "toccando una lane si apre la scheda (chi è avvantaggiato, perché, statistiche, oggetto) e si chiude restando nel draft");
+    ok(ln.cmp && ln.guide, "dalla scheda si apre il Confronto completo; lo stesso riquadro è nella Guida");
 
     section("Quiz: sfida del giorno");
     var qa = await p.evaluate(function () { S.daily = null; QZ = null; go("quiz"); document.getElementById("dgo").click(); return JSON.stringify(QZ.r.map(function (q) { return [q.q, q.o, q.a] })) });
