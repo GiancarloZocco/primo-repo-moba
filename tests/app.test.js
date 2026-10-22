@@ -131,6 +131,14 @@ async function run() {
     ok(nv.heroNav === "study|Eroi", "la scheda eroe resta sotto Studia → Eroi");
     ok(nv.draft === "draft", "dalla Home si va al draft");
     ok(nv.news1 && nv.newsPage && !nv.news2, "avviso Novità in Home finché non apri la pagina, poi sparisce");
+    /* anche dove 100dvh non esiste (browser vecchi) la pagina non deve scorrere: scorre solo la schermata, la barra resta ferma */
+    var fx = await p.evaluate(async function () {
+      for (var sh of document.styleSheets) { try { for (var r of sh.cssRules) if (r.selectorText === ".app" && /dvh/.test(r.style.height)) r.style.removeProperty("height") } catch (e) { } }
+      go("tier"); await new Promise(function (r) { setTimeout(r, 50) });
+      var sc = document.getElementById("v-tier"); sc.scrollTop = 99999; var nav = document.getElementById("nav").getBoundingClientRect();
+      return { page: document.scrollingElement.scrollHeight <= innerHeight + 1, inner: sc.scrollTop > 0, nav: Math.abs(nav.bottom - innerHeight) < 2 };
+    });
+    ok(fx.page && fx.inner && fx.nav, "Tier list lunga: scorre la schermata, la pagina no e la barra in basso resta ferma");
 
     section("Draft");
     var d = await p.evaluate(function () {
@@ -143,6 +151,13 @@ async function run() {
     ok(d.r0 > 0 && d.rec, "consigli presenti (consigliato: " + d.rec + ")");
     ok(!d.used, "il consigliato non è già in campo");
     ok(d.lanes === 5, "5 righe di lane");
+    var rp = await p.evaluate(function () {
+      var st = JSON.stringify([S.ally, S.enemy]); document.getElementById("rp").click();
+      var d = document.getElementById("dlg"), r = { shown: !!d && /Azzerare i pick/.test(d.textContent) && !!d.querySelector(".btn.rd") };
+      document.getElementById("dlgno").click(); r.kept = JSON.stringify([S.ally, S.enemy]) === st;
+      return r;
+    });
+    ok(rp.shown && rp.kept, "Azzera pick chiede conferma con la finestra dell'app; Annulla lascia il draft com'era");
     var pl = await p.evaluate(function () {
       var c = H[NAMES[50]].l.charAt(0), h = NAMES.filter(function (x) { return used().indexOf(x) < 0 && H[x].l.indexOf(c) > -1 })[5];
       S.pool = []; compute(); var a = poolRecs.length;
@@ -301,8 +316,13 @@ async function run() {
     ok(!hs.before && hs.shown, "Vittoria/Sconfitta compaiono solo con 5 alleati");
     ok(hs.after.games === 1 && hs.after.r === 1 && hs.after.me && hs.after.empty && hs.after.msg, "Vittoria salva la partita col tuo eroe e svuota il draft");
     ok(hs.n === 3 && hs.prof && hs.mine && hs.team && hs.dots === 3, "nel Profilo: 3 partite, 67% vittorie, i tuoi eroi, compagni migliori, ultime partite");
-    var cleared = await p.evaluate(function () { document.getElementById("ghx").click(); return S.games.length });
-    ok(cleared === 0, "Cancella storico (con conferma) svuota le partite");
+    var cleared = await p.evaluate(function () {
+      var n = S.games.length; document.getElementById("ghx").click(); var d = document.getElementById("dlg"), r = { shown: !!d && /Cancellare lo storico/.test(d.textContent) && d.closest(".app") !== null };
+      document.getElementById("dlgno").click(); r.kept = S.games.length === n && !document.getElementById("dlg");
+      document.getElementById("ghx").click(); document.getElementById("dlgok").click(); r.n = S.games.length; return r;
+    });
+    ok(cleared.shown && cleared.kept, "Cancella storico apre la finestra di conferma dell'app; Annulla non cancella nulla");
+    ok(cleared.n === 0 && !p.lastDialog, "confermando si svuotano le partite (nessun avviso del browser)");
 
     section("Confronto 1 contro 1");
     var cm = await p.evaluate(async function () {
@@ -375,6 +395,13 @@ async function run() {
     var got = await p2.evaluate(function () { return { st: JSON.stringify([S.ally, S.enemy, S.banA, S.banE, S.allyLane]), hash: location.hash } });
     ok(got.st === shared.st, "chi apre il link vede lo stesso draft (pick, ban e lane)" + (got.st === shared.st ? "" : ": " + shared.st + " ≠ " + got.st));
     ok(got.hash === "", "il codice viene tolto dalla barra degli indirizzi dopo l'apertura");
+    var sh2 = await p2.evaluate(async function (url) {
+      var st = JSON.stringify(S.ally); S.ally[0] = null; S.ally[1] = null; save(); var mine = JSON.stringify(S.ally);
+      location.hash = url.split("#")[1]; await new Promise(function (r) { setTimeout(r, 300) });
+      var r = { asked: !!document.getElementById("dlg") && /draft condiviso/.test(document.getElementById("dlg").textContent), kept: JSON.stringify(S.ally) === mine };
+      document.getElementById("dlgok").click(); r.opened = JSON.stringify(S.ally) === st && cur === "draft"; return r;
+    }, shared.url);
+    ok(sh2.asked && sh2.kept && sh2.opened, "link con un draft già in corso: chiede prima con la finestra dell'app, poi apre il draft condiviso");
     await p2.evaluate(function () { location.hash = "d=zzz" }); await p2.waitForTimeout(300);
     ok(await p2.evaluate(function () { return /non valido/.test(document.getElementById("toasts").textContent) }), "link rovinato: avviso dentro l'app, draft invariato");
     var still = await p2.evaluate(function () { return JSON.stringify([S.ally, S.enemy, S.banA, S.banE, S.allyLane]) });
@@ -399,7 +426,7 @@ async function run() {
     var bpath = await dl[0].path(), bk = JSON.parse(fs.readFileSync(bpath, "utf8"));
     ok(bk.app === "mlbb-top" && bk.S.nick === "Backup1" && bk.S.games.length === 1 && bk.shot === PNG, "Esporta: file con profilo, storico partite e screenshot (" + dl[0].suggestedFilename() + ")");
     await p.evaluate(async function () { S.nick = "Altro"; S.games = []; save(); await shotSet(null); SHOT = ""; go("settings") });
-    await p.setInputFiles("#bkf", bpath); await p.waitForTimeout(800); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
+    await p.setInputFiles("#bkf", bpath); await p.waitForSelector("#dlgok"); await p.click("#dlgok"); await p.waitForTimeout(800); await p.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
     var rs = await p.evaluate(async function () { return { nick: S.nick, games: S.games.length, shot: (await shotGet()) || "" } });
     ok(rs.nick === "Backup1" && rs.games === 1 && rs.shot === PNG, "Importa: dopo la conferma tornano profilo, storico e screenshot");
     await p.evaluate(function () { go("settings") });

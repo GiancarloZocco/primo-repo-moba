@@ -55,7 +55,7 @@ function rDraft() {
   }
   $("add").onclick = function () { openPick("Scegli l’eroe nemico", free_(), function (n) { var i = S.enemy.indexOf(null); if (i > -1) setSlot(S.enemy, i, n); rDraft() }, { quick: 1 }) };
   $("det").onclick = function () { detOpen = !detOpen; rDraft() };
-  $("rp").onclick = function () { if (!used().length || !confirm("Azzerare i pick di entrambe le squadre? I ban restano.")) return; S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.allyLane = [null, null, null, null, null]; focus = null; save(); rDraft() };
+  $("rp").onclick = function () { if (!S.ally.concat(S.enemy).some(Boolean)) return; ask("Azzerare i pick?", { text: "Si svuotano gli eroi di entrambe le squadre. I ban restano.", ok: "Azzera pick", danger: 1 }, function () { S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.allyLane = [null, null, null, null, null]; focus = null; save(); rDraft() }) };
   $("lf").onclick = function () { S.lanefit = !S.lanefit; focus = null; save(); rDraft() };
   $("share").onclick = function () { shareDraft(this) };
   [[null, "No"], ["blue", "Primi noi"], ["red", "Primi loro"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.guide === o[0] ? "on" : ""; b.onclick = function () { S.guide = o[0]; save(); rDraft() }; $("gd").appendChild(b) });
@@ -203,7 +203,7 @@ function histCard() {
 function rGames() {
   var v = $("v-games");
   v.innerHTML = '<div class="ttl"><div><h2>Storico partite</h2><p>Le partite segnate a fine draft</p></div></div>' + histCard();
-  if ($("ghx")) $("ghx").onclick = function () { if (!confirm("Cancellare tutte le partite dello storico?")) return; S.games = []; save(); rGames() };
+  if ($("ghx")) $("ghx").onclick = function () { ask("Cancellare lo storico?", { text: "Tutte le partite segnate verranno eliminate.", ok: "Cancella", danger: 1 }, function () { S.games = []; save(); rGames() }) };
 }
 function shareUrl() { return location.href.split("#")[0] + "#d=" + draftCode() }
 function shareDraft(btn) {
@@ -218,8 +218,10 @@ function loadShared() {
   history.replaceState(null, "", location.href.split("#")[0]);
   var o = readCode(decodeURIComponent(m[1]));
   if (!o) { toast("Link del draft non valido.", "err"); return false }
-  if (used().length && !confirm("Aprire il draft condiviso? Sostituisce quello attuale.")) return false;
-  S.ally = o.ally; S.enemy = o.enemy; S.banA = o.banA; S.banE = o.banE; S.allyLane = o.allyLane; focus = null; save(); return true;
+  var open = function () { S.ally = o.ally; S.enemy = o.enemy; S.banA = o.banA; S.banE = o.banE; S.allyLane = o.allyLane; focus = null; save() };
+  /* con un draft già in corso si chiede prima: la risposta arriva dopo, quindi qui si risponde false e si apre il draft dopo la conferma */
+  if (used().length) { ask("Aprire il draft condiviso?", { text: "Sostituisce il draft che hai in corso.", ok: "Apri" }, function () { open(); go("draft") }); return false }
+  open(); return true;
 }
 window.addEventListener("hashchange", function () { if (loadShared()) go("draft") });
 function slots(el, team, side) {

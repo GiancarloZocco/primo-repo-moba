@@ -49,6 +49,17 @@ function toast(msg, kind) {
   t.className = "toast" + (kind ? " " + kind : ""); t.setAttribute("role", kind === "err" ? "alert" : "status"); t.textContent = msg; box.appendChild(t);
   setTimeout(function () { t.classList.add("out") }, 4200); setTimeout(function () { t.remove() }, 4700)
 }
+/* finestra di conferma nello stile dell'app (al posto di confirm del browser): yes() parte solo se si conferma
+   o = { text: spiegazione, ok: testo del pulsante, danger: pulsante rosso per le azioni che cancellano dati } */
+function ask(title, o, yes) {
+  o = o || {}; var d = $("dlg"); if (d) d.remove();
+  d = document.createElement("div"); d.className = "sheet dlg show"; d.id = "dlg"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true");
+  d.innerHTML = '<div class="dbox"><h3>' + esc(title) + '</h3>' + (o.text ? '<p>' + esc(o.text) + '</p>' : '') + '<div class="two"><button class="btn sm" id="dlgno">' + esc(o.no || "Annulla") + '</button><button class="btn sm ' + (o.danger ? "rd" : "p") + '" id="dlgok">' + esc(o.ok || "Conferma") + '</button></div></div>';
+  document.querySelector(".app").appendChild(d);
+  var close = function () { d.remove(); document.removeEventListener("keydown", key) }, key = function (e) { if (e.key === "Escape") close() };
+  d.onclick = function (e) { if (e.target === d) close() }; $("dlgno").onclick = close; $("dlgok").onclick = function () { close(); yes() };
+  document.addEventListener("keydown", key); $(o.danger ? "dlgno" : "dlgok").focus() /* per le azioni che cancellano, il pulsante pronto è Annulla */
+}
 /* screenshot del profilo in IndexedDB: localStorage ha pochi MB e se si riempie fallirebbero anche i salvataggi del draft */
 function idbDo(mode, fn) {
   return new Promise(function (ok, no) {

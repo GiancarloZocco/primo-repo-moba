@@ -42,6 +42,15 @@ body.hc {
   box-sizing: inherit
 }
 
+/* la pagina non scorre mai: scorre solo la schermata dentro l'app, così intestazione e barra in basso restano ferme
+   (anche sui browser che non conoscono 100dvh) */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none
+}
+
 body {
   margin: 0;
   background: #06080C;
@@ -71,7 +80,7 @@ input:focus-visible {
 .app {
   width: 100%;
   max-width: 390px;
-  height: 100dvh;
+  height: 100%;
   background: var(--bg);
   background-image: linear-gradient(rgba(255, 255, 255, .018) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .018) 1px, transparent 1px);
   background-size: 22px 22px;
@@ -182,7 +191,10 @@ input:focus-visible {
 /* screens */
 .scr {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   display: none;
   flex-direction: column;
   gap: 14px;
@@ -3130,3 +3142,10 @@ ul.news {
 .sres .ico0 { background: var(--bg); }
 .sres b { display: block; font-size: 13.5px; }
 .sres small { color: var(--mute); font-size: 11.5px; }
+
+/* finestra di conferma (ask) */
+.sheet.dlg { align-items: center; justify-content: center; padding: 20px; z-index: 9; }
+.dbox { width: 100%; max-width: 330px; background: var(--panel); border: 1px solid var(--line2); border-radius: 16px; padding: 18px 16px 16px; box-shadow: 0 18px 50px rgba(0, 0, 0, .55); animation: dlgIn .16s ease-out; }
+.dbox h3 { margin: 0 0 6px; font-family: var(--hd); font-size: 17px; }
+.dbox p { margin: 0 0 16px; color: var(--mute); font-size: 12.5px; line-height: 1.5; }
+@keyframes dlgIn { from { opacity: 0; transform: translateY(8px) scale(.97) } to { opacity: 1; transform: none } }

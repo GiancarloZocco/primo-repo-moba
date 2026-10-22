@@ -13,7 +13,9 @@ function importBackup(file) {
   r.onload = function () {
     var d; try { d = JSON.parse(r.result) } catch (e) { d = null }
     if (!d || d.app !== "mlbb-top" || !d.S || typeof d.S !== "object") { toast("File non valido: non è un backup di MLBB TOP.", "err"); return }
-    if (!confirm("Ripristinare il backup del " + new Date(d.at).toLocaleDateString("it-IT") + "? I dati attuali verranno sostituiti.")) return;
+    ask("Ripristinare il backup del " + new Date(d.at).toLocaleDateString("it-IT") + "?", { text: "I dati attuali verranno sostituiti.", ok: "Ripristina", danger: 1 }, function () { restore(d) })
+  };
+  var restore = function (d) {
     try {
       localStorage.setItem(KEY.s, JSON.stringify(d.S));
       if (d.live) localStorage.setItem(KEY.live, JSON.stringify(d.live)); else localStorage.removeItem(KEY.live);
