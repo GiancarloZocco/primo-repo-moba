@@ -4,6 +4,12 @@
    (le frasi composte da più pezzi, es. "Countera X (+2% di win rate contro di lui)").
    Per tradurre un testo nuovo basta aggiungerlo a EN (la chiave è il testo italiano esatto, o un suo pezzo). */
 var EN = {
+  "Nella fase dei ban ti suggerisco chi bannare: gli eroi più forti del meta e quelli che counterano il tuo pool.": "In the ban phase I suggest who to ban: the strongest meta heroes and those that counter your pool.",
+  "Qui ci sono i pick consigliati per ogni lane, con il perché: counter, sinergia, meta e i tuoi eroi. Tocca un eroe per vedere la scheda.": "Here are the recommended picks for each lane, with the reason: counters, synergy, meta and your heroes. Tap a hero to see its sheet.",
+  "Lane 1v1: chi vince ogni scontro di lane tra te e l'avversario diretto. Tocca una lane per i consigli su come giocarla.": "Lane 1v1: who wins each lane matchup against your direct opponent. Tap a lane for tips on how to play it.",
+  "Guida ti dà build, spell ed emblema contro i nemici; Confronto mette due eroi faccia a faccia; Storico tiene le tue partite.": "Guide gives you build, spell and emblem against the enemies; Compare puts two heroes face to face; History keeps your matches.",
+  "A fine partita segna Vittoria o Sconfitta: imparo quali eroi ti funzionano e miglioro i consigli.": "After the match mark Victory or Defeat: I learn which heroes work for you and improve the tips.",
+  "Ah, un'ultima cosa: scusa ma non posso aiutarti se hai dei bot come compagni. 😅": "Oh, one last thing: sorry, but I can't help you if your teammates are bots. 😅",
   "Progetto non ufficiale, non affiliato a Moonton. Mobile Legends: Bang Bang e tutte le immagini degli eroi sono © Moonton.": "Unofficial project, not affiliated with Moonton. Mobile Legends: Bang Bang and all hero images are © Moonton.",
   "Salta": "Skip", "Avanti": "Next", "Iniziamo!": "Let's go!", "Rivedi il tutorial": "Replay the tutorial",
   "Ciao! Sono Lunox. Ti mostro in un attimo come usare MLBB TOP per vincere più draft.": "Hi! I'm Lunox. Let me quickly show you how to use MLBB TOP to win more drafts.",

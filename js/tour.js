@@ -7,8 +7,14 @@ var TOUR = [
   { v: "draft", s: "#qebox", t: "Inserimento rapido: scrivi 2-3 lettere dell'eroe nemico e premi Invio. Più veloce del timer del draft!" },
   { v: "draft", s: ".teamh", t: "Qui ci sono le squadre: tocca uno slot per scegliere un eroe. «Azzera pick» svuota le squadre." },
   { v: "draft", s: "#undo", t: "Sbagliato eroe? «Annulla» toglie l'ultimo inserito." },
+  { v: "draft", s: 'details[data-f="bans"] > summary', t: "Nella fase dei ban ti suggerisco chi bannare: gli eroi più forti del meta e quelli che counterano il tuo pool." },
+  { v: "draft", s: 'details[data-f="recs"] > summary', t: "Qui ci sono i pick consigliati per ogni lane, con il perché: counter, sinergia, meta e i tuoi eroi. Tocca un eroe per vedere la scheda." },
+  { v: "draft", s: 'details[data-f="lane"] > summary', t: "Lane 1v1: chi vince ogni scontro di lane tra te e l'avversario diretto. Tocca una lane per i consigli su come giocarla." },
+  { v: "draft", s: "#subnav", t: "Guida ti dà build, spell ed emblema contro i nemici; Confronto mette due eroi faccia a faccia; Storico tiene le tue partite." },
   { v: "draft", s: "#srch", t: "Con la lente cerchi eroi, oggetti, talenti e schermate da ovunque nell'app." },
   { v: "draft", s: "#act", t: "Qui trovi il tuo profilo e le impostazioni: temi, lingua, backup." },
+  { v: "draft", s: "#gwin", t: "A fine partita segna Vittoria o Sconfitta: imparo quali eroi ti funzionano e miglioro i consigli." },
+  { v: "draft", t: "Ah, un'ultima cosa: scusa ma non posso aiutarti se hai dei bot come compagni. 😅" },
   { v: "draft", t: "È tutto! Scegli i nemici e io ti dirò chi pickare. Buona partita, che la luce e il caos siano con te!" }
 ];
 function tourStart() {
