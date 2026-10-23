@@ -96,7 +96,7 @@ async function run() {
       while (document.getElementById("tour") && !document.querySelector("#tour.out") && n < 20) { n++; document.getElementById("tnext").click() }
       r.n = n; r.done = S.tour === true; go("home"); return r;
     });
-    ok(tu.open && tu.done && tu.n === 9, "dopo la configurazione parte il tutorial di Layla e si chiude dopo " + tu.n + " passi");
+    ok(tu.open && tu.done && tu.n === 9, "dopo la configurazione parte il tutorial di Lunox e si chiude dopo " + tu.n + " passi");
     var first = await p.evaluate(function () { S.pool = []; save(); var home = cur === "home"; go("draft"); return { home: home, picks: used().length, hint: /Inizia dai ban/.test(document.querySelector("#v-draft").textContent) } });
     ok(first.home, "dopo la configurazione l'app è sulla Home");
     ok(first.picks === 0 && first.hint, "prima apertura: draft vuoto con il suggerimento iniziale");

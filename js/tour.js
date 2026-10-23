@@ -1,7 +1,7 @@
-/* MLBB TOP - Tutorial della prima apertura: Layla entra dal basso e spiega i tasti principali, illuminando quello di cui parla.
+/* MLBB TOP - Tutorial della prima apertura: Lunox entra dal basso e spiega i tasti principali, illuminando quello di cui parla.
    Parte dopo la configurazione iniziale (S.tour non ancora visto); si rivede da Impostazioni → Info. */
 var TOUR = [
-  { v: "home", t: "Ciao! Sono Layla. Ti mostro in un attimo come usare MLBB TOP per vincere più draft." },
+  { v: "home", t: "Ciao! Sono Lunox. Ti mostro in un attimo come usare MLBB TOP per vincere più draft." },
   { v: "home", s: "#nav", t: "Qui sotto ci sono le sezioni: Gioca per il draft, Studia per eroi e tier list, Io per profilo e storico." },
   { v: "draft", s: "#dbs", t: "Questo è il Draft live. Tocca qui per scegliere il draft guidato (ranked o torneo), il criterio dei consigli e la tua lane." },
   { v: "draft", s: "#qebox", t: "Inserimento rapido: scrivi 2-3 lettere dell'eroe nemico e premi Invio. Più veloce del timer del draft!" },
@@ -9,13 +9,13 @@ var TOUR = [
   { v: "draft", s: "#undo", t: "Sbagliato eroe? «Annulla» toglie l'ultimo inserito." },
   { v: "draft", s: "#srch", t: "Con la lente cerchi eroi, oggetti, talenti e schermate da ovunque nell'app." },
   { v: "draft", s: "#act", t: "Qui trovi il tuo profilo e le impostazioni: temi, lingua, backup." },
-  { v: "draft", t: "È tutto! Scegli i nemici e io ti dirò chi pickare. Buona partita, ci vediamo nella Land of Dawn!" }
+  { v: "draft", t: "È tutto! Scegli i nemici e io ti dirò chi pickare. Buona partita, che la luce e il caos siano con te!" }
 ];
 function tourStart() {
   var i = 0, d = $("tour"); if (d) d.remove();
   d = document.createElement("div"); d.id = "tour"; d.className = "tour";
-  d.innerHTML = '<div class="tspot" id="tspot"></div><div class="tbox"><div class="tlay" style="background-image:url(' + ((HX.Layla && HX.Layla.img) || "") + ')"></div>' +
-    '<div class="tbub"><b>Layla</b><p id="ttx"></p><div class="tnav"><button class="lnk" id="tskip">Salta</button><span class="tdots" id="tdots"></span><button class="btn p sm" id="tnext">Avanti</button></div></div></div>';
+  d.innerHTML = '<div class="tspot" id="tspot"></div><div class="tbox"><div class="tlay" style="background-image:url(' + ((HX.Lunox && HX.Lunox.img) || "") + ')"></div>' +
+    '<div class="tbub"><b>Lunox</b><p id="ttx"></p><div class="tnav"><button class="lnk" id="tskip">Salta</button><span class="tdots" id="tdots"></span><button class="btn p sm" id="tnext">Avanti</button></div></div></div>';
   document.querySelector(".app").appendChild(d);
   var timer, end = function () { clearInterval(timer); S.tour = true; save(); d.classList.add("out"); setTimeout(function () { d.remove() }, 300) };
   var show = function () {
