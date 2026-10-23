@@ -13,8 +13,8 @@ var TOUR = [
 ];
 function tourStart() {
   var i = 0, d = $("tour"); if (d) d.remove();
-  d = document.createElement("div"); d.id = "tour"; d.className = "tour";
-  d.innerHTML = '<div class="tspot" id="tspot"></div><div class="tbox"><div class="tlay" style="background-image:url(' + ((HX.Lunox && HX.Lunox.img) || "") + ')"></div>' +
+  d = document.createElement("div"); d.id = "tour"; d.className = "tour in";
+  d.innerHTML = '<div class="tspot" id="tspot"></div><div class="tbox"><img class="tlx" src="img/lunox-full.webp" alt="Lunox">' +
     '<div class="tbub"><b>Lunox</b><p id="ttx"></p><div class="tnav"><button class="lnk" id="tskip">Salta</button><span class="tdots" id="tdots"></span><button class="btn p sm" id="tnext">Avanti</button></div></div></div>';
   document.querySelector(".app").appendChild(d);
   var timer, end = function () { clearInterval(timer); S.tour = true; save(); d.classList.add("out"); setTimeout(function () { d.remove() }, 300) };
@@ -28,7 +28,7 @@ function tourStart() {
     timer = setInterval(function () { k += 2; p.textContent = tx.slice(0, k); if (k >= tx.length) clearInterval(timer) }, 18);
     $("tdots").innerHTML = TOUR.map(function (x, j) { return '<i' + (j === i ? ' class="on"' : '') + '></i>' }).join("");
     $("tnext").textContent = tr(i === TOUR.length - 1 ? "Iniziamo!" : "Avanti");
-    var b = d.querySelector(".tbox"); b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
+    var b = d.querySelector(".tbox"); b.classList.remove("pop"); void b.offsetWidth; if (i) { d.classList.remove("in"); b.classList.add("pop") }
   };
   $("tnext").onclick = function () { if (++i >= TOUR.length) end(); else show() };
   $("tskip").onclick = end;
