@@ -1,6 +1,6 @@
 /* MLBB TOP - Preferenze del draft (draft guidato, criterio dei consigli, la mia lane) usate in due posti:
    la riga compatta in cima al Draft e la sezione "Draft e consigli" delle Impostazioni.
-   S.dui sceglie come appare la riga nel Draft: "a" = pulsanti che aprono un menu, "b" = riepilogo + link alle Impostazioni */
+*/
 var CRITD = { bal: "Un po' di tutto: counter, meta, lane, ruoli che mancano e il tuo pool.", meta: "Solo quanto è forte l'eroe nel meta del tuo rank.", lane: "Solo lo scontro con l'avversario diretto: ogni riga consiglia chi batte il nemico di quella lane.", game: "Chi batte tutta la squadra nemica, anche nemici di altre lane (dati ufficiali, tratti e counter segnati da te).", safe: "Come Equilibrato, ma evita gli eroi che i nemici scelti counterano." };
 function guideSum() { return S.guide ? (S.gmode === "tour" ? "Torneo" : "Ranked") + " · " + (S.guide === "blue" ? "Primi noi" : "Primi loro") + " · " + S.gbans + " ban" : "Non guidato" }
 function myLaneSum() { return S.myLane && S.lane ? LN[S.lane] : "Tutte le lane" }
@@ -40,14 +40,14 @@ function optSheet(title, fill) {
   fill($("oshb"), close); return close;
 }
 function goSettings(sec) { go("settings"); var el = $("sec-" + sec); if (el) el.scrollIntoView({ block: "start" }) }
-/* riga in cima al Draft */
-function draftBar() {
-  if (S.dui === "b") return '<div class="dbar b"><span class="dsum"><b>' + guideSum() + '</b> · ' + CRIT[crit()] + ' · ' + myLaneSum() + '</span><button class="lnk" id="dbs">Cambia ›</button></div>';
-  return '<div class="dbar"><button class="dchip" id="dbg">' + IC.sliders + '<span>' + guideSum() + '</span><i class="chev"></i></button><button class="dchip" id="dbc"><span>' + CRIT[crit()] + '</span><i class="chev"></i></button><button class="dchip" id="dbl"><span>' + myLaneSum() + '</span><i class="chev"></i></button></div>';
-}
+/* riga in cima al Draft: riepilogo delle scelte, "Cambia" apre un menu con tutte e tre */
+function draftBar() { return '<div class="dbar b"><span class="dsum"><b>' + guideSum() + '</b> · ' + CRIT[crit()] + ' · ' + myLaneSum() + '</span><button class="lnk" id="dbs">Cambia ›</button></div>' }
 function draftBarBind() {
-  if ($("dbs")) $("dbs").onclick = function () { goSettings("draft") };
-  if ($("dbg")) $("dbg").onclick = function () { optSheet("Draft guidato", function (b, close) { var w = document.createElement("div"); b.appendChild(w); guideCtl(w); var ok = document.createElement("button"); ok.className = "btn p sm"; ok.style.cssText = "width:100%;margin-top:10px"; ok.textContent = "Fatto"; ok.onclick = close; b.appendChild(ok) }) };
-  if ($("dbc")) $("dbc").onclick = function () { optSheet("Criterio dei consigli", function (b, close) { critCtl(b, close) }) };
-  if ($("dbl")) $("dbl").onclick = function () { optSheet("La mia lane", function (b, close) { laneCtl(b, close) }) };
+  if ($("dbs")) $("dbs").onclick = function () {
+    optSheet("Draft e consigli", function (b, close) {
+      b.innerHTML = '<div class="k">Draft guidato</div><div id="osg"></div><div class="k" style="margin-top:12px">Criterio dei consigli</div><div id="osc"></div><div class="k" style="margin-top:12px">La mia lane</div><div id="osl"></div><button class="btn p sm" id="osok" style="width:100%;margin-top:12px">Fatto</button>';
+      var again = function () { critCtl($("osc"), again); laneCtl($("osl"), again); };
+      guideCtl($("osg")); again(); $("osok").onclick = close;
+    })
+  };
 }

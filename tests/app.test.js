@@ -307,7 +307,7 @@ async function run() {
       ok(gr.lit === nSteps && gr.done && !gr.dup, "  a ogni turno uno slot evidenziato, alla fine Draft completato (" + gr.cnt + "), nessun eroe doppio");
     }
     var gm = await p.evaluate(function () {
-      S.guide = "blue"; S.gbans = 10; S.gmode = "tour"; S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; go("draft"); document.getElementById("dbg").click(); var gmo = document.querySelectorAll("#oshb .seg")[1];
+      S.guide = "blue"; S.gbans = 10; S.gmode = "tour"; S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; go("draft"); document.getElementById("dbs").click(); var gmo = document.querySelectorAll("#osg .seg")[1];
       var r = { btn: [].map.call(gmo.querySelectorAll("button"), function (b) { return b.textContent + (b.className === "on" ? "*" : "") }).join(",") };
       gmo.querySelector("button").click(); document.getElementById("oshx").click(); r.after = S.gmode + "|" + guideSteps().slice(0, 10).every(function (t) { return t.charAt(0) === "b" }); return r;
     });
@@ -414,8 +414,8 @@ async function run() {
     ok(en2.code && en2.read && en2.cleared, "la lane dei nemici viaggia nel link condiviso e si azzera cambiando eroe");
     ok(en2.pick === "ok" && en2.near, "selettore: cercando, la barra di ricerca resta ferma e l'eroe filtrato è subito sotto (" + en2.pick + ")");
 
-    ok(await p.evaluate(function () { go("draft"); document.getElementById("dbg").click(); var o = !!document.getElementById("osh"); document.querySelector("#oshb .seg button:nth-child(2)").click(); var r = o && S.guide === "blue" && /Primi noi/.test(document.getElementById("dbg").textContent); document.getElementById("oshx").click(); var c = !document.getElementById("osh"); S.guide = null; save(); go("draft"); return r && c }), "il pulsante del draft guidato apre il menu, la scelta si applica e il menu si chiude");
-    ok(await p.evaluate(function () { S.dui = "b"; go("draft"); var b = !!document.getElementById("dbs") && !document.getElementById("dbg"); document.getElementById("dbs").click(); var r = b && cur === "settings" && !!document.getElementById("sec-draft"); S.dui = null; save(); go("draft"); return r && !!document.getElementById("rp") }), "variante riepilogo: «Cambia» porta alla sezione Draft delle Impostazioni; Azzera pick sopra le squadre");
+    ok(await p.evaluate(function () { go("draft"); document.getElementById("dbs").click(); var o = !!document.getElementById("osh"); document.querySelector("#osg .seg button:nth-child(2)").click(); var r = o && S.guide === "blue" && /Primi noi/.test(document.querySelector(".dsum").textContent); document.getElementById("oshx").click(); var c = !document.getElementById("osh"); S.guide = null; save(); go("draft"); return r && c }), "«Cambia» apre il menu, la scelta si applica e il menu si chiude");
+    ok(await p.evaluate(function () { go("draft"); return !!document.getElementById("rp") }), "Azzera pick sopra le squadre");
 
     section("Inserimento rapido");
     await p.evaluate(function () { window.qClean = function () { S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.banA = [null, null, null, null, null]; S.banE = [null, null, null, null, null]; S.guide = null; S.only = false; S.qt = "pE"; S.gskip = []; QE.hist = []; QE.q = ""; QE.focus = false; save(); go("draft") }; qClean() });
@@ -497,7 +497,7 @@ async function run() {
       S.crit = "meta"; var m = top("o"); r.meta = m.length > 1 && M[m[0]].meta >= M[m[1]].meta;
       S.crit = "lane"; var g = top("o"); r.lane = g[0] + ":" + laneVs(g[0], "Moskov").v; r.laneOk = g.slice(1).every(function (x) { return laneVs(x, "Moskov").v <= laneVs(g[0], "Moskov").v + .01 });
       S.myLane = true; S.lane = "o"; go("draft"); r.rows = [].map.call(document.querySelectorAll("#lanes .lrow .lh b"), function (b) { return b.textContent }).join(","); r.six = document.querySelectorAll("#lanes .lrow .lcand").length;
-      document.getElementById("dbc").click(); r.btns = document.querySelectorAll("#oshb .opt1").length; document.getElementById("oshx").click();
+      document.getElementById("dbs").click(); r.btns = document.querySelectorAll("#osc .opt1").length; document.getElementById("oshx").click();
       S.myLane = false; S.crit = "bal"; S.gc = {}; qClean(); return r;
     });
     ok(cr.gameR === 0 || cr.gameM === 0, "«Counter in partita» con Faramis segnato contro Gloo: Faramis primo in roam o mid (bal: " + cr.balR + ", game: roam " + cr.gameR + " / mid " + cr.gameM + ")");
