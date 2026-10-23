@@ -7,12 +7,12 @@
    - Aggiornamento dati live (arena.rone.dev): sempre dalla rete, mai in cache.
    VERSION e CORE li scrive tools/build.js (npm run build): VERSION è un'impronta dei file,
    quindi cambia da sola a ogni modifica e chi ha l'app installata riceve la versione nuova. */
-var VERSION = "0528a0a2cc";
+var VERSION = "7545bc42f8";
 var CACHE = "mlbb-top-" + VERSION;
 var EXT = "mlbb-top-ext-v1";
 var EXT_MAX = 600;
 var WAIT = 4000;
-var CORE = ["./", "./index.html", "./css/app.css", "./css/lod.css", "./data/data.js", "./data/data-it.js", "./js/core.js", "./js/i18n.js", "./js/engine.js", "./js/ui.js", "./js/fx.js", "./js/build.js", "./js/draft.js", "./js/guide.js", "./js/lane.js", "./js/quick.js", "./js/tier.js", "./js/heroes.js", "./js/quiz.js", "./js/profile.js", "./js/start.js", "./js/prefs.js", "./js/settings.js", "./js/search.js", "./js/home.js", "./js/system.js", "./manifest.json", "./fonts/cinzel.woff2", "./fonts/rajdhani-600.woff2", "./fonts/rajdhani-700.woff2", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png"];
+var CORE = ["./", "./index.html", "./css/app.css", "./css/lod.css", "./data/data.js", "./data/data-it.js", "./js/core.js", "./js/i18n.js", "./js/engine.js", "./js/ui.js", "./js/fx.js", "./js/build.js", "./js/draft.js", "./js/guide.js", "./js/lane.js", "./js/quick.js", "./js/tier.js", "./js/heroes.js", "./js/quiz.js", "./js/profile.js", "./js/start.js", "./js/prefs.js", "./js/tour.js", "./js/settings.js", "./js/search.js", "./js/home.js", "./js/system.js", "./manifest.json", "./fonts/cinzel.woff2", "./fonts/rajdhani-600.woff2", "./fonts/rajdhani-700.woff2", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png"];
 
 /* scarica saltando la cache HTTP del browser, così una versione nuova non riceve file vecchi */
 function fresh(u) { return new Request(u, { cache: "reload" }) }

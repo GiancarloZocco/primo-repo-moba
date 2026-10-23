@@ -91,6 +91,12 @@ async function run() {
     ok(ob.start, "primo avvio: si apre la configurazione iniziale");
     ok(ob.sugg.length && ob.pool.length === 2 && ob.pool[0] === ob.sugg[0].trim(), "pool: eroi suggeriti per la lane e aggiunta dal selettore (" + ob.pool.join(", ") + ")");
     ok(ob.after === "home|true|X|o|Tester|2" && ob.sheet, "a fine configurazione si va alla Home con ruolo, lane, nickname e pool salvati (" + ob.after + ")");
+    var tu = await p.evaluate(async function () {
+      await new Promise(function (r) { setTimeout(r, 600) }); var r = { open: !!document.getElementById("tour") }, n = 0;
+      while (document.getElementById("tour") && !document.querySelector("#tour.out") && n < 20) { n++; document.getElementById("tnext").click() }
+      r.n = n; r.done = S.tour === true; go("home"); return r;
+    });
+    ok(tu.open && tu.done && tu.n === 9, "dopo la configurazione parte il tutorial di Layla e si chiude dopo " + tu.n + " passi");
     var first = await p.evaluate(function () { S.pool = []; save(); var home = cur === "home"; go("draft"); return { home: home, picks: used().length, hint: /Inizia dai ban/.test(document.querySelector("#v-draft").textContent) } });
     ok(first.home, "dopo la configurazione l'app è sulla Home");
     ok(first.picks === 0 && first.hint, "prima apertura: draft vuoto con il suggerimento iniziale");
@@ -227,7 +233,7 @@ async function run() {
     var ctxe = await browser.newContext({ viewport: { width: 390, height: 844 } }), pe = await newPage(ctxe, errs);
     await ctxe.route(function (u) { return !u.href.startsWith(URL0) }, function (r) { return r.abort() });
     await pe.goto(URL0); await pe.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
-    await pe.evaluate(function () { document.getElementById("sskip").click(); go("settings") });
+    await pe.evaluate(function () { S.tour = true; document.getElementById("sskip").click(); go("settings") });
     await pe.click("#uil button:nth-child(2)"); await pe.waitForFunction(function () { return window.NAMES && document.querySelector(".scr.on") });
     var en = await pe.evaluate(async function () {
       var IT = /(^|[^\p{L}])(il|della|degli|nella|alla|che|con|non|sono|nessun|nessuna|tocca|scegli|eroi|nemici|alleati|partita|squadra|consigli|ancora|già|punti|abilità|oggetti|talenti|giungla|impostazioni|storico|confronto|guida)(?![\p{L}])/iu, bad = [];

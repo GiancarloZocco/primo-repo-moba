@@ -4,6 +4,16 @@
    (le frasi composte da più pezzi, es. "Countera X (+2% di win rate contro di lui)").
    Per tradurre un testo nuovo basta aggiungerlo a EN (la chiave è il testo italiano esatto, o un suo pezzo). */
 var EN = {
+  "Salta": "Skip", "Avanti": "Next", "Iniziamo!": "Let's go!", "Rivedi il tutorial": "Replay the tutorial",
+  "Ciao! Sono Layla. Ti mostro in un attimo come usare MLBB TOP per vincere più draft.": "Hi! I'm Layla. Let me quickly show you how to use MLBB TOP to win more drafts.",
+  "Qui sotto ci sono le sezioni: Gioca per il draft, Studia per eroi e tier list, Io per profilo e storico.": "Down here are the sections: Play for the draft, Study for heroes and tier list, Me for profile and history.",
+  "Questo è il Draft live. Tocca qui per scegliere il draft guidato (ranked o torneo), il criterio dei consigli e la tua lane.": "This is the Live draft. Tap here to choose the guided draft (ranked or tournament), the recommendation criterion and your lane.",
+  "Inserimento rapido: scrivi 2-3 lettere dell'eroe nemico e premi Invio. Più veloce del timer del draft!": "Quick entry: type 2-3 letters of the enemy hero and press Enter. Faster than the draft timer!",
+  "Qui ci sono le squadre: tocca uno slot per scegliere un eroe. «Azzera pick» svuota le squadre.": "Here are the teams: tap a slot to pick a hero. \u00abReset picks\u00bb clears the teams.",
+  "Sbagliato eroe? «Annulla» toglie l'ultimo inserito.": "Wrong hero? \u00abUndo\u00bb removes the last one.",
+  "Con la lente cerchi eroi, oggetti, talenti e schermate da ovunque nell'app.": "With the magnifier you search heroes, items, talents and screens from anywhere.",
+  "Qui trovi il tuo profilo e le impostazioni: temi, lingua, backup.": "Here are your profile and settings: themes, language, backup.",
+  "È tutto! Scegli i nemici e io ti dirò chi pickare. Buona partita, ci vediamo nella Land of Dawn!": "That's all! Pick the enemies and I'll tell you who to pick. Good game, see you in the Land of Dawn!",
   "Non guidato": "Not guided", "Tutte le lane": "All lanes", "Cambia ›": "Change ›", "Cambia": "Change", "Impostazioni draft": "Draft settings", "Squadre": "Teams", "Fatto": "Done", "Criterio dei consigli": "Recommendation criterion", "La mia lane": "My lane", "Draft guidato": "Guided draft", "Consigli per ogni lane": "Tips for every lane",
   "Mostra solo i consigli della tua lane": "Show only the tips for your lane", "Turni del ranked o del torneo": "Ranked or tournament turns", "Su cosa si basano i pick consigliati": "What recommended picks are based on",
   "Un po' di tutto: counter, meta, lane, ruoli che mancano e il tuo pool.": "A bit of everything: counters, meta, lane, missing roles and your pool.", "Solo quanto è forte l'eroe nel meta del tuo rank.": "Only how strong the hero is in your rank's meta.", "Solo lo scontro con l'avversario diretto: ogni riga consiglia chi batte il nemico di quella lane.": "Only the direct matchup: each row suggests who beats that lane's enemy.", "Chi batte tutta la squadra nemica, anche nemici di altre lane (dati ufficiali, tratti e counter segnati da te).": "Who beats the whole enemy team, including other lanes (official data, traits and counters you marked).", "Come Equilibrato, ma evita gli eroi che i nemici scelti counterano.": "Like Balanced, but avoids heroes the picked enemies counter.",

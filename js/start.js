@@ -48,6 +48,6 @@ function rStart() {
   laneChips($("slane"), rStart);
   poolBind("spool", rStart);
   $("snick").onchange = function () { S.nick = this.value.trim() || "DraftStrategist"; save() };
-  var done = function () { S.nick = $("snick").value.trim() || "DraftStrategist"; S.onb = true; save(); hist = []; go("home", true) };
+  var done = function () { S.nick = $("snick").value.trim() || "DraftStrategist"; S.onb = true; save(); hist = []; go("home", true); if (!S.tour) setTimeout(tourStart, 400) };
   $("sgo").onclick = done; $("sskip").onclick = done;
 }

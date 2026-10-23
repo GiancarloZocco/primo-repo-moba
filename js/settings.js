@@ -26,7 +26,7 @@ function rSettings() {
     '</div>' + sec("info", IC.star, "Info") +
     '<p class="hint" style="margin:0">Win rate, pick rate, ban rate, counter, compagni e build: dati ufficiali MLBB Academy (via arena.rone.dev, ' + META.win + '). Abilità e titoli: MLBB Academy e Wiki MLBB. Il pulsante Aggiorna scarica le statistiche più recenti (serve internet). Tier e punteggi del draft sono calcolati da MLBB TOP.</p>' +
     '<p class="k" style="text-align:center;margin:10px 0 0">MLBB TOP esports system · build v4.0</p></div>';
-  $("sec-info").insertAdjacentHTML("beforeend", '<button class="btn sm" id="tonews" style="width:100%;margin-top:10px">Novità di questa versione</button>');
+  $("sec-info").insertAdjacentHTML("beforeend", '<button class="btn sm" id="tonews" style="width:100%;margin-top:10px">Novità di questa versione</button><button class="btn sm" id="totour" style="width:100%;margin-top:8px">Rivedi il tutorial</button>');
   [["draft", "Draft"], ["look", "Aspetto"], ["lang", "Lingua"], ["data", "Dati"], ["backup", "Backup"], ["info", "Info"]].forEach(function (o) { var b = document.createElement("button"); b.className = "chip"; b.textContent = o[1]; b.onclick = function () { $("sec-" + o[0]).scrollIntoView({ block: "start", behavior: "smooth" }) }; $("setnav").appendChild(b) });
   guideCtl($("sguide")); critCtl($("scrit")); laneCtl($("slanes"));
   /* [codice, nome, colori dell'anteprima: sfondo, accento, alleati, nemici] */
@@ -46,4 +46,5 @@ function rSettings() {
   $("bkf").onchange = function () { var f = this.files[0]; this.value = ""; if (f) importBackup(f) };
   $("rq").onclick = function () { S.quiz = Object.assign({}, DEF.quiz); QZ = null; save(); rSettings() };
   $("tonews").onclick = function () { go("news") };
+  $("totour").onclick = tourStart;
 }
