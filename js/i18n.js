@@ -4,6 +4,7 @@
    (le frasi composte da più pezzi, es. "Countera X (+2% di win rate contro di lui)").
    Per tradurre un testo nuovo basta aggiungerlo a EN (la chiave è il testo italiano esatto, o un suo pezzo). */
 var EN = {
+  "Progetto non ufficiale, non affiliato a Moonton. Mobile Legends: Bang Bang e tutte le immagini degli eroi sono © Moonton.": "Unofficial project, not affiliated with Moonton. Mobile Legends: Bang Bang and all hero images are © Moonton.",
   "Salta": "Skip", "Avanti": "Next", "Iniziamo!": "Let's go!", "Rivedi il tutorial": "Replay the tutorial",
   "Ciao! Sono Layla. Ti mostro in un attimo come usare MLBB TOP per vincere più draft.": "Hi! I'm Layla. Let me quickly show you how to use MLBB TOP to win more drafts.",
   "Qui sotto ci sono le sezioni: Gioca per il draft, Studia per eroi e tier list, Io per profilo e storico.": "Down here are the sections: Play for the draft, Study for heroes and tier list, Me for profile and history.",
