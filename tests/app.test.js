@@ -487,6 +487,22 @@ async function run() {
     ok(lc.saved && lc.after > -1 && lc.after < 3 && (lc.before < 0 || lc.after < lc.before), "counter di lane segnato da te: Lunox sale tra i primi consigli in mid (" + lc.before + " → " + lc.after + ")");
     ok(lc.pair === "Lunox>Cecilion:5:true", "Lane 1v1 usa il counter segnato da te (" + lc.pair + ")");
 
+    section("Criterio dei consigli");
+    var cr = await p.evaluate(function () {
+      qClean(); S.gc = {}; S.lc = {}; S.myLane = false; ["Gloo", "Moskov"].forEach(function (h, i) { setSlot(S.enemy, i, h) }); S.enemyLane[0] = "e"; S.enemyLane[1] = "o";
+      var top = function (l) { compute(); return (byLaneList[l] || []).map(function (x) { return x.n }) }, r = {};
+      S.crit = "bal"; r.balR = top("r").indexOf("Faramis");
+      S.gc.Gloo = ["Faramis"]; S.crit = "game"; r.gameR = top("r").indexOf("Faramis"); r.gameM = top("m").indexOf("Faramis");
+      S.crit = "meta"; var m = top("o"); r.meta = m.length > 1 && M[m[0]].meta >= M[m[1]].meta;
+      S.crit = "lane"; var g = top("o"); r.lane = g[0] + ":" + laneVs(g[0], "Moskov").v; r.laneOk = g.slice(1).every(function (x) { return laneVs(x, "Moskov").v <= laneVs(g[0], "Moskov").v + .01 });
+      S.myLane = true; S.lane = "o"; go("draft"); r.rows = [].map.call(document.querySelectorAll("#lanes .lrow .lh b"), function (b) { return b.textContent }).join(","); r.six = document.querySelectorAll("#lanes .lrow .lcand").length;
+      r.btns = document.querySelectorAll("#crit button").length;
+      S.myLane = false; S.crit = "bal"; S.gc = {}; qClean(); return r;
+    });
+    ok(cr.gameR === 0 || cr.gameM === 0, "«Counter in partita» con Faramis segnato contro Gloo: Faramis primo in roam o mid (bal: " + cr.balR + ", game: roam " + cr.gameR + " / mid " + cr.gameM + ")");
+    ok(cr.meta && cr.laneOk, "«Meta» ordina per forza nel meta, «Vinci la lane» per lo scontro con il nemico della lane (" + cr.lane + ")");
+    ok(cr.rows === "GOLD" && cr.six === 6 && cr.btns === 5, "«Solo la mia lane»: solo la riga GOLD con 6 proposte; 5 criteri nel selettore");
+
     section("Quiz: sfida del giorno");
     var qa = await p.evaluate(function () { S.daily = null; QZ = null; go("quiz"); document.getElementById("dgo").click(); return JSON.stringify(QZ.r.map(function (q) { return [q.q, q.o, q.a] })) });
     var ctx4 = await browser.newContext({ locale: "en-US" }), errs4 = [], p4 = await newPage(ctx4, errs4);

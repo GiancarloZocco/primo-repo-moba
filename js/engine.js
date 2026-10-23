@@ -64,26 +64,36 @@ function mineBonus(h) {
 /* pool scelto dal giocatore (primo avvio o Profilo): bonus fisso, un po' di più nella sua lane preferita */
 function inPool(h) { return S.useMine !== false && S.pool.indexOf(h) > -1 }
 function poolBonus(h, l) { if (!inPool(h)) return null; var lp = S.lane && l === S.lane; return { v: lp ? 2 : 1.5, t: "È nel tuo pool di eroi" + (lp ? ", nella tua lane preferita" : "") } }
+/* criterio dei consigli (selettore nel Draft):
+   bal = un po' di tutto · meta = solo forza nel meta · lane = solo lo scontro con l'avversario della lane
+   game = counter contro tutta la squadra nemica (anche di altre lane) · safe = come bal ma evita chi viene counterato */
+var CRIT = { bal: "Equilibrato", meta: "Meta", lane: "Vinci la lane", game: "Counter in partita", safe: "Sicuro" };
+function crit() { return CRIT[S.crit] ? S.crit : "bal" }
+function myGc(e) { return (S.gc && S.gc[e]) || [] }
 function compute() {
-  var u = used(), gaps = missing(), out = [];
+  var u = used(), gaps = missing(), out = [], C = crit();
   NAMES.forEach(function (h) {
     if (u.indexOf(h) > -1) return;
-    var s = 0, why = "", b = 0, risk = 0, parts = [], warn = [];
+    var cg = 0, why = "", b = 0, risk = 0, parts = [], warn = [], syn = 0, gap = 0;
     en().forEach(function (e) {
-      var x = sc(h, e), rc = realC(h, e); s += x.s + rc;
+      /* un counter segnato da te sostituisce, per quella coppia, dato ufficiale e tratti */
+      var my = myGc(e).indexOf(h) > -1, x = my ? { s: 0, w: "" } : sc(h, e), rc = my ? 0 : realC(h, e); cg += x.s + rc;
       if (rc > 0 && rc * 1.2 >= b) { b = rc * 1.2; why = "+" + rc.toFixed(1) + "% win rate contro " + e + " (dati ufficiali)" } else if (x.s > b) { b = x.s; why = x.w }
       if (rc) parts.push({ v: rc, t: (rc > 0 ? "+" : "") + rc.toFixed(1) + "% di win rate contro " + e + " (dati ufficiali)" });
       if (x.s) parts.push({ v: x.s, t: cap(x.w) });
-      var r1 = sc(e, h), r2 = realC(e, h), rr = r1.s + Math.max(0, r2); risk += rr;
+      /* counter "in partita" segnati da te: valgono contro quel nemico in qualunque lane giochi */
+      if (my) { cg += 5; parts.push({ v: 5, t: "Counter di " + e + " segnato da te (in partita)" + (realC(h, e) < 0 ? ": i dati ufficiali dicono il contrario (" + realC(h, e).toFixed(1) + "%)" : "") }); if (5 >= b) { b = 5; why = "counter di " + e + " segnato da te" } }
+      var r1 = my ? { s: 0, w: "" } : sc(e, h), r2 = my ? 0 : realC(e, h), rr = r1.s + Math.max(0, r2); risk += rr;
       if (rr > 0) warn.push({ v: rr, t: e + " lo mette in difficoltà" + (r2 > 0 ? " (+" + r2.toFixed(1) + "% di win rate per " + e + ")" : "") + (r1.s ? ": " + r1.w.replace(h, "lui") : "") })
     });
-    S.ally.forEach(function (a) { if (a) { var v = findInc(HX[a] && HX[a].mate, h); if (v != null) { s += v * .5; parts.push({ v: v * .5, t: (v >= 0 ? "+" : "") + v.toFixed(1) + "% di win rate in coppia con " + a + " (dati ufficiali)" }) } } });
+    S.ally.forEach(function (a) { if (a) { var v = findInc(HX[a] && HX[a].mate, h); if (v != null) { syn += v * .5; parts.push({ v: v * .5, t: (v >= 0 ? "+" : "") + v.toFixed(1) + "% di win rate in coppia con " + a + " (dati ufficiali)" }) } } });
     var fill = H[h].g.split("").filter(function (t) { return gaps.indexOf(t) > -1 });
-    if (fill.length) { s += 1.5; parts.push({ v: 1.5, t: "Porta " + fill.map(function (t) { return CAT[t] }).join(" e ") + ", che manca alla squadra" }) }
-    if (S.algo === "meta") { var mv = M[h].meta / 25; s += mv; parts.push({ v: mv, t: "Meta: " + (M[h].wr != null ? "win rate " + pc(M[h].wr) + ", pick " + pc(M[h].pr) + ", ban " + pc(M[h].br) + ", " : "") + "tier " + M[h].tier + " (" + RKN[S.rk] + ")" }) }
-    if (S.algo === "safe" && risk) { s -= risk * .8; parts.push({ v: -risk * .8, t: "Penalità Safe pick per i counter nemici" }) }
-    var mb = mineBonus(h); if (mb) { s += mb.v; parts.push(mb) }
-    out.push({ n: h, s: Math.round(s * 10) / 10, why: why, risk: risk, parts: parts, warn: warn });
+    if (fill.length) { gap = 1.5; parts.push({ v: 1.5, t: "Porta " + fill.map(function (t) { return CAT[t] }).join(" e ") + ", che manca alla squadra" }) }
+    var mv = M[h].meta / 25; parts.push({ v: mv, t: "Meta: " + (M[h].wr != null ? "win rate " + pc(M[h].wr) + ", pick " + pc(M[h].pr) + ", ban " + pc(M[h].br) + ", " : "") + "tier " + M[h].tier + " (" + RKN[S.rk] + ")" });
+    if (C === "safe" && risk) parts.push({ v: -risk * .8, t: "Penalità Sicuro: eroi che lo counterano tra i nemici" });
+    var mb = mineBonus(h), mine = mb ? mb.v : 0; if (mb) parts.push(mb);
+    var base = C === "meta" ? mv * 2 : C === "lane" ? mv * .3 : C === "game" ? cg * 1.5 + syn : cg + syn + gap + mv + mine - (C === "safe" ? risk * .8 : 0);
+    out.push({ n: h, s: Math.round(base * 10) / 10, mv: mv, why: why, risk: risk, parts: parts, warn: warn });
   });
   out.sort(function (a, b) { return b.s - a.s || M[b.n].score - M[a.n].score });
   cover = laneAssign(); byLane = {}; byLaneList = {}; var poolBest = {};
@@ -96,7 +106,9 @@ function compute() {
       var pb = poolBonus(o.n, l); if (pb) pp.push(pb);
       var lo = EL[l], lv = lo ? laneVs(o.n, lo) : null, lw = lv ? Math.round(lv.v * 1.2 * 10) / 10 : 0;
       if (lv && lw) pp.push({ v: lw, t: "In lane contro " + lo + ": " + (lv.src === "tu" ? "counter segnato da te" : lv.src === "uff" ? (lv.v > 0 ? "+" : "") + lv.v.toFixed(1) + "% di win rate (dati ufficiali)" : "stima " + (lv.v > 0 ? "+" : "") + lv.v.toFixed(1) + "% da tratti e lane") });
-      return Object.assign({}, o, { lane: l, fit: f, s: Math.round((o.s + 2 * f + (pb ? pb.v : 0) + lw) * 10) / 10, parts: pp })
+      if (C === "lane" && !lo) pp.push({ v: 0, t: "Nessun nemico ancora in " + LN[l] + ": per ora conta il meta" });
+      var ls = C === "meta" ? f + (pb ? pb.v * .5 : 0) : C === "lane" ? (lo ? lw * 2 : o.mv) + 2 * f : C === "game" ? f : 2 * f + (pb ? pb.v : 0) + lw;
+      return Object.assign({}, o, { lane: l, fit: f, s: Math.round((o.s + ls) * 10) / 10, parts: pp })
     }).sort(function (a, b) { return b.s - a.s || M[b.n].score - M[a.n].score });
     byLaneList[l] = c.slice(0, 6); if (c[0]) byLane[l] = c[0];
     c.forEach(function (r) { if (inPool(r.n) && (!poolBest[r.n] || r.s > poolBest[r.n].s)) poolBest[r.n] = r })
@@ -106,6 +118,8 @@ function compute() {
   if (S.lanefit && free.length && S.ally.indexOf(null) > -1) recs = free.map(function (l) { return byLane[l] }).filter(Boolean).sort(function (a, b) { return b.s - a.s });
   else recs = LANES.map(function (l) { return byLane[l] }).filter(Boolean).sort(function (a, b) { return b.s - a.s }).filter(function (r, i, a) { return a.findIndex(function (z) { return z.n === r.n }) === i }).slice(0, 4);
   if (!focus || !focusRec()) { focus = recs[0] && recs[0].n; focusL = recs[0] && recs[0].lane }
+  /* "solo la mia lane": il consigliato è quello della tua lane */
+  if (S.myLane && S.lane && byLane[S.lane] && focusL !== S.lane) { focus = byLane[S.lane].n; focusL = S.lane }
 }
 var LANES = ["o", "e", "m", "j", "r"], poolRecs = [], byLane = {}, byLaneList = {}, cover = {}, laneIdx = {}, focusL = null, lMore = false;
 var LS3 = { o: "GOLD", e: "EXP", m: "MID", j: "JGL", r: "ROAM" };

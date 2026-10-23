@@ -3387,3 +3387,9 @@ details.mys > summary::-webkit-details-marker { display: none; }
 .mch.r { border-color: rgba(248, 113, 113, .45); }
 .mch.g { border-color: rgba(74, 222, 128, .45); }
 .mch b { font-size: 10.5px; }
+
+/* criterio dei consigli */
+.crit { display: flex; flex-direction: column; gap: 6px; }
+.crit .seg { flex-wrap: wrap; }
+.crit .seg button { flex: 1 1 30%; font-size: 10px; padding: 7px 4px; }
+.crit p.hint { margin: 0; }

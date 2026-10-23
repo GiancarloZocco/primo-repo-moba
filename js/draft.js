@@ -11,18 +11,28 @@ function draftUndo() {
 function rDraft() {
   var st = draftState(); if (lastSt !== null && st !== lastSt && !undoing) { UNDO.push(lastSt); if (UNDO.length > 40) UNDO.shift() } lastSt = st; undoing = false;
   if (!used().length) { S.gskip = []; QE.hist = [] }
-  compute(); var v = $("v-draft"), full = S.ally.indexOf(null) < 0, algo = { meta: "Meta", bal: "Bilanciata", safe: "Safe pick" }[S.algo], free = LANES.filter(function (l) { return !cover[l] });
+  compute(); var v = $("v-draft"), full = S.ally.indexOf(null) < 0, algo = CRIT[crit()], free = LANES.filter(function (l) { return !cover[l] });
   v.innerHTML = '<div class="ttl"><div><h2>Draft Live<i></i></h2><p>5v5 · ' + algo + ' · ' + RKN[S.rk] + '</p></div><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><span class="pill am" title="Sinergia della squadra alleata">Sinergia ' + synergy() + '%</span><span class="pill bl">' + en().length + '/5 Nemici</span>' + (UNDO.length ? '<button class="pill undo" id="undo" aria-label="Annulla l\'ultima modifica">↶ Annulla</button>' : '') + '</span></div>' +
     '<details class="gset" id="gset"' + (gsetOpen ? " open" : "") + '><summary><span class="k">Draft guidato</span><b>' + (S.guide ? (S.gmode === "tour" ? "Torneo" : "Ranked") + ' · ' + (S.guide === "blue" ? "Primi noi" : "Primi loro") + ' · ' + S.gbans + ' ban' : "No") + '</b><span class="gear">' + IC.sliders + '</span></summary>' +
     '<div class="srt" style="margin-top:8px"><span class="k">Guidato:</span><div class="seg" id="gd"></div></div>' + (S.guide ? '<div class="srt" style="margin-top:0"><span class="k">Modalità:</span><div class="seg" id="gmo"></div></div><div class="srt" style="margin-top:0"><span class="k">Ban:</span><div class="seg" id="gbn"></div></div>' : '') + '</details>' + guideBox() + resultBox() + quickBox() +
     (used().length || S.guide || gameMsg ? '' : '<div class="alert"><span class="a">' + IC.bulb + '</span><span>Inizia dai ban, poi aggiungi gli eroi nemici man mano che li scelgono: i consigli per ogni lane si aggiornano a ogni pick.</span></div>') +
     '<div class="teams"><div class="team ally"><h3>Alleati</h3><div id="ally"></div></div><div class="team enemy"><h3>Nemici</h3><div id="enemy"></div></div></div>' + (S.ally.some(Boolean) && en().length ? tend("lane", "Lane 1v1", laneSum(), laneCard()) : '') + tend("bans", "Ban", banSum(), '<div class="bans" id="bans"></div>') +
-    foldOpen("recs", "Consigliati", recSum()) + '<div class="kv" style="align-items:center"><span class="k">Consigliati per lane</span><button class="lnk" id="lf">' + (S.lanefit ? "Solo lane libere ✓" : "Tutte le lane") + '</button></div><div class="lrows" id="lanes"></div><button class="lnk" id="lmore" style="align-self:center">' + (lMore ? "Mostra 3 per lane" : "Mostra 6 per lane") + '</button>' + (poolRecs.length && !full ? '<div class="card prow"><div class="kv"><b class="hh">' + IC.star + ' Dal tuo pool</b><span class="k">' + poolRecs.length + ' disponibili</span></div><div class="hrow" id="poolr"></div></div>' : '') + '<div id="rec"></div>' +
+    foldOpen("recs", "Consigliati", recSum()) +
+    '<div class="crit"><span class="k">Criterio</span><div class="seg" id="crit"></div><p class="hint" id="crith"></p>' +
+    '<label class="qonly"><input type="checkbox" id="myln"' + (S.myLane ? " checked" : "") + '> Solo la mia lane' + (S.myLane && S.lane ? ': <b>' + LN[S.lane] + '</b>' : '') + '</label>' + (S.myLane ? '<div class="chips" id="mylnc" style="margin:0;padding:0"></div>' : '') + '</div>' +
+    '<div class="kv" style="align-items:center"><span class="k">Consigliati per lane</span><button class="lnk" id="lf">' + (S.lanefit ? "Solo lane libere ✓" : "Tutte le lane") + '</button></div><div class="lrows" id="lanes"></div><button class="lnk" id="lmore" style="align-self:center">' + (lMore ? "Mostra 3 per lane" : "Mostra 6 per lane") + '</button>' + (poolRecs.length && !full ? '<div class="card prow"><div class="kv"><b class="hh">' + IC.star + ' Dal tuo pool</b><span class="k">' + poolRecs.length + ' disponibili</span></div><div class="hrow" id="poolr"></div></div>' : '') + '<div id="rec"></div>' +
     '<div class="two"><button class="btn sm" id="add"' + (en().length >= 5 ? " disabled" : "") + '>+ Nemico</button><button class="btn sm" id="det">' + (detOpen || S.keep ? "Chiudi analisi" : "Analisi dettagliata") + '</button></div><div id="detail"></div></div></details>' +
     '<div id="alert"></div><div class="two"><button class="btn sm" id="rp">Azzera pick</button><button class="btn sm" id="share"' + (used().length ? "" : " disabled") + '>Condividi draft</button></div>';
   slots($("ally"), S.ally, 1); slots($("enemy"), S.enemy, 0); banRows();
-  LANES.forEach(function (l) {
-    var row = document.createElement("div"), al = cover[l], list = (byLaneList[l] || []).slice(0, lMore ? 6 : 3);
+  /* criterio e "solo la mia lane" */
+  var CH = { bal: "Un po' di tutto: counter, meta, lane, ruoli che mancano e il tuo pool.", meta: "Solo quanto è forte l'eroe nel meta del tuo rank.", lane: "Solo lo scontro con l'avversario diretto: ogni riga consiglia chi batte il nemico di quella lane.", game: "Chi batte tutta la squadra nemica, anche nemici di altre lane (dati ufficiali, tratti e counter segnati da te).", safe: "Come Equilibrato, ma evita gli eroi che i nemici scelti counterano." };
+  Object.keys(CRIT).forEach(function (k) { var b = document.createElement("button"); b.textContent = CRIT[k]; b.className = crit() === k ? "on" : ""; b.onclick = function () { S.crit = k; focus = null; save(); rDraft() }; $("crit").appendChild(b) });
+  $("crith").textContent = CH[crit()];
+  $("myln").onchange = function () { S.myLane = this.checked; focus = null; save(); rDraft() };
+  if ($("mylnc")) LANES.forEach(function (k) { var b = document.createElement("button"); b.className = "chip" + (S.lane === k ? " on" : ""); b.textContent = LN[k]; b.onclick = function () { S.lane = k; focus = null; save(); rDraft() }; $("mylnc").appendChild(b) });
+  var only = S.myLane && S.lane ? S.lane : null;
+  (only ? [only] : LANES).forEach(function (l) {
+    var row = document.createElement("div"), al = cover[l], list = (byLaneList[l] || []).slice(0, only || lMore ? 6 : 3);
     row.className = "lrow" + (al ? " cov" : "");
     row.innerHTML = '<div class="lh"><b>' + LS3[l] + '</b><small>' + (al ? "✓ " + esc(al) : "libera") + '</small></div><div class="lc3"></div>';
     list.forEach(function (r) {
