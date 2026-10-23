@@ -13,23 +13,15 @@ function rDraft() {
   if (!used().length) { S.gskip = []; QE.hist = [] }
   compute(); var v = $("v-draft"), full = S.ally.indexOf(null) < 0, algo = CRIT[crit()], free = LANES.filter(function (l) { return !cover[l] });
   v.innerHTML = '<div class="ttl"><div><h2>Draft Live<i></i></h2><p>5v5 · ' + algo + ' · ' + RKN[S.rk] + '</p></div><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><span class="pill am" title="Sinergia della squadra alleata">Sinergia ' + synergy() + '%</span><span class="pill bl">' + en().length + '/5 Nemici</span>' + (UNDO.length ? '<button class="pill undo" id="undo" aria-label="Annulla l\'ultima modifica">↶ Annulla</button>' : '') + '</span></div>' +
-    '<details class="gset" id="gset"' + (gsetOpen ? " open" : "") + '><summary><span class="k">Draft guidato</span><b>' + (S.guide ? (S.gmode === "tour" ? "Torneo" : "Ranked") + ' · ' + (S.guide === "blue" ? "Primi noi" : "Primi loro") + ' · ' + S.gbans + ' ban' : "No") + '</b><span class="gear">' + IC.sliders + '</span></summary>' +
-    '<div class="srt" style="margin-top:8px"><span class="k">Guidato:</span><div class="seg" id="gd"></div></div>' + (S.guide ? '<div class="srt" style="margin-top:0"><span class="k">Modalità:</span><div class="seg" id="gmo"></div></div><div class="srt" style="margin-top:0"><span class="k">Ban:</span><div class="seg" id="gbn"></div></div>' : '') + '</details>' + guideBox() + resultBox() + quickBox() +
+    draftBar() + guideBox() + resultBox() + quickBox() +
     (used().length || S.guide || gameMsg ? '' : '<div class="alert"><span class="a">' + IC.bulb + '</span><span>Inizia dai ban, poi aggiungi gli eroi nemici man mano che li scelgono: i consigli per ogni lane si aggiornano a ogni pick.</span></div>') +
+    '<div class="teamh"><span class="k">Squadre</span><button class="lnk" id="rp"' + (S.ally.concat(S.enemy).some(Boolean) ? '' : ' disabled') + '>Azzera pick</button></div>' +
     '<div class="teams"><div class="team ally"><h3>Alleati</h3><div id="ally"></div></div><div class="team enemy"><h3>Nemici</h3><div id="enemy"></div></div></div>' + (S.ally.some(Boolean) && en().length ? tend("lane", "Lane 1v1", laneSum(), laneCard()) : '') + tend("bans", "Ban", banSum(), '<div class="bans" id="bans"></div>') +
     foldOpen("recs", "Consigliati", recSum()) +
-    '<div class="crit"><span class="k">Criterio</span><div class="seg" id="crit"></div><p class="hint" id="crith"></p>' +
-    '<label class="qonly"><input type="checkbox" id="myln"' + (S.myLane ? " checked" : "") + '> Solo la mia lane' + (S.myLane && S.lane ? ': <b>' + LN[S.lane] + '</b>' : '') + '</label>' + (S.myLane ? '<div class="chips" id="mylnc" style="margin:0;padding:0"></div>' : '') + '</div>' +
     '<div class="kv" style="align-items:center"><span class="k">Consigliati per lane</span><button class="lnk" id="lf">' + (S.lanefit ? "Solo lane libere ✓" : "Tutte le lane") + '</button></div><div class="lrows" id="lanes"></div><button class="lnk" id="lmore" style="align-self:center">' + (lMore ? "Mostra 3 per lane" : "Mostra 6 per lane") + '</button>' + (poolRecs.length && !full ? '<div class="card prow"><div class="kv"><b class="hh">' + IC.star + ' Dal tuo pool</b><span class="k">' + poolRecs.length + ' disponibili</span></div><div class="hrow" id="poolr"></div></div>' : '') + '<div id="rec"></div>' +
     '<div class="two"><button class="btn sm" id="add"' + (en().length >= 5 ? " disabled" : "") + '>+ Nemico</button><button class="btn sm" id="det">' + (detOpen || S.keep ? "Chiudi analisi" : "Analisi dettagliata") + '</button></div><div id="detail"></div></div></details>' +
-    '<div id="alert"></div><div class="two"><button class="btn sm" id="rp">Azzera pick</button><button class="btn sm" id="share"' + (used().length ? "" : " disabled") + '>Condividi draft</button></div>';
+    '<div id="alert"></div><button class="btn sm" id="share" style="width:100%"' + (used().length ? "" : " disabled") + '>Condividi draft</button>';
   slots($("ally"), S.ally, 1); slots($("enemy"), S.enemy, 0); banRows();
-  /* criterio e "solo la mia lane" */
-  var CH = { bal: "Un po' di tutto: counter, meta, lane, ruoli che mancano e il tuo pool.", meta: "Solo quanto è forte l'eroe nel meta del tuo rank.", lane: "Solo lo scontro con l'avversario diretto: ogni riga consiglia chi batte il nemico di quella lane.", game: "Chi batte tutta la squadra nemica, anche nemici di altre lane (dati ufficiali, tratti e counter segnati da te).", safe: "Come Equilibrato, ma evita gli eroi che i nemici scelti counterano." };
-  Object.keys(CRIT).forEach(function (k) { var b = document.createElement("button"); b.textContent = CRIT[k]; b.className = crit() === k ? "on" : ""; b.onclick = function () { S.crit = k; focus = null; save(); rDraft() }; $("crit").appendChild(b) });
-  $("crith").textContent = CH[crit()];
-  $("myln").onchange = function () { S.myLane = this.checked; focus = null; save(); rDraft() };
-  if ($("mylnc")) LANES.forEach(function (k) { var b = document.createElement("button"); b.className = "chip" + (S.lane === k ? " on" : ""); b.textContent = LN[k]; b.onclick = function () { S.lane = k; focus = null; save(); rDraft() }; $("mylnc").appendChild(b) });
   var only = S.myLane && S.lane ? S.lane : null;
   (only ? [only] : LANES).forEach(function (l) {
     var row = document.createElement("div"), al = cover[l], list = (byLaneList[l] || []).slice(0, only || lMore ? 6 : 3);
@@ -80,17 +72,13 @@ function rDraft() {
   $("rp").onclick = function () { if (!S.ally.concat(S.enemy).some(Boolean)) return; ask("Azzerare i pick?", { text: "Si svuotano gli eroi di entrambe le squadre. I ban restano.", ok: "Azzera pick", danger: 1 }, function () { S.ally = [null, null, null, null, null]; S.enemy = [null, null, null, null, null]; S.allyLane = [null, null, null, null, null]; focus = null; save(); rDraft() }) };
   $("lf").onclick = function () { S.lanefit = !S.lanefit; focus = null; save(); rDraft() };
   $("share").onclick = function () { shareDraft(this) };
-  [[null, "No"], ["blue", "Primi noi"], ["red", "Primi loro"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.guide === o[0] ? "on" : ""; b.onclick = function () { S.guide = o[0]; gsetOpen = false; save(); rDraft() }; $("gd").appendChild(b) });
-  if (S.guide) [["rank", "Ranked"], ["tour", "Torneo"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = (S.gmode === "tour" ? "tour" : "rank") === o[0] ? "on" : ""; b.onclick = function () { S.gmode = o[0]; gsetOpen = false; save(); rDraft() }; $("gmo").appendChild(b) });
-  if (S.guide) [[10, S.gmode === "tour" ? "10" : "10 (Mitico)"], [6, "6"]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[1]; b.className = S.gbans === o[0] ? "on" : ""; b.onclick = function () { S.gbans = o[0]; gsetOpen = false; save(); rDraft() }; $("gbn").appendChild(b) });
   guideBind(); resultBind(); quickBind(); laneBind(v); foldBind(v);
   if ($("undo")) $("undo").onclick = function () { if (draftUndo()) rDraft() };
-  $("gset").ontoggle = function () { gsetOpen = this.open }; gameMsg = ""; fxDraftDone(S.ally.every(Boolean) && S.enemy.every(Boolean));
+  draftBarBind(); gameMsg = ""; fxDraftDone(S.ally.every(Boolean) && S.enemy.every(Boolean));
   $("lmore").onclick = function () { lMore = !lMore; rDraft() };
 }
 /* ---------- tendine del draft: si aprono da sole quelle utili nella fase attuale (ban, pick, draft completo);
    se ne apri o chiudi una a mano, l'app lo ricorda finché non cambia fase ---------- */
-var gsetOpen = false; /* la riga del draft guidato si richiude da sola dopo ogni scelta */
 function draftPhase() {
   if (S.ally.every(Boolean) && S.enemy.every(Boolean)) return "done";
   var g = guideNow(); if (g && g.t) return g.t.charAt(0) === "b" ? "ban" : "pick";

@@ -1,23 +1,34 @@
 /* MLBB TOP - Schermata Impostazioni: preferenze del draft, app, dati e backup */
 function rSettings() {
   var v = $("v-settings");
-  v.innerHTML = '<div class="ttl"><div><h2>Impostazioni</h2><p>Draft, app, dati e backup</p></div></div>' +
-    '<div class="card"><div class="ph">' + IC.sliders + ' Configurazione draft & preferenze</div>' +
+  var sec = function (id, ic, t) { return '<div class="card" id="sec-' + id + '"><div class="ph">' + ic + ' ' + t + '</div>' };
+  v.innerHTML = '<div class="ttl"><div><h2>Impostazioni</h2><p>Draft, aspetto, lingua, dati e backup</p></div></div>' +
+    '<div class="setnav" id="setnav"></div>' +
+    sec("draft", IC.pad, "Draft e consigli") +
+    '<div class="set" style="flex-direction:column;align-items:stretch"><span><b>Draft guidato</b><small>Turni del ranked o del torneo</small></span><div id="sguide"></div></div>' +
+    '<div class="set" style="flex-direction:column;align-items:stretch"><span><b>Criterio dei consigli</b><small>Su cosa si basano i pick consigliati</small></span><div id="scrit"></div></div>' +
+    '<div class="set" style="flex-direction:column;align-items:stretch"><span><b>La mia lane</b><small>Mostra solo i consigli della tua lane</small></span><div id="slanes"></div></div>' +
     '<div class="set"><span><b>Analisi dettagliata sempre aperta</b><small>Mostra copertura ruoli e pressione nel draft</small></span><button class="tg' + (S.keep ? " on" : "") + '" id="tg" aria-label="Analisi dettagliata sempre aperta"></button></div>' +
     '<div class="set"><span><b>Usa i miei eroi nei consigli</b><small>Bonus agli eroi del tuo pool e a quelli più usati del Profilo MLBB</small></span><button class="tg' + (S.useMine !== false ? " on" : "") + '" id="tgm" aria-label="Usa i miei eroi nei consigli"></button></div>' +
     '<div class="set"><span><b>Azzera il draft</b><small>Svuota squadre e ban</small></span><button class="btn sm" id="reset">Azzera</button></div></div>' +
-    '<div class="card"><div class="ph">' + IC.monitor + ' Impostazioni app & sistema</div>' +
+    sec("look", IC.monitor, "Aspetto") +
     '<div class="set" style="flex-direction:column;align-items:stretch"><span><b>Tema interfaccia</b><small>Colori e stile dell\'app, anche a tema fazioni del gioco</small></span><div class="thg" id="theme"></div></div>' +
+    '</div>' + sec("lang", IC.book, "Lingua") +
     '<div class="set"><span><b>Lingua dell\'app</b><small>Menu, pulsanti e consigli</small></span><div class="seg" id="uil" style="width:170px"></div></div>' +
     '<div class="set"><span><b>Testi di gioco</b><small>Abilità, oggetti, talenti e matchup</small></span><div class="seg" id="lang" style="width:170px"></div></div>' +
+    '</div>' + sec("data", IC.chart, "Statistiche e dati") +
     '<div class="set" style="flex-direction:column;align-items:stretch"><div class="kv"><b style="font-family:var(--hd);font-weight:500;font-size:13px">Statistiche per rank</b><span class="a" style="font-size:10.5px;font-weight:700">' + RKN[S.rk].toUpperCase() + '</span></div><div class="seg" id="prk"></div></div>' +
     '<div class="set"><span><b>Aggiornamento automatico</b><small>Scarica le statistiche una volta al giorno quando c’è internet</small></span><button class="tg' + (S.autoLive !== false ? " on" : "") + '" id="tga" aria-label="Aggiornamento automatico"></button></div>' +
     '<div class="set"><span><b>Dati ufficiali</b><small>' + NAMES.length + ' eroi · ' + (META.live ? "aggiornati online il " : "snapshot del ") + META.date + '</small></span><button class="btn sm" id="live">Aggiorna</button></div>' +
+    '</div>' + sec("backup", IC.shield, "Backup e progressi") +
     '<div class="set"><span><b>Backup dei dati</b><small>Profilo, draft, storico partite, quiz e screenshot in un file</small></span><span style="display:flex;gap:6px"><button class="btn sm" id="bkx">Esporta</button><button class="btn sm" id="bki">Importa</button></span></div><input type="file" accept="application/json,.json" id="bkf" hidden>' +
     '<div class="set"><span><b>Azzera progressi quiz</b><small>XP, serie e record</small></span><button class="btn rd sm" id="rq">Azzera</button></div>' +
-    '<p class="hint" style="padding-top:10px;border-top:1px solid var(--line)">Win rate, pick rate, ban rate, counter, compagni e build: dati ufficiali MLBB Academy (via arena.rone.dev, ' + META.win + '). Abilità e titoli: MLBB Academy e Wiki MLBB. Il pulsante Aggiorna scarica le statistiche più recenti (serve internet). Tier e punteggi del draft sono calcolati da MLBB TOP.</p>' +
+    '</div>' + sec("info", IC.star, "Info") +
+    '<p class="hint" style="margin:0">Win rate, pick rate, ban rate, counter, compagni e build: dati ufficiali MLBB Academy (via arena.rone.dev, ' + META.win + '). Abilità e titoli: MLBB Academy e Wiki MLBB. Il pulsante Aggiorna scarica le statistiche più recenti (serve internet). Tier e punteggi del draft sono calcolati da MLBB TOP.</p>' +
     '<p class="k" style="text-align:center;margin:10px 0 0">MLBB TOP esports system · build v4.0</p></div>';
-  v.innerHTML += '<button class="btn sm" id="tonews" style="width:100%">Novità di questa versione</button>';
+  $("sec-info").insertAdjacentHTML("beforeend", '<button class="btn sm" id="tonews" style="width:100%;margin-top:10px">Novità di questa versione</button>');
+  [["draft", "Draft"], ["look", "Aspetto"], ["lang", "Lingua"], ["data", "Dati"], ["backup", "Backup"], ["info", "Info"]].forEach(function (o) { var b = document.createElement("button"); b.className = "chip"; b.textContent = o[1]; b.onclick = function () { $("sec-" + o[0]).scrollIntoView({ block: "start", behavior: "smooth" }) }; $("setnav").appendChild(b) });
+  guideCtl($("sguide")); critCtl($("scrit")); laneCtl($("slanes"));
   /* [codice, nome, colori dell'anteprima: sfondo, accento, alleati, nemici] */
   [["dark", "Cyber dark", "#0B0E14,#5B8CFF,#A9C3FF,#F87171"], ["lod", "Land of Dawn", "#0d1631,#f5c24a,#3fa9ff,#ff5a5a"], ["moniyan", "Moniyan", "#1c2a52,#f6e3a6,#a9d6ff,#ff5a5a"], ["abyss", "Abyss", "#1c0507,#ff5a3a,#9fc4ff,#ff2a1a"],
     ["eruditio", "Eruditio", "#0a2a33,#4ff0ff,#8ff6ff,#ff5a5a"], ["cadia", "Cadia", "#2c0d0b,#e8c26a,#7fe0b8,#ff5a5a"], ["vale", "Northern Vale", "#1f3249,#cfe6ff,#bfe0ff,#ff5a5a"], ["hc", "Alto contrasto", "#000,#fff,#7FA8FF,#FF8080"]].forEach(function (a) { var b = document.createElement("button"), c = a[2].split(","); b.innerHTML = '<span class="sw" style="background:' + c[0] + '"><i style="background:' + c[1] + '"></i><i style="background:' + c[2] + '"></i><i style="background:' + c[3] + '"></i></span>' + esc(a[1]); b.className = S.theme === a[0] ? "on" : ""; b.onclick = function () { S.theme = a[0]; applyTheme(); save(); rSettings() }; $("theme").appendChild(b) });
