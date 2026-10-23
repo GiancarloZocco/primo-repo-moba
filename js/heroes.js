@@ -85,20 +85,33 @@ function rHero() {
     }
   } else if (htab === "mu") {
     var rel = X.rel || {}, html3 = '<div class="sec">' + IC.swap + ' Analisi matchup & counter</div>';
-    function pctf(a) { return function (n) { var v = findInc(a, n); return v == null ? '' : '<span class="' + (v >= 0 ? "g" : "r") + '">' + (v >= 0 ? "+" : "") + v.toFixed(1) + '%</span>' } }
+    /* neg: nei dati "vs" il numero è il calo dell'avversario, quindi per h è un vantaggio */
+    function pctf(a, neg) { return function (n) { var v = findInc(a, n); if (v != null && neg) v = -v; return v == null ? '' : '<span class="' + (v >= 0 ? "g" : "r") + '">' + (v >= 0 ? "+" : "") + v.toFixed(1) + '%</span>' } }
     function names(a) { return (a || []).map(function (z) { return z[0] }) }
     if (rel.strong || rel.weak) {
       html3 += '<div class="card mu1 pos"><h4>' + IC.up + ' Forte contro</h4><p>' + esc(rel.strong && rel.strong.d || "") + '</p>' + chips(rel.strong ? rel.strong.h : []) + '</div>' +
         '<div class="card mu1 neg"><h4>' + IC.down + ' Debole contro</h4><p>' + esc(rel.weak && rel.weak.d || "") + '</p>' + chips(rel.weak ? rel.weak.h : []) + '</div>' +
         '<div class="card mu1 syn"><h4>' + IC.check + ' Sinergia ideale</h4><p>' + esc(rel.assist && rel.assist.d || "") + '</p>' + chips(rel.assist ? rel.assist.h : []) + '</div>';
     }
-    if (X.by && X.by.length) html3 += '<div class="mu"><div class="neg"><h4>' + IC.down + ' Lo counterano</h4>' + chips(names(X.by), pctf(X.by)) + '</div><div class="pos"><h4>' + IC.up + ' Domina contro</h4>' + chips(names(X.vs), pctf(X.vs)) + '</div></div>';
+    /* in lane: solo eroi che giocano almeno una lane in comune con h */
+    var same = NAMES.filter(function (o) { return o !== h && !H[o].nw && shareLane(o, h) }), tag = function (lv) { return lv.src === "tu" ? '<span class="g">✎</span>' : '<span class="' + (lv.v >= 0 ? "g" : "r") + '">+' + Math.abs(lv.v).toFixed(1) + '%' + (lv.src === "stima" ? "*" : "") + '</span>' };
+    var lcBy = same.map(function (o) { return { n: o, lv: laneVs(o, h) } }).filter(function (z) { return z.lv.v >= .5 }).sort(function (a, b) { return (b.lv.src === "tu") - (a.lv.src === "tu") || b.lv.v - a.lv.v }).slice(0, 5);
+    var lcVs = same.map(function (o) { return { n: o, lv: laneVs(h, o) } }).filter(function (z) { return z.lv.v >= .5 }).sort(function (a, b) { return b.lv.v - a.lv.v }).slice(0, 5);
+    var byMap = {}, vsMap = {}; lcBy.forEach(function (z) { byMap[z.n] = z.lv }); lcVs.forEach(function (z) { vsMap[z.n] = z.lv });
+    html3 += '<div class="card mlane"><div class="kv"><b class="hh">' + IC.swap + ' In lane (' + lanes(h) + ')</b></div><div class="mu"><div class="neg"><h4>' + IC.down + ' Lo counterano in lane</h4>' + (lcBy.length ? chips(lcBy.map(function (z) { return z.n }), function (n) { return tag(byMap[n]) }) : '<p class="hint">Nessuno.</p>') + '</div><div class="pos"><h4>' + IC.up + ' Domina in lane</h4>' + (lcVs.length ? chips(lcVs.map(function (z) { return z.n }), function (n) { return tag(vsMap[n]) }) : '<p class="hint">Nessuno.</p>') + '</div></div>' +
+      '<div class="k" style="margin-top:10px">I tuoi counter di lane per ' + esc(h) + '</div><div class="pool" id="mylc"></div><p class="hint" style="margin:6px 0 0">Aggiungi gli eroi che secondo te lo battono in lane: per i consigli e la Lane 1v1 contano più dei dati ufficiali. % ufficiale · * stima · ✎ segnato da te.</p></div>';
+    if (X.by && X.by.length) html3 += '<div class="mu"><div class="neg"><h4>' + IC.down + ' Counter di squadra</h4>' + chips(names(X.by), pctf(X.by)) + '</div><div class="pos"><h4>' + IC.up + ' Forte in squadra contro</h4>' + chips(names(X.vs), pctf(X.vs, 1)) + '</div></div><p class="hint" style="margin-top:-6px">Dati ufficiali su tutta la partita: possono essere eroi di altre lane.</p>';
     if (X.mate && X.mate.length) html3 += '<div class="mu"><div class="pos"><h4>' + IC.check + ' Compagni migliori</h4>' + chips(names(X.mate), pctf(X.mate)) + '</div><div class="neg"><h4>' + IC.warn + ' Compagni peggiori</h4>' + chips(names(X.bad), pctf(X.bad)) + '</div></div>';
     if (X.by && X.by.length) html3 += '<p class="hint">Percentuali = variazione di win rate nel matchup (dati ufficiali, ' + META.win + '). ' + (ITON ? 'Testi dei matchup ufficiali tradotti in italiano.' : 'Testi dei matchup ufficiali in inglese.') + '</p>';
     function rows(a, cls) { return a.slice(0, 5).map(function (o) { return '<button class="mrow" data-h="' + esc(o.n) + '"><span>' + o.n + '</span><span class="' + cls + '">' + (cls === "g" ? "+" : "-") + o.s + ' ctr</span></button>' }).join("") || '<p>Nessuno nel database.</p>' }
     html3 += '<details class="fold"><summary class="sec">' + IC.bolt + ' Motore tratti MLBB TOP</summary><div class="mu"><div class="pos"><h4>' + IC.up + ' Vantaggio</h4>' + rows(pos, "g") + '</div><div class="neg"><h4>' + IC.down + ' Svantaggio</h4>' + rows(neg, "r") + '</div></div></details>';
     B.innerHTML = html3;
     [].forEach.call(B.querySelectorAll(".mrow"), function (b) { b.onclick = function () { openHero(b.dataset.h, "mu") } });
+    var re = function () { save(); rHero() };
+    myLc(h).forEach(function (o) { var b = document.createElement("button"); b.className = "pch on"; b.innerHTML = tile(o, "xs") + '<span>' + esc(o) + '</span><i aria-hidden="true">×</i>'; b.setAttribute("aria-label", "Togli " + o + " dai counter di lane di " + h); b.onclick = function () { S.lc[h] = myLc(h).filter(function (z) { return z !== o }); if (!S.lc[h].length) delete S.lc[h]; re() }; $("mylc").appendChild(b) });
+    var ad = document.createElement("button"); ad.className = "pch add"; ad.textContent = "+ Aggiungi";
+    ad.onclick = function () { var sm = NAMES.filter(function (o) { return o !== h && myLc(h).indexOf(o) < 0 }); sm.sort(function (a, b) { return shareLane(b, h) - shareLane(a, h) || a.localeCompare(b) }); openPick("Chi counter " + h + " in lane?", sm, function (o) { S.lc[h] = myLc(h).concat([o]); re() }) };
+    $("mylc").appendChild(ad);
   } else {
     B.innerHTML = '<div class="card arch"><div class="hd"><span class="a">' + IC.book + '</span><b>Archivio storico: ' + h + '</b><span class="k">Doc #' + String(1000 + (X.id || NAMES.indexOf(h)) * 7).padStart(4, "0") + '</span></div><p>' + x.lore + '</p>' + (X.ds ? '<blockquote>“' + esc(X.ds) + '”</blockquote>' : '') + '</div>' +
       '<div class="card rows">' + [["Titolo", X.ti], ["Regione", X.rg], ["Anno di uscita", X.yr], ["Ruolo ufficiale", (X.rl || []).join(" / ")], ["Lane", lanes(h)], ["Specialità", (X.sp || []).join(", ")], ["Tipo di attacco", { Melee: "Mischia", Ranged: "A distanza", Hybrid: "Ibrido" }[X.at] || X.at], ["Categoria", x.g.split("").map(function (g) { return CAT[g] }).join(", ")]].filter(function (r) { return r[1] }).map(function (r) { return '<div class="kv"><span class="k">' + r[0] + '</span><span>' + esc(r[1]) + '</span></div>' }).join("") + '</div>' +

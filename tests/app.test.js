@@ -469,6 +469,24 @@ async function run() {
     });
     ok(ms.first === "Ling:3:33" && ms.bad === "Saber:2" && ms.good === "Tigreal" && ms.rows === 2, "statistiche per eroe: win rate, contro chi perdi (Saber 2 sconfitte) e con chi vinci");
 
+    section("Scontri di lane");
+    var lc = await p.evaluate(function () {
+      qClean(); S.lc = {}; setSlot(S.enemy, 0, "Cecilion"); compute();
+      var mid = function () { compute(); return (byLaneList.m || []).map(function (r) { return r.n }) };
+      var r = { rule: laneRule("Lunox", "Cecilion").v > 0, est: laneVs("Lunox", "Cecilion").src, before: mid().indexOf("Lunox") };
+      openHero("Cecilion", "mu"); r.team = /Counter di squadra/.test(document.getElementById("hbody").textContent);
+      var inl = [].map.call(document.querySelectorAll(".mlane .neg .hc"), function (x) { return x.dataset.h }); r.sameLane = inl.length > 0 && inl.every(function (n) { return H[n] && shareLane(n, "Cecilion") });
+      document.querySelector("#mylc .pch.add").click(); [].filter.call(document.querySelectorAll("#grid button"), function (b) { return b.textContent === "Lunox" })[0].click();
+      r.saved = JSON.stringify(S.lc.Cecilion) === '["Lunox"]' && laneVs("Lunox", "Cecilion").src === "tu";
+      r.after = mid().indexOf("Lunox");
+      setSlot(S.ally, 0, "Lunox"); S.allyLane[0] = "m"; S.enemyLane[0] = "m"; go("draft"); var p1 = lanePair("m"); r.pair = p1.a + ">" + p1.e + ":" + p1.d + ":" + p1.mine;
+      document.querySelector("#mylc") || go("hero"); S.lc = {}; qClean(); return r;
+    });
+    ok(lc.rule && lc.est === "stima", "regola di lane: chi si cura regge il poke di un eroe fermo (Lunox contro Cecilion)");
+    ok(lc.team && lc.sameLane, "scheda eroe: «In lane» mostra solo eroi della stessa lane, i counter ufficiali diventano «di squadra»");
+    ok(lc.saved && lc.after > -1 && lc.after < 3 && (lc.before < 0 || lc.after < lc.before), "counter di lane segnato da te: Lunox sale tra i primi consigli in mid (" + lc.before + " → " + lc.after + ")");
+    ok(lc.pair === "Lunox>Cecilion:5:true", "Lane 1v1 usa il counter segnato da te (" + lc.pair + ")");
+
     section("Quiz: sfida del giorno");
     var qa = await p.evaluate(function () { S.daily = null; QZ = null; go("quiz"); document.getElementById("dgo").click(); return JSON.stringify(QZ.r.map(function (q) { return [q.q, q.o, q.a] })) });
     var ctx4 = await browser.newContext({ locale: "en-US" }), errs4 = [], p4 = await newPage(ctx4, errs4);

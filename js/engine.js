@@ -87,12 +87,16 @@ function compute() {
   });
   out.sort(function (a, b) { return b.s - a.s || M[b.n].score - M[a.n].score });
   cover = laneAssign(); byLane = {}; byLaneList = {}; var poolBest = {};
+  /* l'avversario diretto nella lane conta più degli altri nemici */
+  var EL = typeof enemyLanes === "function" ? enemyLanes() : {};
   LANES.forEach(function (l) {
     var c = out.filter(function (o) { return H[o.n].l.indexOf(l) > -1 }).map(function (o) {
       var f = fit(o.n, l), main = H[o.n].l[0] === l, pp = o.parts.concat([{ v: 2 * f, t: (main ? "Lane principale" : "Lane secondaria") + ": " + Math.round(f * 100) + "% delle sue build ufficiali sono in " + LN[l] }]);
       if (!cover[l]) pp.push({ v: 0, t: "Copre la " + LN[l] + ", ancora libera" });
       var pb = poolBonus(o.n, l); if (pb) pp.push(pb);
-      return Object.assign({}, o, { lane: l, fit: f, s: Math.round((o.s + 2 * f + (pb ? pb.v : 0)) * 10) / 10, parts: pp })
+      var lo = EL[l], lv = lo ? laneVs(o.n, lo) : null, lw = lv ? Math.round(lv.v * 1.2 * 10) / 10 : 0;
+      if (lv && lw) pp.push({ v: lw, t: "In lane contro " + lo + ": " + (lv.src === "tu" ? "counter segnato da te" : lv.src === "uff" ? (lv.v > 0 ? "+" : "") + lv.v.toFixed(1) + "% di win rate (dati ufficiali)" : "stima " + (lv.v > 0 ? "+" : "") + lv.v.toFixed(1) + "% da tratti e lane") });
+      return Object.assign({}, o, { lane: l, fit: f, s: Math.round((o.s + 2 * f + (pb ? pb.v : 0) + lw) * 10) / 10, parts: pp })
     }).sort(function (a, b) { return b.s - a.s || M[b.n].score - M[a.n].score });
     byLaneList[l] = c.slice(0, 6); if (c[0]) byLane[l] = c[0];
     c.forEach(function (r) { if (inPool(r.n) && (!poolBest[r.n] || r.s > poolBest[r.n].s)) poolBest[r.n] = r })
