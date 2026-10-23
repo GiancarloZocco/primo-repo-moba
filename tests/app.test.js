@@ -414,7 +414,7 @@ async function run() {
     ok(en2.code && en2.read && en2.cleared, "la lane dei nemici viaggia nel link condiviso e si azzera cambiando eroe");
     ok(en2.pick === "ok" && en2.near, "selettore: cercando, la barra di ricerca resta ferma e l'eroe filtrato è subito sotto (" + en2.pick + ")");
 
-    ok(await p.evaluate(function () { go("draft"); document.getElementById("dbs").click(); var o = !!document.getElementById("osh"); document.querySelector("#osg .seg button:nth-child(2)").click(); var r = o && S.guide === "blue" && /Primi noi/.test(document.querySelector(".dsum").textContent); document.getElementById("oshx").click(); var c = !document.getElementById("osh"); S.guide = null; save(); go("draft"); return r && c }), "«Cambia» apre il menu, la scelta si applica e il menu si chiude");
+    ok(await p.evaluate(function () { go("draft"); document.getElementById("dbs").click(); var o = !!document.getElementById("osh"); document.querySelector("#osg .seg button:nth-child(2)").click(); var r = o && S.guide === "blue" && /Primi noi/.test(document.querySelector(".dsum b").textContent); document.getElementById("oshx").click(); var c = !document.getElementById("osh"); S.guide = null; save(); go("draft"); return r && c }), "«Cambia» apre il menu, la scelta si applica e il menu si chiude");
     ok(await p.evaluate(function () { go("draft"); return !!document.getElementById("rp") }), "Azzera pick sopra le squadre");
 
     section("Inserimento rapido");

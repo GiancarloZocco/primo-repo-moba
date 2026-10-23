@@ -7,7 +7,7 @@
    - Aggiornamento dati live (arena.rone.dev): sempre dalla rete, mai in cache.
    VERSION e CORE li scrive tools/build.js (npm run build): VERSION è un'impronta dei file,
    quindi cambia da sola a ogni modifica e chi ha l'app installata riceve la versione nuova. */
-var VERSION = "5981b2ecb0";
+var VERSION = "0528a0a2cc";
 var CACHE = "mlbb-top-" + VERSION;
 var EXT = "mlbb-top-ext-v1";
 var EXT_MAX = 600;

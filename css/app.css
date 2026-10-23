@@ -3400,9 +3400,12 @@ details.mys > summary::-webkit-details-marker { display: none; }
 .dchip { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--txt); font: inherit; font-size: 12.5px; cursor: pointer; white-space: nowrap; }
 .dchip svg { width: 14px; height: 14px; }
 .dchip .chev { width: 6px; height: 6px; border-right: 2px solid var(--mute); border-bottom: 2px solid var(--mute); transform: rotate(45deg); margin: -3px 0 0 2px; }
-.dbar.b { align-items: center; justify-content: space-between; gap: 10px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
-.dbar.b .dsum { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--mute); }
-.dbar.b .dsum b { color: var(--txt); }
+.dbar.b { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1.5px solid var(--blue2); border-radius: 12px; background: linear-gradient(90deg, rgba(90,140,255,.16), var(--card)); color: var(--txt); font: inherit; text-align: left; cursor: pointer; }
+.dbar.b > svg { flex: none; width: 20px; height: 20px; color: var(--blue2); }
+.dbar.b .dsum { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.dbar.b .dsum small { font-size: 11px; color: var(--mute); text-transform: uppercase; letter-spacing: .05em; }
+.dbar.b .dsum b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.dbar.b .dgo { flex: none; padding: 6px 12px; border-radius: 999px; background: var(--blue2); color: #fff; font-weight: 700; font-size: 12.5px; }
 .osb { height: auto !important; max-height: 80%; overflow-y: auto; }
 .opts { display: flex; flex-direction: column; gap: 6px; }
 .opt1 { text-align: left; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--txt); font: inherit; cursor: pointer; }

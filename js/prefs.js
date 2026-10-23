@@ -41,7 +41,7 @@ function optSheet(title, fill) {
 }
 function goSettings(sec) { go("settings"); var el = $("sec-" + sec); if (el) el.scrollIntoView({ block: "start" }) }
 /* riga in cima al Draft: riepilogo delle scelte, "Cambia" apre un menu con tutte e tre */
-function draftBar() { return '<div class="dbar b"><span class="dsum"><b>' + guideSum() + '</b> · ' + CRIT[crit()] + ' · ' + myLaneSum() + '</span><button class="lnk" id="dbs">Cambia ›</button></div>' }
+function draftBar() { return '<button class="dbar b" id="dbs">' + IC.sliders + '<span class="dsum"><small>Impostazioni draft</small><b>' + guideSum() + ' · ' + CRIT[crit()] + ' · ' + myLaneSum() + '</b></span><span class="dgo">Cambia</span></button>' }
 function draftBarBind() {
   if ($("dbs")) $("dbs").onclick = function () {
     optSheet("Draft e consigli", function (b, close) {
