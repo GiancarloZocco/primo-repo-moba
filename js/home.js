@@ -2,6 +2,16 @@
 /* novità per versione, la più recente per prima: la Home mostra un avviso finché non la apri */
 var NEWS = [
   {
+    v: "2026-10-23", t: "Consigli su misura e tutorial con Lunox", items: [
+      "Criterio dei consigli: Equilibrato, Meta, Vinci la lane, Counter in partita o Sicuro.",
+      "«La mia lane»: mostra solo i consigli della tua lane, con 6 proposte.",
+      "Counter segnati da te, in lane e in partita, dalla scheda di ogni eroe: valgono più dei dati ufficiali.",
+      "Draft più pulito: una riga «Impostazioni draft» con un menu per tutte le scelte; «Azzera pick» sopra le squadre.",
+      "Impostazioni divise in sezioni: Draft, Aspetto, Lingua, Dati, Backup e Info.",
+      "Tutorial alla prima apertura con Lunox (si rivede da Impostazioni → Info)."
+    ]
+  },
+  {
     v: "2026-10-22", t: "Draft più veloce e nuovi temi", items: [
       "Inserimento rapido nel Draft: scrivi 2-3 lettere e premi Invio, l'eroe va nel turno giusto. Eroi probabili a un tocco e opzione «Solo pick nemici».",
       "Draft più ordinato: Ban, Consigliati e Lane 1v1 sono tendine che si aprono da sole in base alla fase.",

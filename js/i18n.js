@@ -4,6 +4,13 @@
    (le frasi composte da più pezzi, es. "Countera X (+2% di win rate contro di lui)").
    Per tradurre un testo nuovo basta aggiungerlo a EN (la chiave è il testo italiano esatto, o un suo pezzo). */
 var EN = {
+  "Consigli su misura e tutorial con Lunox": "Tailored tips and a tutorial with Lunox",
+  "Criterio dei consigli: Equilibrato, Meta, Vinci la lane, Counter in partita o Sicuro.": "Recommendation criterion: Balanced, Meta, Win the lane, Game counter or Safe.",
+  "«La mia lane»: mostra solo i consigli della tua lane, con 6 proposte.": "\u00abMy lane\u00bb: shows only the tips for your lane, with 6 suggestions.",
+  "Counter segnati da te, in lane e in partita, dalla scheda di ogni eroe: valgono più dei dati ufficiali.": "Counters you mark, in lane and in game, from each hero sheet: they weigh more than official data.",
+  "Draft più pulito: una riga «Impostazioni draft» con un menu per tutte le scelte; «Azzera pick» sopra le squadre.": "Cleaner draft: one \u00abDraft settings\u00bb row with a menu for every choice; \u00abReset picks\u00bb above the teams.",
+  "Impostazioni divise in sezioni: Draft, Aspetto, Lingua, Dati, Backup e Info.": "Settings split into sections: Draft, Look, Language, Data, Backup and Info.",
+  "Tutorial alla prima apertura con Lunox (si rivede da Impostazioni → Info).": "First-launch tutorial with Lunox (replay it from Settings \u2192 Info).",
   "Nella fase dei ban ti suggerisco chi bannare: gli eroi più forti del meta e quelli che counterano il tuo pool.": "In the ban phase I suggest who to ban: the strongest meta heroes and those that counter your pool.",
   "Qui ci sono i pick consigliati per ogni lane, con il perché: counter, sinergia, meta e i tuoi eroi. Tocca un eroe per vedere la scheda.": "Here are the recommended picks for each lane, with the reason: counters, synergy, meta and your heroes. Tap a hero to see its sheet.",
   "Lane 1v1: chi vince ogni scontro di lane tra te e l'avversario diretto. Tocca una lane per i consigli su come giocarla.": "Lane 1v1: who wins each lane matchup against your direct opponent. Tap a lane for tips on how to play it.",
