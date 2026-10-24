@@ -1,6 +1,5 @@
 /* MLBB TOP - Preferenze del draft (draft guidato, criterio dei consigli, la mia lane) usate in due posti:
-   la riga compatta in cima al Draft e la sezione "Draft e consigli" delle Impostazioni.
-*/
+   la riga compatta in cima al Draft e la sezione "Draft e consigli" delle Impostazioni. */
 var CRITD = { bal: "Un po' di tutto: counter, meta, lane, ruoli che mancano e il tuo pool.", meta: "Solo quanto è forte l'eroe nel meta del tuo rank.", lane: "Solo lo scontro con l'avversario diretto: ogni riga consiglia chi batte il nemico di quella lane.", game: "Chi batte tutta la squadra nemica, anche nemici di altre lane (dati ufficiali, tratti e counter segnati da te).", safe: "Come Equilibrato, ma evita gli eroi che i nemici scelti counterano." };
 function guideSum() { return S.guide ? (S.gmode === "tour" ? "Torneo" : "Ranked") + " · " + (S.guide === "blue" ? "Primi noi" : "Primi loro") + " · " + S.gbans + " ban" : "Non guidato" }
 function myLaneSum() { return S.myLane && S.lane ? LN[S.lane] : "Tutte le lane" }
@@ -39,9 +38,8 @@ function optSheet(title, fill) {
   var close = function () { d.remove() }; d.onclick = function (e) { if (e.target === d) close() }; $("oshx").onclick = close;
   fill($("oshb"), close); return close;
 }
-function goSettings(sec) { go("settings"); var el = $("sec-" + sec); if (el) el.scrollIntoView({ block: "start" }) }
 /* riga in cima al Draft: riepilogo delle scelte, "Cambia" apre un menu con tutte e tre */
-function draftBar() { return '<button class="dbar b" id="dbs">' + IC.sliders + '<span class="dsum"><small>Impostazioni draft</small><b>' + guideSum() + ' · ' + CRIT[crit()] + ' · ' + myLaneSum() + '</b></span><span class="dgo">Cambia</span></button>' }
+function draftBar() { return '<button class="dbar" id="dbs">' + IC.sliders + '<span class="dsum"><small>Impostazioni draft</small><b>' + guideSum() + ' · ' + CRIT[crit()] + ' · ' + myLaneSum() + '</b></span><span class="dgo">Cambia</span></button>' }
 function draftBarBind() {
   if ($("dbs")) $("dbs").onclick = function () {
     optSheet("Draft e consigli", function (b, close) {

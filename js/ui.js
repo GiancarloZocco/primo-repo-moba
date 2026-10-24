@@ -6,8 +6,6 @@ function lanes(h) { return H[h].l.split("").map(function (k) { return LN[k] }).j
 function roleLane(h) { return R[H[h].r] + " / " + H[h].l.split("").map(function (k) { return LS[k] }).join(" · ") }
 function traits(h) { return H[h].t.split("").map(function (t) { return TR[t] }).join(", ") }
 function bar(v, col) { return '<div class="bar"><i style="width:' + v + '%;background:' + col + '"></i></div>' }
-function vc(v) { return v >= 70 ? "g" : v >= 45 ? "a" : "r" }
-function colv(v) { return v >= 70 ? "var(--green)" : v >= 45 ? "var(--amber)" : "var(--red)" }
 var IC = {
   bolt: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',
   shield: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg>',

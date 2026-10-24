@@ -93,10 +93,11 @@ async function run() {
     ok(ob.after === "home|true|X|o|Tester|2" && ob.sheet, "a fine configurazione si va alla Home con ruolo, lane, nickname e pool salvati (" + ob.after + ")");
     var tu = await p.evaluate(async function () {
       await new Promise(function (r) { setTimeout(r, 600) }); var r = { open: !!document.getElementById("tour") }, n = 0;
-      while (document.getElementById("tour") && !document.querySelector("#tour.out") && n < 20) { n++; document.getElementById("tnext").click() }
+      var demo = false; while (document.getElementById("tour") && !document.querySelector("#tour.out") && n < 30) { n++; document.getElementById("tnext").click(); if (S.ally[0] === "Tigreal" && document.querySelector("#lanes .lrow")) demo = true }
+      r.demo = demo; r.back = !S.tourBak && S.ally.every(function (h) { return !h }) && S.enemy.every(function (h) { return !h });
       r.n = n; r.len = TOUR.length; r.done = S.tour === true; go("home"); return r;
     });
-    ok(tu.open && tu.done && tu.n === tu.len, "dopo la configurazione parte il tutorial di Lunox e si chiude dopo " + tu.n + " passi");
+    ok(tu.open && tu.done && tu.n === tu.len && tu.demo && tu.back, "dopo la configurazione parte il tutorial di Lunox e si chiude dopo " + tu.n + " passi; draft di esempio durante, draft vero rimesso alla fine (demo " + tu.demo + ", ripristino " + tu.back + ")");
     var first = await p.evaluate(function () { S.pool = []; save(); var home = cur === "home"; go("draft"); return { home: home, picks: used().length, hint: /Inizia dai ban/.test(document.querySelector("#v-draft").textContent) } });
     ok(first.home, "dopo la configurazione l'app è sulla Home");
     ok(first.picks === 0 && first.hint, "prima apertura: draft vuoto con il suggerimento iniziale");
